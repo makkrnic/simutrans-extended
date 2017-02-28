@@ -33,14 +33,6 @@
 #	include <unistd.h>
 #endif
 
-// first: find out, which copy routines we may use!
-#ifdef  __GNUC__
-# if defined(__i686__)
-// default, but will only make a difference with display_fb_intern
-#  define USE_ASSEMBLER
-# endif
-#endif
-
 #ifdef MULTI_THREAD
 #include "../utils/simthread.h"
 
@@ -2380,9 +2372,11 @@ static void display_img_nc(KOORD_VAL h, const KOORD_VAL xp, const KOORD_VAL yp, 
 						while (runlen--) {
 #if defined _MSC_VER // MSVC can read unaligned
 							*ld++ = *(uint32 const *const)sp;
-#else
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 							// little endian order, assumed by default
 							*ld++ = (uint32(sp[1]) << 16) | uint32(sp[0]);
+#else
+							*ld++ = (uint32(sp[0]) << 16) | uint32(sp[1]);
 #endif
 							sp += 2;
 						}
@@ -3812,8 +3806,8 @@ static void display_fb_internal(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, KOORD_V
 		if (dirty) {
 			mark_rect_dirty_nc(xp, yp, xp + w - 1, yp + h - 1);
 		}
-#if defined(USE_ASSEMBLER)
-		// since only here assembler makes a difference ...
+#if defined USE_ASSEMBLER && defined __GNUC__ && defined __i686__
+		// GCC might not use "rep stos" so force its use
 		const uint32 longcolval = (colval << 16) | colval;
 		do {
 			unsigned int count = w;
@@ -3833,7 +3827,7 @@ static void display_fb_internal(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, KOORD_V
 				);
 			p += dx;
 		} while (--h);
-#elif defined(LOW_LEVEL)
+#elif defined LOW_LEVEL
 		// low level c++
 		const uint32 colvald = (colval << 16) | colval;
 		do {
@@ -4315,6 +4309,7 @@ int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char*
 				for (h = char_yoffset; h < char_height; h++) {
 					unsigned int dat = *p++ & m;
 					PIXVAL* dst = textur + screen_pos;
+<<<<<<< HEAD
 #if defined LOW_LEVEL
 					// low level c++
 					if (dat != 0) {
@@ -4332,11 +4327,16 @@ int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char*
 					if (dat != 0) {
 						for (size_t dat_offset = 0; dat_offset < 8; dat_offset++) {
 							if ((dat & (0x80 >> dat_offset))) {
+=======
+
+					if(  dat  !=  0  ) {
+						for(  size_t dat_offset = 0 ; dat_offset < 8 ; dat_offset++  ) {
+							if(  (dat & (0x80 >> dat_offset))  ) {
+>>>>>>> ea2d5f2d9... Clean up for assembly removal commit. Improved endian robustness and MSVC performance.
 								dst[dat_offset] = color;
 							}
 						}
 					}
-#endif
 					screen_pos += disp_width;
 				}
 			}
