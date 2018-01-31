@@ -371,6 +371,10 @@ void weg_t::rdwr(loadsave_t *file)
 	if(  file->get_version() >= 99006  ) {
 		sint8 spnum=get_player_nr();
 		file->rdwr_byte(spnum);
+		if (file->get_extended_version() < 14 && spnum == OLD_PLAYER_UNOWNED && file->is_loading())
+		{
+			spnum = PLAYER_UNOWNED;
+		}
 		set_player_nr(spnum);
 	}
 

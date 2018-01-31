@@ -141,9 +141,9 @@ obj_t::~obj_t()
  */
 void obj_t::set_owner(player_t *player)
 {
-	int i = welt->sp2num(player);
+	uint8 i = welt->sp2num(player);
 	assert(i>=0);
-	owner_n = (uint8)i;
+	owner_n = i;
 }
 
 
@@ -208,6 +208,10 @@ void obj_t::rdwr(loadsave_t *file)
 	yoff = (sint8)(((sint16)byte*OBJECT_OFFSET_STEPS)/16);
 	byte = owner_n;
 	file->rdwr_byte(byte);
+	if (file->get_extended_version() < 14 && byte == OLD_PLAYER_UNOWNED)
+	{
+		byte = PLAYER_UNOWNED;
+	}
 	owner_n = byte;
 }
 

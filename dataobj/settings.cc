@@ -1472,17 +1472,28 @@ void settings_t::rdwr(loadsave_t *file)
 			file->rdwr_long(capital_threshold_size);
 			file->rdwr_long(city_threshold_size);
 		}
+
+		int player_count;
+		if (file->get_extended_version() >= 14)
+		{
+			player_count = MAX_PLAYER_COUNT;
+		}
+		else
+		{
+			player_count = OLD_MAX_PLAYER_COUNT;
+		}
 		
 		if(  file->get_version()>=110001  ) {
 			file->rdwr_bool( default_player_color_random );
-			for(  int i=0;  i<MAX_PLAYER_COUNT;  i++  ) {
+			
+			for(  int i=0;  i<player_count;  i++  ) {
 				file->rdwr_byte( default_player_color[i][0] );
 				file->rdwr_byte( default_player_color[i][1] );
 			}
 		}
 		else if(  file->is_loading()  ) {
 			default_player_color_random = false;
-			for(  int i=0;  i<MAX_PLAYER_COUNT;  i++  ) {
+			for(  int i=0;  i<player_count;  i++  ) {
 				// default colors for player ...
 				default_player_color[i][0] = 255;
 				default_player_color[i][1] = 255;

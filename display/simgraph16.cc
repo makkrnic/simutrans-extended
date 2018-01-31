@@ -1206,7 +1206,7 @@ static void recode_img_src_target(KOORD_VAL h, PIXVAL *src, PIXVAL *target)
 				if (runlen & TRANSPARENT_RUN) {
 					runlen &= ~TRANSPARENT_RUN;
 					while (runlen--) {
-						if (*src < 0x8020 + (31 * 16)) {
+						if (*src < 0x8020 + (31 * MAX_PLAYER_COUNT)) {
 							// expand transparent player color
 							PIXVAL rgb565 = rgbmap_day_night[(*src - 0x8020) / 31 + 0x8000];
 							PIXVAL alpha = (*src - 0x8020) % 31;

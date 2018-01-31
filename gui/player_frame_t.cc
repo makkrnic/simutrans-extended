@@ -236,7 +236,7 @@ ki_kontroll_t::~ki_kontroll_t()
  */
 bool ki_kontroll_t::action_triggered( gui_action_creator_t *comp,value_t p )
 {
-	static char param[16];
+	static char param[MAX_PLAYER_COUNT];
 
 	// Free play button?
 	if(  comp==&freeplay  ) {
@@ -333,7 +333,7 @@ bool ki_kontroll_t::action_triggered( gui_action_creator_t *comp,value_t p )
 				tooltip_out[i].printf("Allow %s to access your ways and stops", player->get_name());
 			}
 			
-			static char param[16];
+			static char param[MAX_PLAYER_COUNT];
 			sprintf(param,"g%hi,%hi,%hi", welt->get_active_player_nr(), i, access_out[i].pressed);
 			tool_t *tool = create_tool( TOOL_ACCESS_TOOL | SIMPLE_TOOL );
 			tool->set_default_param(param);

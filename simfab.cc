@@ -1492,6 +1492,10 @@ DBG_DEBUG("fabrik_t::rdwr()","loading factory '%s'",s);
 	// restore other information
 	owner_n = welt->sp2num(owner);
 	file->rdwr_long(owner_n);
+	if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
+	{
+		owner_n = PLAYER_UNOWNED;
+	}
 	file->rdwr_long(prodbase);
 	if(  file->get_version()<110005  ) {
 		// TurfIt : prodfactor saving no longer required
