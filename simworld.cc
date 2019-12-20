@@ -7930,8 +7930,17 @@ DBG_MESSAGE("karte_t::save(loadsave_t *file)", "start");
 			settings.set_player_type(i, player_t::EMPTY);
 		}
 	}
+	uint8 player_count;
+	if ((file->get_extended_version() >= 15 || (file->get_extended_version() == 14 && file->get_extended_revision() >= 15)))
+	{
+		player_count = MAX_PLAYER_COUNT;
+	}
+	else
+	{
+		player_count = OLD_MAX_PLAYER_COUNT;
+	}
 	settings.rdwr(file);
-	for(  int i=0;  i<MAX_PLAYER_COUNT;  i++  ) {
+	for(  int i=0;  i< player_count;  i++  ) {
 		settings.set_player_type(i, old_players[i]);
 	}
 
@@ -8031,7 +8040,7 @@ DBG_MESSAGE("karte_t::save(loadsave_t *file)", "saved stops");
 	}
 DBG_MESSAGE("karte_t::save(loadsave_t *file)", "saved %i convois",convoi_array.get_count());
 
-	for(int i=0; i<MAX_PLAYER_COUNT; i++) {
+	for(int i=0; i<player_count; i++) {
 // **** REMOVE IF SOON! *********
 		if(file->get_version()<101000) {
 			if(  i<8  ) {
@@ -9034,7 +9043,16 @@ DBG_MESSAGE("karte_t::load()", "init player");
 DBG_MESSAGE("karte_t::load()", "%d convois/trains loaded", convoi_array.get_count());
 
 	// now the player can be loaded
-	for(int i=0; i<MAX_PLAYER_COUNT; i++) {
+	uint8 player_count;
+	if ((file->get_extended_version() >= 15 || (file->get_extended_version() == 14 && file->get_extended_revision() >= 15)))
+	{
+		player_count = MAX_PLAYER_COUNT;
+	}
+	else
+	{
+		player_count = OLD_MAX_PLAYER_COUNT;
+	}
+	for(int i=0; i< player_count; i++) {
 		if(  players[i]  ) {
 			players[i]->rdwr(file);
 			settings.player_active[i] = players[i]->is_active();
@@ -9138,7 +9156,7 @@ DBG_MESSAGE("karte_t::load()", "%d factories loaded", fab_list.get_count());
 	haltestelle_t::end_load_game();
 
 	// register all line stops and change line types, if needed
-	for(int i=0; i<MAX_PLAYER_COUNT ; i++) {
+	for(int i=0; i< player_count; i++) {
 		if(  players[i]  ) {
 			players[i]->load_finished();
 		}

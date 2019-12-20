@@ -252,12 +252,12 @@ void grund_t::rdwr(loadsave_t *file)
 
 	sint8 owner_n=-1;
 	if(file->get_version()<99005) {
-		if (file->get_extended_version() < 14 && owner_n == PLAYER_UNOWNED)
+		if ((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && owner_n == PLAYER_UNOWNED)
 		{
 			owner_n = OLD_PLAYER_UNOWNED;
 		}
 		file->rdwr_byte(owner_n);
-		if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED)
+		if ((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && owner_n == PLAYER_UNOWNED)
 		{
 			owner_n = PLAYER_UNOWNED;
 		}

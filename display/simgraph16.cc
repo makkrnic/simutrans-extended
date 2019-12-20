@@ -269,8 +269,6 @@ static font_type large_font;
 int large_font_ascent = 9;
 int large_font_total_height = 11;
 
-#define MAX_PLAYER_COUNT (16)
-
 #define RGBMAPSIZE (0x8000+LIGHT_COUNT+MAX_PLAYER_COUNT)
 
 /*

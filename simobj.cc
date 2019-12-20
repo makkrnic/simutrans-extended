@@ -208,7 +208,7 @@ void obj_t::rdwr(loadsave_t *file)
 	yoff = (sint8)(((sint16)byte*OBJECT_OFFSET_STEPS)/16);
 	byte = owner_n;
 	file->rdwr_byte(byte);
-	if (file->get_extended_version() < 14 && byte == OLD_PLAYER_UNOWNED)
+	if ((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && byte == OLD_PLAYER_UNOWNED)
 	{
 		byte = PLAYER_UNOWNED;
 	}

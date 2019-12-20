@@ -1492,7 +1492,7 @@ DBG_DEBUG("fabrik_t::rdwr()","loading factory '%s'",s);
 	// restore other information
 	owner_n = welt->sp2num(owner);
 	file->rdwr_long(owner_n);
-	if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
+	if ((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
 	{
 		owner_n = PLAYER_UNOWNED;
 	}

@@ -6,7 +6,7 @@
 #define simconst_h
 
 // number of players
-#define MAX_PLAYER_COUNT (32)
+#define MAX_PLAYER_COUNT (24)
 #define OLD_MAX_PLAYER_COUNT (16)
 #define PLAYER_UNOWNED (MAX_PLAYER_COUNT - 1)
 #define OLD_PLAYER_UNOWNED (OLD_MAX_PLAYER_COUNT - 1)
@@ -48,7 +48,7 @@
 //#define ENABLE_WATERWAY_SIGNS
 
 // Maximum number of threads
-#define MAX_THREADS (12)
+#define MAX_THREADS (64)
 
 /*********************** Useful things for debugging ... ********************/
 

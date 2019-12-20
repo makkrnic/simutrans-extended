@@ -3891,7 +3891,7 @@ void convoi_t::rdwr(loadsave_t *file)
 	bool dummy_bool=false;
 	file->rdwr_bool(dummy_bool);
 	file->rdwr_long(owner_n);
-	if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
+	if (((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15))  && owner_n == OLD_PLAYER_UNOWNED && file->is_loading()))
 	{
 		owner_n = PLAYER_UNOWNED;
 	}
@@ -3917,7 +3917,7 @@ void convoi_t::rdwr(loadsave_t *file)
 		}
 		owner = welt->get_player( owner_n );
 
-		if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
+		if (((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && owner_n == OLD_PLAYER_UNOWNED && file->is_loading()))
 		{
 			owner_n = PLAYER_UNOWNED;
 		}

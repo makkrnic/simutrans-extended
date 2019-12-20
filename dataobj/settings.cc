@@ -1474,7 +1474,7 @@ void settings_t::rdwr(loadsave_t *file)
 		}
 
 		int player_count;
-		if (file->get_extended_version() >= 14)
+		if ((file->get_extended_version() >= 15 || (file->get_extended_version() == 14 && file->get_extended_revision() >= 15)))
 		{
 			player_count = MAX_PLAYER_COUNT;
 		}

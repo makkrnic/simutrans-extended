@@ -856,7 +856,15 @@ DBG_DEBUG("player_t::rdwr()","player %i: loading %i halts.",welt->sp2num( this )
 		file->rdwr_byte(player_color_2);
 
 		// Save access parameters
-		uint8 max_players = MAX_PLAYER_COUNT;
+		uint8 max_players;
+		if ((file->get_extended_version() >= 15 || (file->get_extended_version() == 14 && file->get_extended_revision() >= 15)))
+		{
+			max_players = MAX_PLAYER_COUNT;
+		}
+		else
+		{
+			max_players = OLD_MAX_PLAYER_COUNT;
+		}
 		file->rdwr_byte(max_players);
 		for(int i = 0; i < max_players; i ++)
 		{

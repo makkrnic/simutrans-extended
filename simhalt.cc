@@ -3776,7 +3776,7 @@ void haltestelle_t::rdwr(loadsave_t *file)
 	}
 	file->rdwr_long(owner_n);
 
-	if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
+	if ((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
 	{
 		owner_n = PLAYER_UNOWNED;
 	}
@@ -3791,7 +3791,7 @@ void haltestelle_t::rdwr(loadsave_t *file)
 	if(file->is_loading()) {
 		owner = welt->get_player(owner_n);
 
-		if (file->get_extended_version() < 14 && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
+		if ((file->get_extended_version() < 15 && (file->get_extended_version() < 14 || file->get_extended_revision() < 15)) && owner_n == OLD_PLAYER_UNOWNED && file->is_loading())
 		{
 			owner_n = PLAYER_UNOWNED;
 		}
