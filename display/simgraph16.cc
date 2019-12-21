@@ -302,7 +302,7 @@ static PIXVAL *rgbmap_current = 0;
 * to actual output format - day&night mode
 * 16 sets of 24 colors
 */
-static PIXVAL specialcolormap_day_night[512];
+static PIXVAL specialcolormap_day_night[256];
 
 
 /*
@@ -1932,7 +1932,7 @@ static void calc_base_pal_from_night_shift(const int night)
 		specialcolormap_day_night[i + (NUMBER_OF_PLAYER_COLOURS * 8)] = get_system_color(display_day_lights[i * 3 + 0], display_day_lights[i * 3 + 1], display_day_lights[i * 3 + 2]);
 	}
 	// init with black for forbidden colors
-	for (i = (NUMBER_OF_PLAYER_COLOURS * 8) + LIGHT_COUNT; i<512; i++) {
+	for (i = (NUMBER_OF_PLAYER_COLOURS * 8) + LIGHT_COUNT; i<256; i++) {
 		specialcolormap_day_night[i] = 0;
 	}
 	// default player colors
