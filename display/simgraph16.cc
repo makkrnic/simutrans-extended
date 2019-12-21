@@ -300,9 +300,9 @@ static PIXVAL *rgbmap_current = 0;
 /*
 * Hajo: mapping table for special-colors (AI player colors)
 * to actual output format - day&night mode
-* 16 sets of 16 colors
+* 16 sets of 32 colors
 */
-static PIXVAL specialcolormap_day_night[256];
+static PIXVAL specialcolormap_day_night[512];
 
 
 /*
@@ -474,7 +474,7 @@ COLOR_VAL display_night_lights[LIGHT_COUNT * 3] = {
 
 // the players colors and colors for simple drawing operations
 // each eight colors are corresponding to a player color
-static const COLOR_VAL special_pal[224 * 3] =
+static const COLOR_VAL special_pal[NUMBER_OF_PLAYER_COLOURS * 8 * 3] =
 {
 	36, 75, 103,
 	57, 94, 124,
@@ -727,6 +727,42 @@ static const COLOR_VAL special_pal[224 * 3] =
 	135, 120, 176,
 	165, 145, 218,
 	198, 191, 232,
+
+	46, 44, 38,
+	64, 62, 53,
+	82, 79, 68,
+	94, 91, 79,
+	115, 111, 96,
+	179, 173, 154,
+	190, 184, 163,
+	199, 193, 173,
+
+	0, 35, 38,
+	0, 48, 51,
+	1, 86, 92,
+	2, 119, 128,
+	4, 158, 169,
+	4, 164, 176,
+	4, 183, 196,
+	5, 190, 204,
+
+	50, 28, 0,
+	106, 60, 0,
+	122, 70, 3,
+	141, 94, 24,
+	164, 101, 18,
+	179, 109, 20,
+	189, 116, 22,
+	196, 134, 39,
+
+	26, 7, 7,
+	31, 9, 9,
+	42, 12, 12,
+	64, 18, 18,
+	91, 27, 27,
+	101, 33, 32,
+	110, 36, 35,
+	120, 39, 38,
 };
 
 
@@ -1920,7 +1956,7 @@ static void calc_base_pal_from_night_shift(const int night)
 	}
 
 	// player color map (and used for map display etc.)
-	for (i = 0; i < 224; i++) {
+	for (i = 0; i < (NUMBER_OF_PLAYER_COLOURS * 8); i++) {
 		const int R = (int)(special_pal[i * 3 + 0] * RG_night_multiplier);
 		const int G = (int)(special_pal[i * 3 + 1] * RG_night_multiplier);
 		const int B = (int)(special_pal[i * 3 + 2] * B_night_multiplier);
@@ -1929,10 +1965,10 @@ static void calc_base_pal_from_night_shift(const int night)
 	}
 	// special light colors (actually, only non-darkening greys should be used
 	for (i = 0; i<LIGHT_COUNT; i++) {
-		specialcolormap_day_night[i + 224] = get_system_color(display_day_lights[i * 3 + 0], display_day_lights[i * 3 + 1], display_day_lights[i * 3 + 2]);
+		specialcolormap_day_night[i + (NUMBER_OF_PLAYER_COLOURS * 8)] = get_system_color(display_day_lights[i * 3 + 0], display_day_lights[i * 3 + 1], display_day_lights[i * 3 + 2]);
 	}
 	// init with black for forbidden colors
-	for (i = 224 + LIGHT_COUNT; i<256; i++) {
+	for (i = (NUMBER_OF_PLAYER_COLOURS * 8) + LIGHT_COUNT; i<512; i++) {
 		specialcolormap_day_night[i] = 0;
 	}
 	// default player colors

@@ -19,6 +19,7 @@
 #include "components/gui_label.h"
 #include "components/gui_button.h"
 #include "components/gui_image.h"
+#include "../descriptor/image.h"
 
 
 /**
@@ -36,8 +37,8 @@ class farbengui_t : public gui_frame_t, action_listener_t
 		gui_label_t c1, c2;
 		gui_image_t image;
 
-		button_t player_color_1[28];
-		button_t player_color_2[28];
+		button_t player_color_1[NUMBER_OF_PLAYER_COLOURS];
+		button_t player_color_2[NUMBER_OF_PLAYER_COLOURS];
 
 	public:
 		farbengui_t(player_t *player_);

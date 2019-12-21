@@ -28,11 +28,12 @@
  *  Child nodes:
  *	(none)
  */
+# define NUMBER_OF_PLAYER_COLOURS 32
 class image_t : public obj_desc_t
 {
 public:
 	static const uint32 rgbtab[SPECIAL];
-	static const uint8  special_pal[224*3];
+	static const uint8  special_pal[NUMBER_OF_PLAYER_COLOURS * 8 * 3];
 
 	// returns next matching color to an rgb
 	static COLOR_VAL get_index_from_rgb( uint8 r, uint8 g, uint8 b );

@@ -49,7 +49,7 @@ const uint32 image_t::rgbtab[SPECIAL] = {
 
 // the players' colors and colors for simple drawing operations
 // each eight colors are corresponding to a player color
-const uint8 image_t::special_pal[224*3]=
+const uint8 image_t::special_pal[NUMBER_OF_PLAYER_COLOURS * 8 *3]
 {
 	36, 75, 103,
 	57, 94, 124,
@@ -302,6 +302,42 @@ const uint8 image_t::special_pal[224*3]=
 	135, 120, 176,
 	165, 145, 218,
 	198, 191, 232,
+
+	46, 44, 38,
+	64, 62, 53,
+	82, 79, 68,
+	94, 91, 79,
+	115, 111, 96,
+	179, 173, 154,
+	190, 184, 163,
+	199, 193, 173,
+
+	0, 35, 38,
+	0, 48, 51,
+	1, 86, 92,
+	2, 119, 128,
+	4, 158, 169,
+	4, 164, 176,
+	4, 183, 196,
+	5, 190, 204,
+
+	50, 28, 0,
+	106, 60, 0,
+	122, 70, 3,
+	141, 94, 24,
+	164, 101, 18,
+	179, 109, 20,
+	189, 116, 22,
+	196, 134, 39,
+
+	26, 7, 7,
+	31, 9, 9,
+	42, 12, 12,
+	64, 18, 18,
+	91, 27, 27,
+	101, 33, 32,
+	110, 36, 35,
+	120, 39, 38,
 };
 
 
@@ -313,7 +349,7 @@ COLOR_VAL image_t::get_index_from_rgb( uint8 r, uint8 g, uint8 b )
 	uint32 rgb = (r<<16) + (g<<8) + b;
 	for(  uint i=0;  i<lengthof(rgbtab);  i++  ) {
 		if(  rgb == rgbtab[i]  ) {
-			return 224+i;
+			return NUMBER_OF_PLAYER_COLOURS + i;
 		}
 	}
 	// best matching
