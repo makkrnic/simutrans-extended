@@ -817,7 +817,16 @@ void settings_t::rdwr(loadsave_t *file)
 
 			// restore AI state
 			//char password[16]; // unused
-			for(  int i=0;  i<15;  i++  ) {
+			uint8 player_count;
+			if ((file->get_extended_version() >= 15 || (file->get_extended_version() == 14 && file->get_extended_revision() >= 15)))
+			{
+				player_count = MAX_PLAYER_COUNT;
+			}
+			else
+			{
+				player_count = OLD_MAX_PLAYER_COUNT;
+			}
+			for(  int i=0;  i < player_count - 1;  i++  ) {
 				file->rdwr_bool( player_active[i]);
 				file->rdwr_byte( player_type[i]);
 				if(  file->get_version()<=102002 || file->get_extended_version() == 7) {

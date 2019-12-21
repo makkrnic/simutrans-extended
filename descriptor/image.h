@@ -28,7 +28,7 @@
  *  Child nodes:
  *	(none)
  */
-# define NUMBER_OF_PLAYER_COLOURS 32
+# define NUMBER_OF_PLAYER_COLOURS 28
 class image_t : public obj_desc_t
 {
 public:

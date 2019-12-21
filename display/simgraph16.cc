@@ -300,7 +300,7 @@ static PIXVAL *rgbmap_current = 0;
 /*
 * Hajo: mapping table for special-colors (AI player colors)
 * to actual output format - day&night mode
-* 16 sets of 32 colors
+* 16 sets of 24 colors
 */
 static PIXVAL specialcolormap_day_night[512];
 
@@ -727,42 +727,6 @@ static const COLOR_VAL special_pal[NUMBER_OF_PLAYER_COLOURS * 8 * 3] =
 	135, 120, 176,
 	165, 145, 218,
 	198, 191, 232,
-
-	46, 44, 38,
-	64, 62, 53,
-	82, 79, 68,
-	94, 91, 79,
-	115, 111, 96,
-	179, 173, 154,
-	190, 184, 163,
-	199, 193, 173,
-
-	0, 35, 38,
-	0, 48, 51,
-	1, 86, 92,
-	2, 119, 128,
-	4, 158, 169,
-	4, 164, 176,
-	4, 183, 196,
-	5, 190, 204,
-
-	50, 28, 0,
-	106, 60, 0,
-	122, 70, 3,
-	141, 94, 24,
-	164, 101, 18,
-	179, 109, 20,
-	189, 116, 22,
-	196, 134, 39,
-
-	26, 7, 7,
-	31, 9, 9,
-	42, 12, 12,
-	64, 18, 18,
-	91, 27, 27,
-	101, 33, 32,
-	110, 36, 35,
-	120, 39, 38,
 };
 
 
