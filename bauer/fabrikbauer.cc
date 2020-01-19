@@ -1129,15 +1129,16 @@ next_ware_check:
 	int no_electric = force_add_consumer || (promille >= target_promille) ? 1 : 0;
 	DBG_MESSAGE( "factory_builder_t::increase_industry_density()", "production of electricity/total electrical demand is %i/%i (%i o/oo)", electric_productivity, total_electric_demand, promille );
 
-	while(  no_electric<2  ) 
+	while(no_electric < 2) 
 	{
 		bool ignore_climates = false;
 
-		for(int retries=20;  retries>0;  retries--  )
+		for(int retries = 20; retries > 0; retries --)
 		{
 			const factory_desc_t *fab=get_random_consumer( no_electric==0, ALL_CLIMATES, welt->get_timeline_year_month() );
-			if(fab) {
-				if(do_not_add_beyond_target_density && !fab->is_electricity_producer())
+			if(fab)
+			{
+				if(do_not_add_beyond_target_density && !fab->is_electricity_producer() && !fab->is_consumer_only())
 				{
 					// Make sure that industries are not added beyond target density.
 					if(100 / fab->get_distribution_weight() > (welt->get_target_industry_density() - welt->get_actual_industry_density()))
@@ -1165,7 +1166,7 @@ next_ware_check:
 				if(!in_city) 
 				{
 					// find somewhere on the map
-					pos = find_random_construction_site( koord(welt->get_size().x/2,welt->get_size().y/2), welt->get_size_max()/2, fab->get_building()->get_size(rotation),fab->get_placement()==factory_desc_t::Water,fab->get_building(),ignore_climates,10000);
+					pos = find_random_construction_site(koord(welt->get_size().x/2,welt->get_size().y/2), welt->get_size_max()/2, fab->get_building()->get_size(rotation),fab->get_placement() == factory_desc_t::Water,fab->get_building(), ignore_climates, 10000);
 				}
 				else 
 				{
@@ -1176,13 +1177,14 @@ next_ware_check:
 						city = pick_any_weighted(welt->get_cities());
 					}
 					koord diff = city->get_rechtsunten()-city->get_linksoben();
-					pos = find_random_construction_site( city->get_center(), max(diff.x,diff.y)/2, fab->get_building()->get_size(rotation),fab->get_placement()==factory_desc_t::Water,fab->get_building(),ignore_climates, 1000);
+					pos = find_random_construction_site( city->get_center(), max(diff.x,diff.y)/2, fab->get_building()->get_size(rotation),fab->get_placement() == factory_desc_t::Water,fab->get_building(),ignore_climates, 1000);
 				}
 				if(welt->lookup(pos))
 				{
 					// Space found...
 					nr += build_link(NULL, fab, -1 /* random prodbase */, rotation, &pos, welt->get_public_player(), 1, ignore_climates);
-					if(nr>0) {
+					if(nr > 0) 
+					{
 						fabrik_t *our_fab = fabrik_t::get_fab( pos.get_2d() );
 						reliefkarte_t::get_karte()->calc_map_size();
 						// tell the player
@@ -1197,7 +1199,7 @@ next_ware_check:
 						return nr;
 					}
 				}
-				else if(  retries==1  &&  !ignore_climates  )
+				else if(retries == 1 && !ignore_climates)
 				{
 					// from now on, we will ignore climates to avoid broken chains
 					ignore_climates = true;

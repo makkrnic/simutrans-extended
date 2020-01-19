@@ -3878,7 +3878,7 @@ void stadt_t::check_bau_townhall(bool new_town)
 void stadt_t::check_bau_factory(bool new_town)
 {
 	uint32 const inc = welt->get_settings().get_industry_increase_every();
-	if (!new_town && inc > 0 && (uint32)bev %inc == 0)
+	if (!new_town && inc > 0 && (uint32)bev % inc == 0)
 	{
 		uint32 div = bev / inc;
 		for (uint8 i = 0; i < 8; i++)
