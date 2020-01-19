@@ -466,6 +466,9 @@ private:
 	sint32 traffic_level;
 	void calc_traffic_level();
 
+	// Prevent deadlocks with building industries in towns
+	sint32 current_step_build_result = -1;
+
 public:
 
 	/**
@@ -731,7 +734,11 @@ public:
 
 	// @author: jamespetts
 	// September 2010
-	uint16 get_max_dimension();
+	uint16 get_max_dimension(); 
+
+	uint32 get_sum_level_of_city_industries(bool consumer_only) const;
+	uint32 get_number_of_consumer_industries() const;
+	uint32 get_visitor_demand_of_consumer_industries() const;
 };
 
 #endif

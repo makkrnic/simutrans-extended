@@ -1552,7 +1552,7 @@ DBG_DEBUG("karte_t::init()","built timeline");
 	FOR(vector_tpl<fabrik_t*>, factory, fab_list)
 	{
 		const factory_desc_t* factory_type = factory->get_desc();
-		if(!factory_type->is_electricity_producer() && !factory_type->is_consumer_only())
+		if(!factory_type->is_electricity_producer() && (!factory_type->is_consumer_only() || get_settings().get_industry_increase_every() == 0))
 		{
 			// Power stations are excluded from the target weight:
 			// a different system is used for them.
@@ -9290,7 +9290,7 @@ DBG_MESSAGE("karte_t::load()", "%d factories loaded", fab_list.get_count());
 		FOR(vector_tpl<fabrik_t*>, factory, fab_list)
 		{
 			const factory_desc_t* factory_type = factory->get_desc();
-			if(!factory_type->is_electricity_producer() && !factory_type->is_consumer_only())
+			if(!factory_type->is_electricity_producer() && (!factory_type->is_consumer_only() || get_settings().get_industry_increase_every() == 0))
 			{
 				// Power stations are excluded from the target weight:
 				// a different system is used for them.

@@ -979,7 +979,7 @@ fabrik_t::~fabrik_t()
 			city->remove_city_factory(this);
 		}
 		
-		if (desc != NULL && !desc->is_electricity_producer() && !desc->is_consumer_only())
+		if (desc != NULL && !desc->is_electricity_producer() && (!desc->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0))
 		{
 			welt->decrease_actual_industry_density(100 / desc->get_distribution_weight());
 		}
@@ -1612,7 +1612,7 @@ DBG_DEBUG("fabrik_t::rdwr()","loading factory '%s'",s);
 	if(file->get_extended_version() < 9 && file->get_version() < 110006)
 	{
 		// Necessary to ensure that the industry density is correct after re-loading a game.
-		if (!desc->is_electricity_producer() && !desc->is_consumer_only())
+		if (!desc->is_electricity_producer() && (!desc->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0))
 		{
 			welt->increase_actual_industry_density(100 / desc->get_distribution_weight());
 		}
@@ -2822,7 +2822,7 @@ void fabrik_t::new_month()
 
 						const int old_distributionweight = desc->get_distribution_weight();
 						const factory_desc_t* new_type = upgrade_list[distribution_weight];
-						if (!new_type->is_consumer_only() && !new_type->is_electricity_producer())
+						if ((!new_type->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0) && !new_type->is_electricity_producer())
 						{
 							welt->decrease_actual_industry_density(100 / old_distributionweight);
 						}
@@ -2941,7 +2941,7 @@ void fabrik_t::new_month()
 						update_scaled_mail_demand();
 						update_prodfactor_pax();
 						update_prodfactor_mail();
-						if (!desc->is_electricity_producer() && !desc->is_consumer_only())
+						if (!desc->is_electricity_producer() && (!desc->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0))
 						{
 							welt->increase_actual_industry_density(100 / desc->get_distribution_weight());
 						}

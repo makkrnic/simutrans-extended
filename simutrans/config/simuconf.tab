@@ -307,8 +307,10 @@ max_comfort_preference_percentage = 500
 
 ################################## Industry settings #################################
 
-# When a town reaches 2^n times of this number
-# then a consumer industry is built in that town
+# For every N level of population, there will be one consumer industry built in the
+# town. At the default value of 2,000, there will be 1 consumer industry for every
+# 2,000 inhabitants of the town. Set this to zero to disable this system and rely
+# instead on the industry density proportion system. 
 industry_increase_every = 2000
 
 # smallest distance between two adjacent factories

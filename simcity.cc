@@ -2592,6 +2592,8 @@ void stadt_t::step(uint32 delta_t)
 	// is it time for the next step?
 	next_growth_step += delta_t;
 
+	current_step_build_result = -1;
+
 	while(stadt_t::city_growth_step < next_growth_step) {
 		calc_growth();
 		step_grow_city();
@@ -3140,7 +3142,7 @@ void stadt_t::step_grow_city(bool new_town, bool map_generation)
 
 		check_bau_spezial(new_town);
 		check_bau_townhall(new_town);
-		check_bau_factory(new_town); // add industry? (not during creation)
+		check_bau_factory(new_town || map_generation); // add industry? (not during creation)
 		INT_CHECK("simcity 2241");
 	}
 }
@@ -3877,26 +3879,103 @@ void stadt_t::check_bau_townhall(bool new_town)
  */
 void stadt_t::check_bau_factory(bool new_town)
 {
-	uint32 const inc = welt->get_settings().get_industry_increase_every();
+	if (new_town)
+	{
+		// It seems silly to call this method at all if new_town == 0.
+		// The earlier behaviour just checked if new_town was false 
+		// before doing any work, so this is equivalent. This will have
+		// to be reconsidered in more detail when town growth is properly
+		// rewritten in full.
+		return;
+	}
+
+	// New algorithm, January 2020: increase_industry_every is the 
+	// city population per consumer industry in the town. 
+	// Anything more sophisticated taking into account distrubutionweight
+	// and/or visitor demand will have to wait until the full town growth
+	// rewrite, as this is not realistically possible to calibrate within
+	// the confines of the existing data structures: this is because there
+	// is no means of normalising the distributionweight, which tends to 
+	// be very high in Pak128.Britain-Ex, leading to too many industries
+	// being built in towns. 
+
+	const uint32 const increase_interval = welt->get_settings().get_industry_increase_every();
+	const uint32 population_ratio = increase_interval ? ((uint32)city_history_month[0][HIST_CITICENS] * 1000) / increase_interval : 0;
+	uint32 industry_count = get_number_of_consumer_industries();
+	const uint32 industry_ratio = industry_count * 1000;
+
+	if (current_step_build_result != 0 && population_ratio > industry_ratio || (industry_count == 0 && increase_interval > 0))
+	{
+		// If the town population exceeds the increase interval, add more industry
+		DBG_MESSAGE("stadt_t::check_bau_factory", "adding new industry at %i inhabitants.", city_history_month[0][HIST_CITICENS]);
+		// TODO: Have the industries built in the same way as multi-tile town buildings.
+		current_step_build_result = factory_builder_t::increase_industry_density(true, false, false, 2, pos);
+	}
+	// TODO: Consider whether to close down industries here where the converse is the case
+
+	// DEPRECATED: Old algorithm below.
+	/*
 	if (!new_town && inc > 0 && (uint32)bev % inc == 0)
 	{
 		uint32 div = bev / inc;
 		for (uint8 i = 0; i < 8; i++)
 		{
-			if (div == (1u<<i) /*&& welt->get_actual_industry_density() < welt->get_target_industry_density()*/)
+			if (div == (1u<<i) /*&& welt->get_actual_industry_density() < welt->get_target_industry_density()*//*)
 			{
 				// DEPRECATED:
 				// Only add an industry if there is a need for it: if the actual industry density is less than the target density.
 				// @author: jamespetts
 
 				// The industry density proportion system is now not used for consumer industries as of 19 January 2020
-				// The below code forces all town based industry increases to be consumer increases.
-
+				// The below code forces all town based industry increases to be consumer increases. 
+				
 				DBG_MESSAGE("stadt_t::check_bau_factory", "adding new industry at %i inhabitants.", get_einwohner());
 				factory_builder_t::increase_industry_density( true, false, false, 2, pos );
 			}
 		}
+	}*/
+}
+
+uint32 stadt_t::get_sum_level_of_city_industries(bool consumer_only) const
+{
+	uint32 weight = 0;
+	FOR(vector_tpl<fabrik_t*>, const& industry, city_factories)
+	{
+		if (!consumer_only || industry->get_desc()->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0)
+		{
+			weight += industry->get_desc()->get_distribution_weight();
+		}
 	}
+
+	return weight;
+}
+
+uint32 stadt_t::get_number_of_consumer_industries() const
+{
+	uint32 number = 0;
+	FOR(vector_tpl<fabrik_t*>, const& industry, city_factories)
+	{
+		if (industry->get_desc()->is_consumer_only())
+		{
+			number++;
+		}
+	}
+
+	return number;
+}
+
+uint32 stadt_t::get_visitor_demand_of_consumer_industries() const
+{
+	uint32 visitor_demand = 0;
+	FOR(vector_tpl<fabrik_t*>, const& industry, city_factories)
+	{
+		if (industry->get_desc()->is_consumer_only())
+		{
+			visitor_demand += industry->get_desc()->get_building()->get_population_and_visitor_demand_capacity();
+		}
+	}
+
+	return visitor_demand;
 }
 
 

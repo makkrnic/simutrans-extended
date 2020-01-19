@@ -477,7 +477,7 @@ fabrik_t* factory_builder_t::build_factory(koord3d* parent, const factory_desc_t
 	fab->add_to_world_list();
 
 	// Adjust the actual industry density
-	if (!info->is_electricity_producer() && !info->is_consumer_only())
+	if (!info->is_electricity_producer() && (!info->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0))
 	{
 		welt->increase_actual_industry_density(100 / info->get_distribution_weight());
 	}
@@ -1138,7 +1138,7 @@ next_ware_check:
 			const factory_desc_t *fab=get_random_consumer( no_electric==0, ALL_CLIMATES, welt->get_timeline_year_month() );
 			if(fab)
 			{
-				if(do_not_add_beyond_target_density && !fab->is_electricity_producer() && !fab->is_consumer_only())
+				if(do_not_add_beyond_target_density && !fab->is_electricity_producer() && (!fab->is_consumer_only() || welt->get_settings().get_industry_increase_every() == 0))
 				{
 					// Make sure that industries are not added beyond target density.
 					if(100 / fab->get_distribution_weight() > (welt->get_target_industry_density() - welt->get_actual_industry_density()))
