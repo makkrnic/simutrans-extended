@@ -307,9 +307,9 @@ max_comfort_preference_percentage = 500
 
 ################################## Industry settings #################################
 
-# when a city reaches 2^n times of this number
-# then a factory is extended, or a new factory chain is spawned
-#industry_increase_every = 2000
+# When a town reaches 2^n times of this number
+# then a consumer industry is built in that town
+industry_increase_every = 2000
 
 # smallest distance between two adjacent factories
 min_factory_spacing = 6
