@@ -129,7 +129,7 @@ public:
 	 * Force consumer: 0 - neutral; 1 - disallow forcing; 2 - always force consumer
 	 * @returns number of factories built
 	 */
-	static int increase_industry_density(bool tell_me, bool do_not_add_beyond_target_density = false, bool power_station_only = false, uint32 force_consumer = 0 );
+	static int increase_industry_density(bool tell_me, bool do_not_add_beyond_target_density = false, bool power_station_only = false, uint32 force_consumer = 0, koord target_town = koord::invalid );
 
 	static bool power_stations_available();
 

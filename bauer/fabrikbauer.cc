@@ -477,8 +477,12 @@ fabrik_t* factory_builder_t::build_factory(koord3d* parent, const factory_desc_t
 	fab->add_to_world_list();
 
 	// Adjust the actual industry density
-	welt->increase_actual_industry_density(100 / info->get_distribution_weight());
-	if(parent) {
+	if (!info->is_electricity_producer() && !info->is_consumer_only())
+	{
+		welt->increase_actual_industry_density(100 / info->get_distribution_weight());
+	}
+	if(parent) 
+	{
 		fab->add_lieferziel(parent->get_2d());
 	}
 
@@ -928,7 +932,7 @@ int factory_builder_t::build_chain_link(const fabrik_t* our_fab, const factory_d
  * sure that enough consumer industries get built.
  * @return: number of factories built
  */
-int factory_builder_t::increase_industry_density( bool tell_me, bool do_not_add_beyond_target_density, bool power_stations_only, uint32 force_consumer )
+int factory_builder_t::increase_industry_density( bool tell_me, bool do_not_add_beyond_target_density, bool power_stations_only, uint32 force_consumer, koord target_town )
 {
 	int nr = 0;
 
@@ -1125,10 +1129,12 @@ next_ware_check:
 	int no_electric = force_add_consumer || (promille >= target_promille) ? 1 : 0;
 	DBG_MESSAGE( "factory_builder_t::increase_industry_density()", "production of electricity/total electrical demand is %i/%i (%i o/oo)", electric_productivity, total_electric_demand, promille );
 
-	while(  no_electric<2  ) {
+	while(  no_electric<2  ) 
+	{
 		bool ignore_climates = false;
 
-		for(int retries=20;  retries>0;  retries--  ) {
+		for(int retries=20;  retries>0;  retries--  )
+		{
 			const factory_desc_t *fab=get_random_consumer( no_electric==0, ALL_CLIMATES, welt->get_timeline_year_month() );
 			if(fab) {
 				if(do_not_add_beyond_target_density && !fab->is_electricity_producer())
@@ -1140,31 +1146,48 @@ next_ware_check:
 					}
 				}
 				const bool in_city = fab->get_placement() == factory_desc_t::City;
-				if (in_city && welt->get_cities().empty()) {
+				if (in_city && welt->get_cities().empty())
+				{
 					// we cannot build this factory here
 					continue;
 				}
-				koord testpos = in_city ? pick_any_weighted(welt->get_cities())->get_pos() : koord::koord_random(welt->get_size().x, welt->get_size().y);
+				koord testpos;
+				if (target_town == koord::invalid || !in_city)
+				{
+					testpos = in_city ? pick_any_weighted(welt->get_cities())->get_pos() : koord::koord_random(welt->get_size().x, welt->get_size().y);
+				}
+				else
+				{
+					testpos = target_town;
+				}
 				koord3d pos = welt->lookup_kartenboden( testpos )->get_pos();
 				int rotation = simrand(fab->get_building()->get_all_layouts()-1, "factory_builder_t::increase_industry_density()");
-				if(!in_city) {
+				if(!in_city) 
+				{
 					// find somewhere on the map
 					pos = find_random_construction_site( koord(welt->get_size().x/2,welt->get_size().y/2), welt->get_size_max()/2, fab->get_building()->get_size(rotation),fab->get_placement()==factory_desc_t::Water,fab->get_building(),ignore_climates,10000);
 				}
-				else {
+				else 
+				{
 					// or within the city limit
-					const stadt_t *city = pick_any_weighted(welt->get_cities());
+					const stadt_t* city = target_town == koord::invalid ? pick_any_weighted(welt->get_cities()) : welt->get_city(target_town);
+					if (!city)
+					{
+						city = pick_any_weighted(welt->get_cities());
+					}
 					koord diff = city->get_rechtsunten()-city->get_linksoben();
 					pos = find_random_construction_site( city->get_center(), max(diff.x,diff.y)/2, fab->get_building()->get_size(rotation),fab->get_placement()==factory_desc_t::Water,fab->get_building(),ignore_climates, 1000);
 				}
-				if(welt->lookup(pos)) {
+				if(welt->lookup(pos))
+				{
 					// Space found...
 					nr += build_link(NULL, fab, -1 /* random prodbase */, rotation, &pos, welt->get_public_player(), 1, ignore_climates);
 					if(nr>0) {
 						fabrik_t *our_fab = fabrik_t::get_fab( pos.get_2d() );
 						reliefkarte_t::get_karte()->calc_map_size();
 						// tell the player
-						if(tell_me) {
+						if(tell_me) 
+						{
 							stadt_t *s = welt->find_nearest_city( pos.get_2d() );
 							const char *stadt_name = s ? s->get_name() : translator::translate("nowhere");
 							cbuffer_t buf;
@@ -1174,7 +1197,8 @@ next_ware_check:
 						return nr;
 					}
 				}
-				else if(  retries==1  &&  !ignore_climates  ) {
+				else if(  retries==1  &&  !ignore_climates  )
+				{
 					// from now on, we will ignore climates to avoid broken chains
 					ignore_climates = true;
 					retries = 20;

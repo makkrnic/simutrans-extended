@@ -3883,12 +3883,17 @@ void stadt_t::check_bau_factory(bool new_town)
 		uint32 div = bev / inc;
 		for (uint8 i = 0; i < 8; i++)
 		{
-			if (div == (1u<<i) && welt->get_actual_industry_density() < welt->get_target_industry_density())
+			if (div == (1u<<i) /*&& welt->get_actual_industry_density() < welt->get_target_industry_density()*/)
 			{
+				// DEPRECATED:
 				// Only add an industry if there is a need for it: if the actual industry density is less than the target density.
 				// @author: jamespetts
+
+				// The industry density proportion system is now not used for consumer industries as of 19 January 2020
+				// The below code forces all town based industry increases to be consumer increases.
+
 				DBG_MESSAGE("stadt_t::check_bau_factory", "adding new industry at %i inhabitants.", get_einwohner());
-				factory_builder_t::increase_industry_density( true, true, false, 2 );
+				factory_builder_t::increase_industry_density( true, false, false, 2, pos );
 			}
 		}
 	}

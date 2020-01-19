@@ -979,7 +979,7 @@ fabrik_t::~fabrik_t()
 			city->remove_city_factory(this);
 		}
 		
-		if (desc != NULL)
+		if (desc != NULL && !desc->is_electricity_producer() && !desc->is_consumer_only())
 		{
 			welt->decrease_actual_industry_density(100 / desc->get_distribution_weight());
 		}
@@ -1612,7 +1612,10 @@ DBG_DEBUG("fabrik_t::rdwr()","loading factory '%s'",s);
 	if(file->get_extended_version() < 9 && file->get_version() < 110006)
 	{
 		// Necessary to ensure that the industry density is correct after re-loading a game.
-		welt->increase_actual_industry_density(100 / desc->get_distribution_weight());
+		if (!desc->is_electricity_producer() && !desc->is_consumer_only())
+		{
+			welt->increase_actual_industry_density(100 / desc->get_distribution_weight());
+		}
 	}
 
 	if(  file->get_version() >= 110005  ) {
@@ -2819,7 +2822,10 @@ void fabrik_t::new_month()
 
 						const int old_distributionweight = desc->get_distribution_weight();
 						const factory_desc_t* new_type = upgrade_list[distribution_weight];
-						welt->decrease_actual_industry_density(100 / old_distributionweight);
+						if (!new_type->is_consumer_only() && !new_type->is_electricity_producer())
+						{
+							welt->decrease_actual_industry_density(100 / old_distributionweight);
+						}
 						uint32 percentage = new_type->get_field_group() ? (new_type->get_field_group()->get_max_fields() * 100) / desc->get_field_group()->get_max_fields() : 0;
 						const uint16 adjusted_number_of_fields = percentage ? (fields.get_count() * percentage) / 100 : 0;
 						delete_all_fields();
@@ -2935,7 +2941,10 @@ void fabrik_t::new_month()
 						update_scaled_mail_demand();
 						update_prodfactor_pax();
 						update_prodfactor_mail();
-						welt->increase_actual_industry_density(100 / new_type->get_distribution_weight());
+						if (!desc->is_electricity_producer() && !desc->is_consumer_only())
+						{
+							welt->increase_actual_industry_density(100 / desc->get_distribution_weight());
+						}
 						sprintf(buf, translator::translate("Industry:\n%s\nhas been upgraded\nto industry:\n%s."), translator::translate(old_name), translator::translate(new_name));
 						welt->get_message()->add_message(buf, pos.get_2d(), message_t::industry, CITY_KI, skinverwaltung_t::neujahrsymbol->get_image_id(0));
 						return;

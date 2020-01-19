@@ -1552,10 +1552,14 @@ DBG_DEBUG("karte_t::init()","built timeline");
 	FOR(vector_tpl<fabrik_t*>, factory, fab_list)
 	{
 		const factory_desc_t* factory_type = factory->get_desc();
-		if(!factory_type->is_electricity_producer())
+		if(!factory_type->is_electricity_producer() && !factory_type->is_consumer_only())
 		{
 			// Power stations are excluded from the target weight:
 			// a different system is used for them.
+
+			// Likewise, consumer only industries are excluded from
+			// the weighting system, as consumer demand is based on
+			// town growth, rather than this system. 
 			weight = factory_type->get_distribution_weight();
 			actual_industry_density += (100 / weight);
 		}
@@ -9286,10 +9290,14 @@ DBG_MESSAGE("karte_t::load()", "%d factories loaded", fab_list.get_count());
 		FOR(vector_tpl<fabrik_t*>, factory, fab_list)
 		{
 			const factory_desc_t* factory_type = factory->get_desc();
-			if(!factory_type->is_electricity_producer())
+			if(!factory_type->is_electricity_producer() && !factory_type->is_consumer_only())
 			{
 				// Power stations are excluded from the target weight:
 				// a different system is used for them.
+
+				// Likewise, consumer only industries are excluded from
+				// the weighting system, as consumer demand is based on
+				// town growth, rather than this system. 
 				weight = max(factory_type->get_distribution_weight(), 1); // To prevent divisions by zero
 				actual_industry_density += (100 / weight);
 			}
