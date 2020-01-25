@@ -37,7 +37,7 @@ else
           LIBS += -lmingw32
         endif
         ifeq ($(OSTYPE), mingw64)
-          CFLAGS  += -DPNG_STATIC -DZLIB_STATIC -static
+          CFLAGS  += -DZWRAP_USE_ZSTD=1 -DPNG_STATIC -DZLIB_STATIC -static
           LDFLAGS += -static-libgcc -static-libstdc++ -static
           LIBS += -lmingw32
         endif
@@ -72,10 +72,10 @@ endif
 ifeq ($(OSTYPE), mingw64)
   SOURCES += clipboard_w32.cc
 else
-	ifeq ($(OSTYPE),mingw32)
-	  SOURCES += clipboard_w32.cc
-	else
-	  SOURCES += clipboard_internal.cc
+ifeq ($(OSTYPE),mingw32)
+  SOURCES += clipboard_w32.cc
+else
+  SOURCES += clipboard_internal.cc
   endif
 endif
 
@@ -83,7 +83,7 @@ ifeq ($(OSTYPE),openbsd)
   CXXFLAGS +=  -std=c++11
 endif
 
-LIBS += -lbz2 -lz
+LIBS += -lbz2 -lz -lzstd
 
 CXXFLAGS +=  -std=gnu++11
 
@@ -94,18 +94,18 @@ SDL2_CONFIG    ?= sdl2-config
 ifneq ($(OPTIMISE),)
   CFLAGS += -O3
   ifeq ($(findstring $(OSTYPE), amiga),)
-	ifneq ($(findstring $(CXX), clang),)
-		CFLAGS += -minline-all-stringops
-	endif
+ifneq ($(findstring $(CXX), clang),)
+CFLAGS += -minline-all-stringops
+endif
   endif
 else
   CFLAGS += -O
 endif
 
 ifdef DEBUG
-	ifndef MSG_LEVEL
-		MSG_LEVEL = 3
-	endif
+ifndef MSG_LEVEL
+MSG_LEVEL = 3
+endif
   ifeq ($(shell expr $(DEBUG) \>= 1), 1)
     CFLAGS += -g -DDEBUG
   endif
@@ -126,8 +126,8 @@ endif
 ifneq ($(PROFILE),)
   CFLAGS  += -pg -DPROFILE
   ifdef MSG_LEVEL
-	CFLAGS += -DMSG_LEVEL=$(MSG_LEVEL)
-	endif
+CFLAGS += -DMSG_LEVEL=$(MSG_LEVEL)
+endif
   ifneq ($(PROFILE), 2)
     CFLAGS  += -fno-inline -fno-schedule-insns
   endif
@@ -137,11 +137,11 @@ endif
 ifneq ($(MULTI_THREAD),)
   ifeq ($(shell expr $(MULTI_THREAD) \>= 1), 1)
     CFLAGS += -DMULTI_THREAD
-    ifeq ($(OSTYPE),mingw32 mingw64)
+    ifeq ($(OSTYPE),mingw64)
 #use lpthreadGC2d for debug alternatively
 #		Disabled, as this does not work for cross-compiling
 #      LDFLAGS += -lpthreadGC2
-	   LDFLAGS += -static -lpthread
+   LDFLAGS += -static -lpthread
     else
       ifneq ($(OSTYPE),haiku)
         LDFLAGS += -lpthread
@@ -488,6 +488,11 @@ SOURCES += gui/components/gui_convoy_label.cc
 SOURCES += gui/replace_frame.cc
 SOURCES += dataobj/livery_scheme.cc
 SOURCES += dataobj/replace_data.cc
+SOURCES += zlibWrapper/zstd_zlibwrapper.c
+SOURCES += zlibWrapper/gzclose.c
+SOURCES += zlibWrapper/gzlib.c
+SOURCES += zlibWrapper/gzread.c
+SOURCES += zlibWrapper/gzwrite.c
 
 ifeq ($(BACKEND),allegro)
   SOURCES  += simsys_d.cc
@@ -543,11 +548,11 @@ ifeq ($(BACKEND),sdl)
     endif
   else
     SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
-    ifeq ($(OSTYPE),mingw32 mingw64)
-		SDL_LDFLAGS := $(shell $(SDL_CONFIG) --static-libs)
-	else
-	   SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
-	endif
+    ifeq ($(OSTYPE),mingw64)
+  SDL_LDFLAGS := $(shell $(SDL_CONFIG) --static-libs)
+else
+   SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
+endif
   endif
   CFLAGS += $(SDL_CFLAGS)
   LIBS   += $(SDL_LDFLAGS)
@@ -585,7 +590,7 @@ ifeq ($(BACKEND),sdl2)
     endif
   else
     SDL_CFLAGS  := $(shell $(SDL2_CONFIG) --cflags)
-    SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --libs)
+    SDL_LDFLAGS := $(shell $(SDL2_CONFIG) --static-libs)
   endif
   CFLAGS += $(SDL_CFLAGS)
   LIBS   += $(SDL_LDFLAGS)
@@ -600,11 +605,11 @@ ifeq ($(BACKEND),mixer_sdl)
     SDL_LDFLAGS := -lmingw32 -lSDLmain -lSDL
   else
     SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
-	ifeq ($(OSTYPE),mingw32 mingw64)
-		SDL_LDFLAGS := $(shell $(SDL_CONFIG) --static-libs)
-	else
-	   SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
-	endif
+  ifeq ($(OSTYPE),mingw64)
+  SDL_LDFLAGS := $(shell $(SDL_CONFIG) --static-libs)
+ else
+     SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
+  endif
 
   endif
   CFLAGS += $(SDL_CFLAGS)
@@ -638,11 +643,11 @@ ifeq ($(BACKEND),opengl)
     SDL_LDFLAGS := -lmingw32 -lSDLmain -lSDL
   else
     SDL_CFLAGS  := $(shell $(SDL_CONFIG) --cflags)
-    ifeq ($(OSTYPE),mingw32 mingw64)
-		SDL_LDFLAGS := $(shell $(SDL_CONFIG) --static-libs)
-	else
-	   SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
-	endif
+    ifeq ($(OSTYPE),mingw64)
+      SDL_LDFLAGS := $(shell $(SDL_CONFIG) --static-libs)
+  else
+     SDL_LDFLAGS := $(shell $(SDL_CONFIG) --libs)
+  endif
   endif
   CFLAGS += $(SDL_CFLAGS)
   LIBS   += $(SDL_LDFLAGS)
@@ -672,7 +677,8 @@ ifneq ($(findstring $(OSTYPE), cygwin mingw32 mingw64),)
     WINDRES ?= windres -F pe-i386
   else
     ifeq ($(OSTYPE), mingw64)
-      WINDRES ?= x86_64-w64-mingw32-windres
+#      WINDRES ?= x86_64-w64-mingw32-windres
+       WINDRES ?= windres
     endif
   endif
 endif

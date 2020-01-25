@@ -74,7 +74,6 @@ _UpgradeReport_Files*
 *.pak
 /Default
 /x64
-/zlib*
 *server*-network.sve
 # Windows image file caches
 Thumbs.db

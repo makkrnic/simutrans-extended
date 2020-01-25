@@ -696,7 +696,7 @@
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug (single threaded new)|Win32'">..\OpenTTD\shared\include;..\bzip\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug (graphical server)|Win32'">..\OpenTTD\shared\include;..\bzip\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug (non-graphical server)|Win32'">..\OpenTTD\shared\include;..\bzip\include;$(IncludePath)</IncludePath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\OpenTTD\shared\include;..\bzip\include;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Users\James E. Petts\Documents\Development\Zstd;..\OpenTTD\shared\include;..\bzip\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Optimised debug|x64'">..\OpenTTD\shared\include;..\bzip\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug (open GL)|x64'">..\..\sdl2\include;..\OpenTTD\shared\include;$(IncludePath)</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release (open GL 2)|x64'">..\..\sdl2\include;..\OpenTTD\shared\include;$(IncludePath)</IncludePath>
@@ -3403,6 +3403,11 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (open GL 2)|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="descriptor\reader\xref_reader.cc" />
+    <ClCompile Include="zlibWrapper\gzclose.c" />
+    <ClCompile Include="zlibWrapper\gzlib.c" />
+    <ClCompile Include="zlibWrapper\gzread.c" />
+    <ClCompile Include="zlibWrapper\gzwrite.c" />
+    <ClCompile Include="zlibWrapper\zstd_zlibwrapper.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="dataobj\environment.h" />
@@ -3826,6 +3831,22 @@
     <ClInclude Include="descriptor\xref_desc.h" />
     <ClInclude Include="descriptor\reader\xref_reader.h" />
     <ClInclude Include="descriptor\writer\xref_writer.h" />
+    <ClInclude Include="zlibWrapper\bitstream.h" />
+    <ClInclude Include="zlibWrapper\compiler.h" />
+    <ClInclude Include="zlibWrapper\cpu.h" />
+    <ClInclude Include="zlibWrapper\debug.h" />
+    <ClInclude Include="zlibWrapper\error_private.h" />
+    <ClInclude Include="zlibWrapper\fse.h" />
+    <ClInclude Include="zlibWrapper\gzcompatibility.h" />
+    <ClInclude Include="zlibWrapper\gzguts.h" />
+    <ClInclude Include="zlibWrapper\huf.h" />
+    <ClInclude Include="zlibWrapper\mem.h" />
+    <ClInclude Include="zlibWrapper\pool.h" />
+    <ClInclude Include="zlibWrapper\threading.h" />
+    <ClInclude Include="zlibWrapper\xxhash.h" />
+    <ClInclude Include="zlibWrapper\zstd_errors.h" />
+    <ClInclude Include="zlibWrapper\zstd_internal.h" />
+    <ClInclude Include="zlibWrapper\zstd_zlibwrapper.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Simutrans\simu-server.log" />

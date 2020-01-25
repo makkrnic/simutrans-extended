@@ -16,7 +16,8 @@
 
 #include "../utils/simstring.h"
 
-#include <zlib.h>
+//#include <zlib.h>
+#include "../zlibWrapper/zstd_zlibwrapper.h"
 #include <bzlib.h>
 
 #define INVALID_RDWR_ID (-1)
@@ -415,7 +416,8 @@ bool loadsave_t::wr_open(const char *filename_utf8, mode_t m, const char *pak_ex
 	const char *filename = dr_utf8_to_system_filename( filename_utf8, true );
 	if(  is_zipped()  ) {
 		// using zlib
-		fd->gzfp = gzopen(filename, "wb");
+		fd->gzfp = gzopen(filename, "wb1");
+		gzbuffer(fd->gzfp, 65536);
 	}
 	else if(  mode==binary  ) {
 		// no compression
@@ -428,7 +430,7 @@ bool loadsave_t::wr_open(const char *filename_utf8, mode_t m, const char *pak_ex
 		fd->bse = BZ_OK+1;
 		fd->bzfp = NULL;
 		if(  fd->fp  ) {
-			fd->bzfp = BZ2_bzWriteOpen( &fd->bse, fd->fp, 9, 0, 30 /* default is 30 */ );
+			fd->bzfp = BZ2_bzWriteOpen( &fd->bse, fd->fp, 1, 0, 30 /* default is 30 */ );
 			if(  fd->bse!=BZ_OK  ) {
 				return false;
 			}
@@ -472,7 +474,7 @@ bool loadsave_t::wr_open(const char *filename_utf8, mode_t m, const char *pak_ex
 
 	loadsave_t::combined_version combined_version = int_version(savegame_version, NULL, NULL);
 	version = combined_version.version;
-	
+
 	const char* pakset_string = this->pak_extension;
 
 	if(  !is_xml()  ) {

@@ -9,7 +9,8 @@
 #include "image_reader.h"
 #include "../obj_node_info.h"
 
-#include <zlib.h>
+//#include <zlib.h>
+#include "../../zlibWrapper/zstd_zlibwrapper.h"
 #include "../../tpl/inthashtable_tpl.h"
 
 // if without graphics backend, do not copy any pixel
