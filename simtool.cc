@@ -1680,8 +1680,8 @@ const char* tool_transformer_t::get_tooltip(const player_t *) const
 	settings_t const& s = welt->get_settings();
 	sprintf(toolstr, "%s, %ld$ (%ld$)",
 		translator::translate("Build drain"),
-		(long)(s.cst_transformer/-100l),
-		(long)(welt->calc_adjusted_monthly_figure(s.cst_maintain_transformer))/-100l );
+		(sint32)(s.cst_transformer/-100l),
+		(sint32)(welt->calc_adjusted_monthly_figure(s.cst_maintain_transformer))/-100l );
 	return toolstr;
 }
 

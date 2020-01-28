@@ -5569,12 +5569,12 @@ vector_tpl<koord>* stadt_t::random_place(const karte_t* wl, const vector_tpl<sin
 	slist_tpl<koord>* list = welt->find_squares( 5, 5, (climate_bits)cl, old_x, old_y);
 	DBG_DEBUG("karte_t::init()", "found %i places", list->get_count());
 	unsigned int weight_max;
-	// unsigned long here -- from weighted_vector_tpl.h(weight field type)
-	if ( list->get_count() == 0 || (std::numeric_limits<unsigned long>::max)()/ list->get_count() > 65535) {
+	// uint32 here -- from weighted_vector_tpl.h(weight field type)
+	if ( list->get_count() == 0 || (std::numeric_limits<uint32>::max)()/ list->get_count() > 65535) {
 		weight_max = 65535;
 	}
 	else {
-		weight_max = (std::numeric_limits<unsigned long>::max)()/list->get_count();
+		weight_max = (std::numeric_limits<uint32>::max)()/list->get_count();
 	}
 
 	koord wl_size = welt->get_size();

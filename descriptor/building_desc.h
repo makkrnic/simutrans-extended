@@ -321,7 +321,7 @@ public:
 	uint8 get_distribution_weight() const { return distribution_weight; }
 
 	const building_tile_desc_t *get_tile(uint8 index) const {
-		assert(0<=index  &&  index < layouts * size.x * size.y);
+		assert(index < layouts * layouts * size.x * size.y);
 		return get_child<building_tile_desc_t>(index + 2);
 	}
 

@@ -3310,7 +3310,7 @@ void haltestelle_t::get_short_freight_info(cbuffer_t & buf) const
 		if(gibt_ab(wtyp)) {
 
 			// ignore goods with sum=zero
-			const int summe=get_ware_summe(wtyp);
+			const uint32 summe=get_ware_summe(wtyp);
 			if(summe>0) {
 
 				if(got_one) {
