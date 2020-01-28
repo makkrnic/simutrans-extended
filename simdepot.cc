@@ -212,7 +212,7 @@ void depot_t::convoi_arrived(convoihandle_t acnv, bool fpl_adjust)
 	convois.append(acnv);
 	depot_frame_t *depot_frame = dynamic_cast<depot_frame_t *>(win_get_magic( (ptrdiff_t)this ));
 	if(depot_frame) {
-		depot_frame->action_triggered(NULL,(sint32)0);
+		depot_frame->action_triggered(NULL,(long int)0);
 	}
 	acnv->set_home_depot( get_pos() );
 	DBG_MESSAGE("depot_t::convoi_arrived()", "convoi %d, %p entered depot", acnv.get_id(), acnv.get_rep());
