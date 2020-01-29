@@ -243,7 +243,7 @@ public:
 	 */
 	void check_update_underground()
 	{
-		if (ist_karten_boden()  && ist_tunnel()) {
+		if (ist_karten_boden()  && (ist_tunnel()  ||  ist_bruecke())) {
 			calc_image();
 		}
 		else {
