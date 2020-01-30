@@ -9598,13 +9598,13 @@ void karte_t::prepare_tiles(rect_t const &new_area, rect_t const &old_area) {
 		return;
 	}
 
-	size_t const prepare_rects_capacity - rect_t::MAX_FRAGMENT_DIFFERENCE_COUNT;
+	size_t const prepare_rects_capacity = rect_t::MAX_FRAGMENT_DIFFERENCE_COUNT;
 	rect_t prepare_rects[prepare_rects_capacity];
 	size_t const prepare_rects_length = new_area.fragment_difference(old_area, prepare_rects, prepare_rects_capacity);
 
 	// additional tiles to preapre for correct hiding behaviour
-	sint16 const prefix_tiles_x = min(grund_t::MAXIMUM_HIDE_TEXT_DISTANCE, new_area.origin.x);
-	sint16 const prefix_tiles_y = min(grund_t::MAXIMUM_HIDE_TEXT_DISTANCE, new_area.origin.y);
+	sint16 const prefix_tiles_x = min(grund_t::MAXIMUM_HIDE_TEST_DISTANCE, new_area.origin.x);
+	sint16 const prefix_tiles_y = min(grund_t::MAXIMUM_HIDE_TEST_DISTANCE, new_area.origin.y);
 
 	for(size_t rect_index = 0; rect_index < prepare_rects_length ; rect_index++) {
 		rect_t const & prepare_rect= prepare_rects[rect_index];

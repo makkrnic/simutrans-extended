@@ -1157,7 +1157,7 @@ public:
 	 * New area is the area that will be prepared. Old area is the area that was
 	 * already prepared. Only the difference between the two rects is prepared.
 	 */
-	void preapre_tiles(rect_t const& new_area, rect_t const& old_area);
+	void prepare_tiles(rect_t const& new_area, rect_t const& old_area);
 	
 	/**
 	 * @returns true if world gets destroyed
