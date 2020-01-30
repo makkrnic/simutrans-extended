@@ -279,7 +279,7 @@ bool gui_scrolled_list_t::infowin_event(const event_t *ev)
 		new_ev.ev_class = EVENT_KEYBOARD;
 		new_ev.ev_code = 0;
 		new_ev.button_state = 0;
-		if(  new_selection >= 0  ||  !item_list[new_selection]->infowin_event( &new_ev )  ) {
+		if (new_selection >= 0 || !item_list[new_selection]->infowin_event(&new_ev)) {
 			call_listeners((long)new_selection);
 		}
 		return true;
