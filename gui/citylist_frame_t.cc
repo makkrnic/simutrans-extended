@@ -255,12 +255,12 @@ void citylist_frame_t::draw(scr_coord pos, scr_size size)
 {
 	welt->update_history();
 
-	if(  world()->get_cities().get_count() != old_cities  ) {
+	if(  world()->get_staedte().get_count() != old_cities  ) {
 		scrolly.clear_elements();
-		FOR(const weighted_vector_tpl<stadt_t *>,city,world()->get_cities()) {
+		FOR(const weighted_vector_tpl<stadt_t *>,city,world()->get_staedte()) {
 			scrolly.append_element( new citylist_stats_t(city) );
 		}
-		old_cities = world()->get_cities().get_count();
+		old_cities = world()->get_staedte().get_count();
 	}
 
 	gui_frame_t::draw(pos,size);

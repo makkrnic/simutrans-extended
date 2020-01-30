@@ -53,24 +53,23 @@ scr_coord_val citylist_stats_t::draw( scr_coord pos, scr_coord_val width, bool s
 	display_proportional_clip( pos.x+D_H_SPACE*2 + gui_theme_t::gui_pos_button_size.w, pos.y+(h-LINESPACE)/2, buf, ALIGN_LEFT, SYSCOL_TEXT, true);
 
 	// goto button
-	bool info_open = win_get_magic( (ptrdiff_t)city );
 	scr_rect pos_xywh( scr_coord(pos.x+D_H_SPACE, pos.y+(h-gui_theme_t::gui_pos_button_size.h)/2), gui_theme_t::gui_pos_button_size );
-	if(  selected  ||  mouse_over  ||  info_open  ) {
+	if(  selected  ||  mouse_over  ) {
 		// still on center?
 		if(  grund_t *gr = world()->lookup_kartenboden( city->get_center() )  ) {
 			selected = world()->get_viewport()->is_on_center( gr->get_pos() );
 		}
 		if(  mouse_over  ) {
 			// still+pressed? (release will be extra event)
-			scr_coord_val mx = get_mouse_x(), my = get_mouse_y();
+			scr_coord_val mx = get_maus_x(), my = get_maus_y();
 			mouse_over = mx>=pos.x  &&  mx<pos.x+width  &&  my>=pos.y  &&  my<pos.y+h;
 			selected |= mouse_over;
 		}
 	}
 	display_img_aligned( gui_theme_t::pos_button_img[ selected ], pos_xywh, ALIGN_CENTER_V | ALIGN_CENTER_H, true );
 
-	if(  info_open  ) {
-		display_blend_wh( pos.x, pos.y, width, h, COL_BLACK, 25 );
+	if(  win_get_magic( (ptrdiff_t)city )  ) {
+		display_blend_wh( pos.x, pos.x, width, h, COL_BLACK, 25 );
 	}
 	return true;
 }
@@ -84,7 +83,7 @@ bool citylist_stats_t::infowin_event(const event_t *ev)
 		// find out, if in pos box
 		scr_rect pos_xywh( scr_coord(D_H_SPACE, (h-gui_theme_t::gui_pos_button_size.h)/2), gui_theme_t::gui_pos_button_size );
 		bool pos_box_hit = pos_xywh.contains( scr_coord(ev->mx,ev->my) );
-		if(  (IS_LEFTRELEASE(ev)  &&  pos_box_hit)  ||  IS_RIGHTRELEASE(ev)  ) {
+		if(  IS_LEFTRELEASE(ev)  &&  pos_box_hit  ||  IS_RIGHTRELEASE(ev)  ) {
 			if(  grund_t *gr = world()->lookup_kartenboden( city->get_center() )  ) {
 				world()->get_viewport()->change_world_position( gr->get_pos() );
 			}
@@ -112,14 +111,12 @@ bool citylist_stats_t::compare( gui_scrolled_list_t::scrollitem_t *aa, gui_scrol
 	int sort_mode = citylist_stats_t::sort_mode & 0x1F;
 
 	// if there is a mixed list, then this will lead to crashes!
-	citylist_stats_t *a = dynamic_cast<citylist_stats_t*>(aa);
-	citylist_stats_t *b = dynamic_cast<citylist_stats_t*>(bb);
-	// good luck with mixed lists
-	assert(a != NULL && b != NULL);
+	citylist_stats_t *a = (citylist_stats_t *)aa;
+	citylist_stats_t *b = (citylist_stats_t *)bb;
 	if(  reverse  ) {
-		citylist_stats_t *temp = a;
+		citylist_stats_t *temp =a;
 		a = b;
-		b = temp;
+		b =temp;
 	}
 
 	if(  sort_mode != SORT_BY_NAME  ) {
@@ -127,9 +124,9 @@ bool citylist_stats_t::compare( gui_scrolled_list_t::scrollitem_t *aa, gui_scrol
 			case SORT_BY_NAME:	// default
 				break;
 			case SORT_BY_SIZE:
-				return a->city->get_einwohner(),b->city->get_einwohner();
+				return (a->city->get_einwohner(),b->city->get_einwohner())<0;
 			case SORT_BY_GROWTH:
-				return a->city->get_wachstum(),b->city->get_wachstum();
+				return (a->city->get_wachstum(),b->city->get_wachstum())<0;
 			default: break;
 		}
 		// default sorting ...
@@ -161,7 +158,7 @@ bool citylist_stats_t::compare( gui_scrolled_list_t::scrollitem_t *aa, gui_scrol
 }
 
 
-bool citylist_stats_t::sort( vector_tpl<scrollitem_t *>&v, int offset, void * ) const
+bool citylist_stats_t::sort( vector_tpl<scrollitem_t *>&v, int offset, void * )
 {
 	vector_tpl<scrollitem_t *>::iterator start = v.begin();
 	while(  offset-->0  ) {
