@@ -3248,11 +3248,10 @@ void fabrik_t::info_prod(cbuffer_t& buf) const
 		for (uint32 index = 0; index < output.get_count(); index++) {
 			const goods_desc_t * type = output[index].get_typ();
 			const sint64 pfactor = (sint64)desc->get_product(index)->get_factor();
-			// negative values can happen, map them to zero
-			uint32 scaled_menge = ( max(FAB_DISPLAY_UNIT_HALF + (sint64)output[index].menge * pfactor, 0) ) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS);
+
 			buf.printf( "\n - %s %u/%u %s",
 				translator::translate(type->get_name()),
-				scaled_menge,
+				(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)output[index].menge * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
 				(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)output[index].max * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
 				translator::translate(type->get_mass())
 			);
@@ -3287,7 +3286,7 @@ void fabrik_t::info_prod(cbuffer_t& buf) const
 			if(  max_intransit_percentage  ) {
 				buf.printf("\n - %s %i/%i(%i)/%u %s, %u%%",
 					translator::translate(input[index].get_typ()->get_name()),
-									 scaled_menge,
+					(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)input[index].menge * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
 					input[index].get_in_transit(),
 					(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)input[index].max_transit * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
 					(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)input[index].max * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
@@ -3298,7 +3297,7 @@ void fabrik_t::info_prod(cbuffer_t& buf) const
 			else {
 				buf.printf("\n - %s %i/%i/%u %s, %u%%",
 					translator::translate(input[index].get_typ()->get_name()),
-					scaled_menge,
+					(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)input[index].menge * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
 					input[index].get_in_transit(),
 					(uint32)((FAB_DISPLAY_UNIT_HALF + (sint64)input[index].max * pfactor) >> (fabrik_t::precision_bits + DEFAULT_PRODUCTION_FACTOR_BITS)),
 					translator::translate(input[index].get_typ()->get_mass()),
