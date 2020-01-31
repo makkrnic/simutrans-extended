@@ -2604,22 +2604,22 @@ uint8 tool_build_way_t::is_valid_pos( player_t *player, const koord3d &pos, cons
 	uint8 positive_return = 2; 
 	if(  gr  &&  slope_t::is_way(gr->get_weg_hang())  )
 	{
-		// Check for the runway exclusion zone.
-		karte_t::runway_info ri = welt->check_nearby_runways(gr->get_pos().get_2d());
-		if (ri.pos != koord::invalid)
+		// Check for the runway exclusion zone (unless we are underground)
+		const uint8 height = welt->lookup_hgt(pos.get_2d());
+		if (height <= pos.z)
 		{
-			// There is a nearby runway. Only build if we are a runway in the same direction connecting to it,
-			// or a perpendicular taxiway.
+			karte_t::runway_info ri = welt->check_nearby_runways(gr->get_pos().get_2d());
+			if (ri.pos != koord::invalid)
+			{
+				// There is a nearby runway. Only build if we are a runway in the same direction connecting to it,
+				// or a perpendicular taxiway.
 
-			if (desc->get_waytype() != air_wt)
-			{
-				error = "This cannot be built next to a runway.";
-				return 0;
-			}
-			else
-			{
+				if (desc->get_waytype() != air_wt)
+				{
+					error = "This cannot be built next to a runway.";
+					return 0;
+				}
 				// We cannot detect the direciton here: this will be done elsewhere.
-				positive_return = 2;
 			}
 		}
 
@@ -4137,7 +4137,8 @@ const char *tool_build_station_t::tool_station_building_aux(player_t *player, bo
 	DBG_MESSAGE("tool_station_building_aux()", "building post office/station building on square %d,%d", k.x, k.y);
 
 	karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d());
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -4414,11 +4415,11 @@ const char *tool_build_station_t::tool_station_dock_aux(player_t *player, koord3
 	const koord& k = pos.get_2d();
 
 	karte_t::runway_info ri = welt->check_nearby_runways(k);
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
-
 
 	grund_t *gr = welt->lookup_kartenboden(k);
 	if (gr->get_hoehe()!= pos.z) {
@@ -4664,7 +4665,8 @@ const char *tool_build_station_t::tool_station_flat_dock_aux(player_t *player, k
 	koord k = pos.get_2d();
 
 	karte_t::runway_info ri = welt->check_nearby_runways(k);
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -4925,7 +4927,9 @@ const char *tool_build_station_t::tool_station_aux(player_t *player, koord3d pos
 	const koord& k = pos.get_2d();
 
 	karte_t::runway_info ri = welt->check_nearby_runways(k);
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -5470,7 +5474,8 @@ const char *tool_build_station_t::check_pos( player_t*,  koord3d pos )
 	if(  grund_t *gr = welt->lookup( pos )  ) 
 	{
 		karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d());
-		if (ri.pos != koord::invalid)
+		const uint8 height = welt->lookup_hgt(pos.get_2d());
+		if (pos.z >= height && ri.pos != koord::invalid)
 		{
 			return "This cannot be built next to a runway.";
 		}
@@ -6303,7 +6308,8 @@ const char* tool_signalbox_t::tool_signalbox_aux(player_t* player, koord3d pos, 
 {
 
 	karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d());
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid && desc->get_allow_underground() != 1)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -6546,8 +6552,8 @@ const char *tool_build_depot_t::tool_depot_aux(player_t *player, koord3d pos, co
 		return NOTICE_INSUFFICIENT_FUNDS;
 	}
 
-	karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d());
-	if (ri.pos != koord::invalid)
+	karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d()); const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -6747,7 +6753,8 @@ const char *tool_build_house_t::work( player_t *player, koord3d pos )
 	}
 
 	karte_t::runway_info ri = welt->check_nearby_runways(k);
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -6865,7 +6872,8 @@ const char *tool_build_land_chain_t::work( player_t *player, koord3d pos )
 	}
 
 	karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d());
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
@@ -7211,7 +7219,8 @@ DBG_MESSAGE("tool_headquarter()", "building headquarters at (%d,%d)", pos.x, pos
 	}
 
 	karte_t::runway_info ri = welt->check_nearby_runways(pos.get_2d());
-	if (ri.pos != koord::invalid)
+	const uint8 height = welt->lookup_hgt(pos.get_2d());
+	if (pos.z >= height && ri.pos != koord::invalid)
 	{
 		return "This cannot be built next to a runway.";
 	}
