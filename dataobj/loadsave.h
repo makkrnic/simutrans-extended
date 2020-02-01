@@ -34,7 +34,8 @@ struct file_descriptors_t;
 
 class loadsave_t {
 public:
-	enum mode_t { text = 1, xml = 2, binary = 0, zipped = 4, xml_zipped = 6, bzip2 = 8, xml_bzip2 = 10 };
+	enum mode_t { text = 1, xml = 2, binary = 0, zipped = 4, xml_zipped = 6, bzip2 = 8, xml_bzip2 = 10, zstd = 16, xml_zstd = 18
+	};
 
 private:
 	int mode;
@@ -107,6 +108,7 @@ public:
 	bool is_saving() const { return saving; }
 	bool is_zipped() const { return mode&zipped; }
 	bool is_bzip2() const { return mode&bzip2; }
+	bool is_zstd() const { return mode & zstd; }
 	bool is_xml() const { return mode&xml; }
 	uint32 get_version() const { return version; }
 	uint32 get_extended_version() const { return extended_version; }

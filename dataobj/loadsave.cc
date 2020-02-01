@@ -16,8 +16,11 @@
 
 #include "../utils/simstring.h"
 
+#include <zstd.h>
 #include <zlib.h>
 #include <bzlib.h>
+
+#define USE_ZSTD
 
 #define INVALID_RDWR_ID (-1)
 
@@ -184,7 +187,16 @@ struct file_descriptors_t {
 	gzFile gzfp;
 	BZFILE *bzfp;
 	int bse;
-	file_descriptors_t() : fp(NULL), gzfp(NULL), bzfp(NULL), bse(BZ_OK+1) {}
+#ifdef USE_ZSTD
+	ZSTD_inBuffer zin;
+	ZSTD_outBuffer zout;
+	void* zbuff;
+	ZSTD_CCtx * cctx;
+	ZSTD_DCtx * dctx;
+	file_descriptors_t() : fp(NULL), gzfp(NULL), bzfp(NULL), bse(BZ_OK + 1), zbuff(NULL), cctx(NULL), dctx(NULL) {}
+#else
+		file_descriptors_t() : fp(NULL), gzfp(NULL), bzfp(NULL), bse(BZ_OK + 1) {}
+#endif
 };
 
 
@@ -216,6 +228,19 @@ void loadsave_t::set_buffered(bool enable)
 			buf_pos[0] = buf_pos[1] = 0;
 			buf_len[0] = buf_len[1] = 0;
 			ls_buf[0] = new char[LS_BUF_SIZE];
+#ifdef USE_ZSTD
+			if (is_zstd()) {
+				if (saving) {
+					fd->zout = { fd->zbuff, LS_BUF_SIZE, 0 };
+					fd->zin = { NULL, 0, 0 };
+				}
+				else {
+					fd->zout = { NULL, 0, 0 };
+					fd->zin = { fd->zbuff, LS_BUF_SIZE, 0 };
+				}
+			}
+#endif
+
 #ifdef MULTI_THREAD
 			ls_buf[1] = new char[LS_BUF_SIZE]; // second buffer only when multithreaded
 
@@ -264,62 +289,94 @@ void loadsave_t::set_buffered(bool enable)
 }
 
 
-bool loadsave_t::rd_open(const char *filename_utf8 )
+bool loadsave_t::rd_open(const char* filename_utf8)
 {
 	close();
 
-	const char *filename = dr_utf8_to_system_filename( filename_utf8 );
+	const char* filename = dr_utf8_to_system_filename(filename_utf8);
 	version = 0;
-	mode = zipped;
+	mode = binary;
+	saving = false;
 	extended_version = 0;
 	extended_revision = 0;
-	fd->fp = fopen( filename, "rb");
-	if(  fd->fp==NULL  ) {
+	fd->fp = fopen(filename, "rb");
+	if (fd->fp == NULL) {
 		// most likely not existing
 		return false;
 	}
 	// now check for BZ2 format
 	char buf[512];
-	if(  fread( buf, 1, 512, fd->fp )==512  ) {
-		if(  buf[0]=='B'  &&  buf[1]=='Z'  ) {
+	if (fread(buf, 1, 2, fd->fp) == 2) {
+		if (buf[0] == 'B' && buf[1] == 'Z') {
 			mode = bzip2;
 		}
-		fseek(fd->fp,0,SEEK_SET);
+		if (buf[0] == 'Z' && buf[1] == 'D') {
+			mode = zstd;
+		}
+
 	}
 
-	if(  mode==bzip2  ) {
-		fd->bse = BZ_OK+1;
+	if (mode == bzip2) {
+		fseek(fd->fp, 0, SEEK_SET);
+		fd->bse = BZ_OK + 1;
 		fd->bzfp = NULL;
-		fd->bzfp = BZ2_bzReadOpen( &fd->bse, fd->fp, 0, 0, NULL, 0 );
-		bool ok = false;
-		if(  fd->bse==BZ_OK  ) {
-			// else: use zlib
+		fd->bzfp = BZ2_bzReadOpen(&fd->bse, fd->fp, 0, 0, NULL, 0);
+		if (fd->bse != BZ_OK)
+		{
 			MEMZERO(buf);
-			if(  BZ2_bzRead( &fd->bse, fd->bzfp, buf, sizeof(SAVEGAME_PREFIX) )==sizeof(SAVEGAME_PREFIX)  &&  fd->bse==BZ_OK  ) {
-				// get the rest of the string
-				for (int i = sizeof(SAVEGAME_PREFIX); (uint8)buf[i - 1] >= 32 && i<511; i++) {
-					buf[i] = lsgetc();
-				}
-				ok = fd->bse==BZ_OK;
-			}
-		}
-		// BZ-Header but wrong data ...
-		if(  !ok  ) {
+			//last_error = FILE_ERROR_BZ_CORRUPT;
 			close();
 			return false;
 		}
 	}
+	if (mode == zstd) {
+#ifdef USE_ZSTD
+		bool ok = false;
+		fd->zbuff = xmalloc(LS_BUF_SIZE);
+		
+		fd->dctx = ZSTD_createDCtx();
+		if (fd->dctx == NULL) {
+			// zstd could not init
+			bool ok = false;
+			//last_error = FILE_ERROR_BZ_CORRUPT;
 
-	if(  mode!=bzip2  ) {
+			close();
+			return false;
+		}
+		set_buffered(true);
+		fd->zin.size = 0;
+#else
+			dbg->fatal("loadsave_t::rd_open", "Compiled without zstd support!");
+#endif
+	}
+
+	if (!is_bzip2() && !is_zstd()) {
 		fclose(fd->fp);
+		mode = zipped;
 		// and now with zlib ...
 		fd->gzfp = gzopen(filename, "rb");
 		if(fd->gzfp==NULL) {
 			return false;
 		}
-		gzgets(fd->gzfp, buf, 512);
 	}
-	saving = false;
+
+	if (read(buf, sizeof(SAVEGAME_PREFIX)) == sizeof(SAVEGAME_PREFIX)) {
+		// get the rest of the string
+		for (int i = sizeof(SAVEGAME_PREFIX); i < 79; ) {
+			int ch = lsgetc();
+			if (ch < 32) {
+				break;
+			}
+			buf[i++] = (char)ch;
+			buf[i] = 0;
+		}
+	}
+	else {
+		// could not even read start of file
+		//last_error = FILE_ERROR_BZ_CORRUPT;
+		close();
+		return false;
+	}
 
 	if (strstart(buf, SAVEGAME_PREFIX)) {
 		combined_version versions = int_version(buf + sizeof(SAVEGAME_PREFIX) - 1, &mode, pak_extension);
@@ -421,6 +478,31 @@ bool loadsave_t::wr_open(const char *filename_utf8, mode_t m, const char *pak_ex
 		// no compression
 		fd->fp = fopen(filename, "wb");
 	}
+	else if (is_zstd()) {
+#ifdef USE_ZSTD
+		fd->cctx = ZSTD_createCCtx();
+		if (fd->cctx == NULL) {
+			// zstd could not init
+			bool ok = false;
+			//last_error = FILE_ERROR_BZ_CORRUPT;
+			close();
+			return false;
+		}
+		// in principe both below could fail ...
+		ZSTD_CCtx_setParameter(fd->cctx, ZSTD_c_compressionLevel, 3);
+		ZSTD_CCtx_setParameter(fd->cctx, ZSTD_c_checksumFlag, 1);
+		// XML or bzip ...
+		fd->fp = fopen(filename_utf8, "wb");
+		//fd->fp = dr_fopen(filename_utf8, "wb");
+		fd->zbuff = xmalloc(LS_BUF_SIZE);
+		// the additional magic for zstd
+		fwrite("ZD", 1, 2, fd->fp);
+		set_buffered(true);
+#else
+		dbg->fatal("loadsave_t::rd_open", "Compiled without zstd support!");
+#endif
+
+	}
 	else if(  is_bzip2()  ) {
 		// XML or bzip ...
 		fd->fp = fopen(filename, "wb");
@@ -444,7 +526,6 @@ bool loadsave_t::wr_open(const char *filename_utf8, mode_t m, const char *pak_ex
 	if(  is_zipped()  ?  fd->gzfp == NULL  :  fd->fp == NULL  ) {
 		return false;
 	}
-	saving = true;
 
 	// get the right extension
 	const char *start = pak_extension;
@@ -523,6 +604,28 @@ const char *loadsave_t::close()
 		const char *end = "\n</Simutrans>\n";
 		write( end, strlen(end) );
 	}
+#ifdef USE_ZSTD
+	if (is_zstd() && fd->fp) {
+		if (saving) {
+			// write zero length dummy to indicate end of data
+			fd->zin = { "", 0, 0 };
+			fd->zout = { fd->zbuff, LS_BUF_SIZE, 0 };
+			size_t ret;
+			do {
+				fd->zout.pos = 0;
+				ret = ZSTD_compressStream2(fd->cctx, &(fd->zout), &(fd->zin), ZSTD_e_end);
+				fwrite(fd->zout.dst, 1, fd->zout.pos, fd->fp);
+			} while (ret > 0);
+				ZSTD_freeCCtx(fd->cctx);
+				mode = 0; // let default handle the closing errors ...
+		}
+		else {
+			ZSTD_freeDCtx(fd->dctx);
+			mode = zipped; // let zlib handle the closing errors ...
+		}
+		free(fd->zbuff);
+	}
+#endif
 	if(  is_zipped()  &&  fd->gzfp) {
 		int err_no;
 		const char *err_str = gzerror( fd->gzfp, &err_no );
@@ -568,13 +671,13 @@ const char *loadsave_t::close()
  */
 bool loadsave_t::is_eof()
 {
-	if(  is_bzip2()  ) {
-		if(  buffered  ) {
+	if (is_bzip2()) {
+		if (buffered) {
 			bool r;
 #ifdef MULTI_THREAD
 			pthread_mutex_lock(&loadsave_mutex);
 #endif
-			r = buf_pos[0]>=buf_len[0]  &&  buf_pos[1]>=buf_len[1]  &&  fd->bse!=BZ_OK;
+			r = buf_pos[0] >= buf_len[0] && buf_pos[1] >= buf_len[1] && fd->bse != BZ_OK;
 #ifdef MULTI_THREAD
 			pthread_mutex_unlock(&loadsave_mutex);
 #endif
@@ -582,7 +685,7 @@ bool loadsave_t::is_eof()
 		}
 		else {
 			// any error is EOF ...
-			return fd->bse!=BZ_OK;
+			return fd->bse != BZ_OK;
 		}
 	}
 	else {
@@ -681,6 +784,22 @@ void loadsave_t::flush_buffer(int buf_num)
 		BZ2_bzWrite( &bse, fd->bzfp, ls_buf[buf_num], buf_pos[buf_num]);
 		assert(bse==BZ_OK);
 	}
+	else if (is_zstd()) {
+#ifdef USE_ZSTD
+			size_t ret;
+		// first write, whatever remained in buffer
+		gzwrite(fd->gzfp, fd->zout.dst, fd->zout.pos);
+		// then compress the next data
+		fd->zin = { ls_buf[buf_num], buf_pos[buf_num], 0 };
+		while (fd->zin.pos < fd->zin.size) {
+			fd->zout.pos = 0;
+			ret = ZSTD_compressStream2(fd->cctx, &(fd->zout), &(fd->zin), ZSTD_e_continue);
+			fwrite(fd->zout.dst, 1, fd->zout.pos, fd->fp);
+		}
+#else
+			dbg->fatal("loadsave_t::flush_buffer", "Should never happen!");
+#endif
+	}
 	else {
 		fwrite(ls_buf[buf_num], 1, buf_pos[buf_num], fd->fp);
 	}
@@ -761,10 +880,10 @@ int loadsave_t::fill_buffer(int buf_num)
 	int r;
 	int bse = fd->bse;
 
-	if(  is_bzip2()  ) {
-		if(  bse==BZ_OK  ) {
-			r = BZ2_bzRead( &bse, fd->bzfp, ls_buf[buf_num], LS_BUF_SIZE);
-			if (  bse != BZ_OK  &&  bse != BZ_STREAM_END  ) {
+	if (is_bzip2()) {
+		if (bse == BZ_OK) {
+			r = BZ2_bzRead(&bse, fd->bzfp, ls_buf[buf_num], LS_BUF_SIZE);
+			if (bse != BZ_OK && bse != BZ_STREAM_END) {
 				r = -1; // an error occurred
 			}
 		}
@@ -772,6 +891,26 @@ int loadsave_t::fill_buffer(int buf_num)
 			assert(bse == BZ_STREAM_END);
 			r = 0;
 		}
+	}
+	else if (is_zstd()) {
+		fd->zout = { ls_buf[buf_num], LS_BUF_SIZE, 0 };
+		do {
+				// first decompress from remaining input buffer
+				while (fd->zin.pos < fd->zin.size && fd->zout.pos < fd->zout.size) {
+				size_t ret = ZSTD_decompressStream(fd->dctx, &fd->zout, &fd->zin);
+				if (ret == 0) {
+					fd->zout.size = fd->zout.pos;
+				}
+			}
+				// not enough data to fill buffer => read more ...
+				if (fd->zout.pos < fd->zout.size) {
+				r = fread((void*)(fd->zin.src), 1, LS_BUF_SIZE, fd->fp);
+				fd->zin.pos = 0;
+				fd->zin.size = r;
+			}
+		}
+		while (fd->zin.pos < fd->zin.size && fd->zout.pos < fd->zout.size);
+		r = fd->zout.pos; // number of bytes decompressed
 	}
 	else {
 		r = gzread(fd->gzfp, ls_buf[buf_num], LS_BUF_SIZE);
