@@ -27,6 +27,7 @@
 //#undef MULTI_THREAD
 
 // buffer size for read/write - bzip2 gains up to 8M for non-threaded, 1M for threaded. binary, zipped ok with 256K or smaller.
+// zstd need their own buffer size ..
 #define LS_BUF_SIZE (1024*1024)
 
 #ifdef MULTI_THREAD
