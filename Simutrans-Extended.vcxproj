@@ -724,7 +724,7 @@
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug (single threaded new)|Win32'">..\OpenTTD\win32\library;..\bzip\lib;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug (graphical server)|Win32'">..\OpenTTD\win32\library;..\bzip\lib;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug (non-graphical server)|Win32'">..\OpenTTD\win32\library;..\bzip\lib;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\zstd\lib;..\OpenTTD\win64\library;..\bzip\lib\x64;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\zstd\build\VS2010\bin\x64_Release;..\OpenTTD\win64\library;..\bzip\lib\x64;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Optimised debug|x64'">.\zstd\lib;..\OpenTTD\win64\library;..\bzip\lib\x64;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug (open GL)|x64'">..\..\sdl2\lib\x64;..\OpenTTD\win64\library;..\bzip\lib\x64;$(LibraryPath)</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release (open GL 2)|x64'">..\..\sdl2\lib\x64;..\OpenTTD\win64\library;..\bzip\lib\x64;$(LibraryPath)</LibraryPath>
