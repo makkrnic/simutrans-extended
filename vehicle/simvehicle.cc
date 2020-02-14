@@ -3302,6 +3302,7 @@ road_vehicle_t::road_vehicle_t(koord3d pos, const vehicle_desc_t* desc, player_t
 	cnv = cn;
 	is_checker = false;
 	drives_on_left = welt->get_settings().is_drive_left();
+	reset_measurements();
 }
 
 road_vehicle_t::road_vehicle_t() :
@@ -3372,6 +3373,7 @@ road_vehicle_t::road_vehicle_t(loadsave_t *file, bool is_leading, bool is_last) 
 	fix_class_accommodations();
 	is_checker = false;
 	drives_on_left = welt->get_settings().is_drive_left();
+	reset_measurements();
 }
 
 void road_vehicle_t::rotate90()
