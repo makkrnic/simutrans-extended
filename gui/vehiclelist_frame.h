@@ -13,6 +13,7 @@
 #include "components/gui_label.h"
 #include "components/gui_image.h"
 #include "components/gui_tab_panel.h"
+#include "components/gui_combobox.h"
 
 class vehicle_desc_t;
 
@@ -20,9 +21,10 @@ class vehicle_desc_t;
 class vehiclelist_frame_t : public gui_frame_t, private action_listener_t
 {
 private:
-	button_t sortedby, sorteddir, bt_obsolete;
+	button_t sortedby, sorteddir, bt_obsolete, bt_future;
 	gui_scrolled_list_t scrolly;
 	gui_tab_panel_t tabs;
+	gui_combobox_t ware;
 
 	void fill_list();
 
