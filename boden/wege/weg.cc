@@ -436,6 +436,11 @@ void weg_t::rdwr(loadsave_t *file)
 			file->rdwr_long(w);
 			statistics[month][type] = (sint16)w;
 		}
+		if(file->get_extended_version() == 14 && file->get_extended_revision() == 19) 
+		{
+			sint32 dummy32;
+			file->rdwr_long(dummy32);
+		}
 	}
 
 	if (file->is_loading() && file->get_extended_version() < 15 && file->get_extended_revision() < 20)
