@@ -42,6 +42,7 @@ const char* vehicle_builder_t::engine_type_names[11] =
 
 const char *vehicle_builder_t::vehicle_sort_by[vehicle_builder_t::sb_length] =
 {
+	"Fracht",
 	"Vehicle Name",
 	"Capacity",
 	"Price",
@@ -215,9 +216,12 @@ static int compare_retire_year_month(const vehicle_desc_t* a, const vehicle_desc
 // default compare function with mode parameter
 bool vehicle_builder_t::compare_vehicles(const vehicle_desc_t* a, const vehicle_desc_t* b, sort_mode_t mode )
 {
-	int cmp = compare_freight(a, b);
-	if (cmp != 0) return cmp < 0;
+	int cmp = 0;
 	switch (mode) {
+		case sb_freight:
+			cmp = compare_freight(a, b);
+			if (cmp != 0) return cmp < 0;
+			break;
 		case sb_name:
 			cmp = strcmp(translator::translate(a->get_name()), translator::translate(b->get_name()));
 			if (cmp != 0) return cmp < 0;
@@ -267,6 +271,8 @@ bool vehicle_builder_t::compare_vehicles(const vehicle_desc_t* a, const vehicle_
 	//  5. power
 	//  6. intro date
 	//  7. name
+	cmp = compare_freight(a, b);
+	if (cmp != 0) return cmp < 0;
 	cmp = compare_capacity(a, b);
 	if (cmp != 0) return cmp < 0;
 	cmp = compare_engine(a, b);
