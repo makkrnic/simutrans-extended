@@ -553,7 +553,8 @@ bool route_t::find_route(karte_t *welt, const koord3d start, test_driver_t *tdri
 				uint8 current_dir = ribi_t::nsew[r];
 				if(tmp->parent!=NULL) {
 					current_dir |= tmp->ribi_from;
-					if(tmp->dir!=current_dir) {
+					if(tmp->dir!=current_dir && flags != private_car_checker) // Private car routing must be deterministic
+					{
 						k->g += 3;
 						if(ribi_t::is_perpendicular(tmp->dir,current_dir))
 						{
