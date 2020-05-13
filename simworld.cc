@@ -2091,7 +2091,8 @@ void karte_t::init_threads()
 	pthread_attr_init(&thread_attributes);
 	pthread_attr_setdetachstate(&thread_attributes, PTHREAD_CREATE_JOINABLE);
 
-	simthread_barrier_init(&private_car_barrier, NULL, env_t::networkmode ? 2 : parallel_operations + 1);
+	simthread_barrier_init(&private_car_barrier, NULL, parallel_operations + 1);
+	//simthread_barrier_init(&private_car_barrier, NULL, env_t::networkmode ? 2 : parallel_operations + 1);
 	simthread_barrier_init(&karte_t::unreserve_route_barrier, NULL, parallel_operations + 2); // This and the next does not run concurrently with anything significant on the main thread, so the number of parallel operations need to be +1 compared to the others.
 	simthread_barrier_init(&step_passengers_and_mail_barrier, NULL, parallel_operations + 2);
 	simthread_barrier_init(&step_convoys_barrier_external, NULL, 2);
@@ -2113,7 +2114,8 @@ void karte_t::init_threads()
 
 	for (uint32 i = 0; i < parallel_operations + 1; i++)
 	{
-		if ((i < parallel_operations && !env_t::networkmode) || i < 1)
+		if (i < parallel_operations)
+		//if ((i < parallel_operations && !env_t::networkmode) || i < 1)
 		{
 			uint32* thread_number_checker = new uint32;
 			*thread_number_checker = i;
@@ -5507,10 +5509,12 @@ void karte_t::step()
 		// There can be many mutex clashes with this; however, processing only one city at a time can make it take an unfeasible amount of time to refresh all routes.
 		//cities_to_process = stadt.get_count() > 64 ? 1 : min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
 		//cities_to_process = 1;
-		cities_to_process = env_t::networkmode ? 1 : min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
+		//cities_to_process = env_t::networkmode ? 1 : min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
+		cities_to_process = min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
 		start_private_car_threads();
 #else			
-		const sint32 cities_to_process = env_t::networkmode ? 1 : min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
+		const sint32 cities_to_process = min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
+		//const sint32 cities_to_process = env_t::networkmode ? 1 : min(cities_awaiting_private_car_route_check.get_count(), parallel_operations - 1);
 		for (sint32 j = 0; j < cities_to_process; j++)
 		{
 			stadt_t* city = cities_awaiting_private_car_route_check.remove_first();
@@ -5518,7 +5522,14 @@ void karte_t::step()
 		}
 #endif
 	}
-
+	// Placement of this block here for TESTing only
+#ifdef MULTI_THREAD
+	// The placement of this method call must be before any code that in any way relies on the private car routes between cities, most especially the mail and passenger generation (step_passengers_and_mail(delta_t)).
+	if (check_city_routes)
+	{
+		await_private_car_threads();
+	}
+#endif
 	rands[10] = get_random_seed();
 
 	// check for pending seasons change
@@ -5612,7 +5623,7 @@ void karte_t::step()
 	rands[14] = get_random_seed();
 
 	INT_CHECK("karte_t::step 3b");
-
+	/*
 #ifdef MULTI_THREAD
 	// The placement of this method call must be before any code that in any way relies on the private car routes between cities, most especially the mail and passenger generation (step_passengers_and_mail(delta_t)).
 	if (check_city_routes)
@@ -5620,7 +5631,7 @@ void karte_t::step()
 		await_private_car_threads();
 	}
 #endif
-
+*/
 	INT_CHECK("karte_t::step 3c");
 
 	rands[24] = 0;

@@ -1860,7 +1860,15 @@ void weg_t::add_private_car_route(koord destination, koord3d next_tile)
 	int error = pthread_mutex_lock(&private_car_store_route_mutex);
 	assert(error == 0);
 #endif	
-	private_car_routes[get_private_car_routes_currently_writing_element()].set(destination, next_tile); 
+
+	// Below code for TESTing only
+	const koord3d old_next_tile = private_car_routes[get_private_car_routes_currently_writing_element()].get(destination);
+	
+	if (next_tile != koord3d::invalid)
+	{
+		//assert(old_next_tile == koord3d::invalid || (old_next_tile.x == 0 && old_next_tile.y == 0) || old_next_tile == next_tile);
+		private_car_routes[get_private_car_routes_currently_writing_element()].set(destination, next_tile);
+	}
 
 	//private_car_routes_std[get_private_car_routes_currently_writing_element()].emplace(destination, next_tile); // Old performance test - but this was worse than the Simutrans type
 #ifdef MULTI_THREAD
