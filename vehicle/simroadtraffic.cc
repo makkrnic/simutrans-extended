@@ -1054,6 +1054,7 @@ grund_t* private_car_t::hop_check()
 				stadt_t* origin_city = tile ? tile->get_city() : NULL;
 				if (origin_city)
 				{
+					origin_city->delete_private_car_route(check_target); 
 					//welt->add_queued_city(origin_city); // Prioritise re-checking this city even if already re-checked in this cycle.
 				}
 			}
@@ -1089,6 +1090,7 @@ grund_t* private_car_t::hop_check()
 					stadt_t* origin_city = tile ? tile->get_city() : NULL;
 					if (origin_city)
 					{
+						origin_city->delete_private_car_route(check_target);
 						//welt->add_queued_city(origin_city); // Prioritise re-checking this city even if already re-checked in this cycle.
 					}
 				}

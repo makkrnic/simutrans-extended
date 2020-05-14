@@ -5489,6 +5489,11 @@ void karte_t::step()
 				cities_awaiting_private_car_route_check.append(i); 
 			}
 		}
+
+		FOR(weighted_vector_tpl<stadt_t*>, const city, stadt)
+		{
+			city->process_deleted_private_car_routes();
+		}	
 		
 #ifdef MULTI_THREAD
 		// This cannot be started at the end of the step, as we will not know at that point whether we need to call this at all.

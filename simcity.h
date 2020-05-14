@@ -288,6 +288,9 @@ private:
 
 	sint32 number_of_cars;
 
+	// Private car routes from this city that need to be deleted in the next step
+	slist_tpl<const koord> private_car_routes_awaiting_deletion;
+
 public:
 
 	void add_building_to_list(gebaeude_t* building, bool ordered = false, bool do_not_add_to_world_list = false, bool do_not_update_stats = false);
@@ -345,6 +348,10 @@ public:
 	* this city
 	*/
 	void check_city_tiles(bool del = false);
+
+	void delete_private_car_route(const koord destination);
+	/// NOTE: This cannot run concurrently with passenger generation
+	void process_deleted_private_car_routes(); 
 
 
 private:

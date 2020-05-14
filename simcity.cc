@@ -6059,3 +6059,27 @@ void stadt_t::remove_city_factory(fabrik_t *fab)
 {
 	city_factories.remove(fab);
 }
+
+void stadt_t::delete_private_car_route(const koord destination)
+{
+	private_car_routes_awaiting_deletion.append(destination); 
+}
+
+void stadt_t::process_deleted_private_car_routes()
+{
+	FOR(slist_tpl<const koord>, destination, private_car_routes_awaiting_deletion)
+	{
+		const grund_t* townhall_gr = welt->lookup_kartenboden(get_townhall_road()); 
+		weg_t* const townhall_road = townhall_gr ? townhall_gr->get_weg(road_wt) : NULL;
+		if (townhall_road)
+		{
+			townhall_road->delete_route_to(destination, true); 
+		}
+
+		// Now remove from list of connected things
+		connected_attractions.remove(destination);
+		connected_industries.remove(destination);
+		connected_cities.remove(destination); 
+	}
+	
+}
