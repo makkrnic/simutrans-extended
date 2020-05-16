@@ -482,6 +482,13 @@ bool route_t::find_route(karte_t *welt, const koord3d start, test_driver_t *tdri
 		{
 			bridge_tile_count = 0;
 		}
+
+		// For TESTing only
+		if (flags == private_car_checker)
+		{
+			ribi = ribi_t::all;
+		}
+
 		for(int r = 0; r < 4; r++)
 		{
 			// a way goes here, and it is not marked (i.e. in the closed list)
