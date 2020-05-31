@@ -1918,6 +1918,10 @@ void weg_t::delete_all_routes_from_here(bool reading_set)
 
 	if (!private_car_routes[routes_index].empty())
 	{
+#ifdef MULTI_THREAD
+		int error = pthread_mutex_lock(&private_car_store_route_mutex);
+		assert(error == 0);
+#endif
 		vector_tpl<koord> destinations_to_delete;
 		FOR(private_car_route_map, const& route, private_car_routes[routes_index])
 		{
@@ -1930,6 +1934,10 @@ void weg_t::delete_all_routes_from_here(bool reading_set)
 			// This must be done in a two stage process to avoid memory corruption as the delete_route_to function will affect the very hashtable being iterated.
 			delete_route_to(dest, reading_set);
 		}
+#ifdef MULTI_THREAD
+		error = pthread_mutex_unlock(&private_car_store_route_mutex);
+		assert(error == 0);
+#endif
 	}
 #ifdef DEBUG_PRIVATE_CAR_ROUTES
 	calc_image();
@@ -1967,15 +1975,6 @@ void weg_t::delete_route_to(koord destination, bool reading_set)
 void weg_t::remove_private_car_route(koord destination, bool reading_set)
 {
 	const uint32 routes_index = reading_set ? private_car_routes_currently_reading_element : get_private_car_routes_currently_writing_element();
-#ifdef MULTI_THREAD
-	int error = pthread_mutex_lock(&private_car_store_route_mutex);
-	assert(error == 0);
-#endif
 	private_car_routes[routes_index].remove(destination);
 	//private_car_routes_std[routes_index].erase(destination); // Old test - but this was much slower than the Simutrans hashtable.
-#ifdef MULTI_THREAD
-	error = pthread_mutex_unlock(&private_car_store_route_mutex);
-	assert(error == 0);
-#endif
-
 }

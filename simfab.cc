@@ -2448,7 +2448,7 @@ void fabrik_t::verteile_waren(const uint32 product)
 
 					if (needed > 0 && ziel_fab->get_input()[w].get_in_transit() == 0 && (needs_max_amount || storage_base_units <= 1) && needed_base_units == 0)
 					{
-						needed_base_units = 1;
+						needed_base_units = 1; 
 					}
 
 					// if only overflown factories found => deliver to first
