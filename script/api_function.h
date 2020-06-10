@@ -114,7 +114,7 @@ namespace script_api {
 		 //      func_signature_t<F>::get_squirrel_type(discard_first, 0).c_str());
 	}
 
-
+	 
 	/**
 	 * Registers native c++ method to be called from squirrel.
 	 * Squirrel calls generic_squirrel_callback, the pointer to the actual
