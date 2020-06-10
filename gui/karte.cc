@@ -1233,6 +1233,7 @@ reliefkarte_t::reliefkarte_t()
 	zoom_in = 1;
 	zoom_out = 1;
 	isometric = false;
+	show_network_load_factor = false;
 	show_contour = true;
 	mode = MAP_TOWN;
 	city = NULL;

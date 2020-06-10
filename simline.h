@@ -7,9 +7,10 @@
 #define SIMLINE_H
 
 
+#include "simtypes.h"
+#include "simcolor.h"
 #include "convoihandle_t.h"
 #include "linehandle_t.h"
-#include "simtypes.h"
 #include "simconvoi.h"
 #include "simskin.h"
 
@@ -74,7 +75,7 @@ private:
 	 * the current state saved as color
 	 * Meanings are BLACK (ok), WHITE (no convois), YELLOW (no vehicle moved), RED (last month income minus), BLUE (at least one convoi vehicle is obsolete)
 	 */
-	uint8 state_color;
+	COLOR_VAL state_color;
 
 	/*
 	 * a list of all convoys assigned to this line
@@ -165,9 +166,10 @@ public:
 	 * returns the state of the line
 	 * @author prissi
 	 */
-	uint8 get_state_color() const { return state_color; }
+
+	COLOR_VAL get_state_color() const { return state_color; }
 	// This has multiple flags
-	uint8 get_state() const { return state; }
+	int get_state() const { return state; }
 
 	/*
 	 * return schedule of line

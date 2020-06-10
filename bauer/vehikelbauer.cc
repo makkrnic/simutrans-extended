@@ -243,7 +243,7 @@ const vehicle_desc_t *vehicle_builder_t::vehicle_search( waytype_t wt, const uin
 		struct best_t {
 			uint32 power;
 			uint16 payload_per_maintenance;
-			long index;
+			sint32 index;
 		} best, test;
 		best.index = -100000;
 
