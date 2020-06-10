@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1997 - 2001 Hansjörg Malthaner
- *
- * This file is part of the Simutrans project under the artistic licence.
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
  */
 
 #include "../../simdebug.h"
@@ -107,7 +106,7 @@ void gui_image_list_t::draw(scr_coord parent_pos)
 
 			// Get image data
 			scr_coord_val x,y,w,h;
-			display_get_base_image_offset( idata.image, &x, &y, &w, &h );
+			display_get_base_image_offset( idata.image, x, y, w, h );
 
 			// calculate image offsets
 			y = -y + (grid.y-h) - VEHICLE_BAR_HEIGHT - 2; // align to bottom mark

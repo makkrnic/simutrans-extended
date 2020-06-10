@@ -1,3 +1,8 @@
+#
+# This file is part of the Simutrans-Extended project under the Artistic License.
+# (see LICENSE.txt)
+#
+
 CFG ?= default
 -include config.$(CFG)
 
@@ -65,8 +70,8 @@ else
 endif
 
 ifeq ($(OSTYPE),mac)
-  CFLAGS +=  -std=c++11 -stdlib=libstdc++
-  LDFLAGS += -stdlib=libstdc++
+  CFLAGS +=  -std=c++11 -stdlib=libc++
+  LDFLAGS += -stdlib=libc++
 endif
 
 ifeq ($(OSTYPE), mingw64)
@@ -487,6 +492,8 @@ SOURCES += gui/components/gui_component_table.cc
 SOURCES += gui/components/gui_table.cc
 SOURCES += gui/components/gui_convoy_assembler.cc
 SOURCES += gui/components/gui_convoy_label.cc
+SOURCES += gui/components/gui_convoy_formation.cc
+SOURCES += gui/components/gui_convoy_payloadinfo.cc
 SOURCES += gui/replace_frame.cc
 SOURCES += dataobj/livery_scheme.cc
 SOURCES += dataobj/replace_data.cc
@@ -516,7 +523,7 @@ endif
 ifeq ($(BACKEND),sdl)
   SOURCES += simsys_s.cc
   ifeq ($(OSTYPE),mac)
-		ifeq ($(AV_FOUNDATION),1)
+		ifeq ($(shell expr $(AV_FOUNDATION) \>= 1), 1)
 			# Core Audio (AVFoundation) base sound system routines
 			SOURCES += sound/AVF_core-audio_sound.mm
 			SOURCES += music/AVF_core-audio_midi.mm
@@ -558,7 +565,7 @@ endif
 ifeq ($(BACKEND),sdl2)
   SOURCES += simsys_s2.cc
   ifeq ($(OSTYPE),mac)
-		ifeq ($(AV_FOUNDATION),1)
+		ifeq ($(shell expr $(AV_FOUNDATION) \>= 1), 1)
 			# Core Audio (AVFoundation) base sound system routines
 			SOURCES += sound/AVF_core-audio_sound.mm
 			SOURCES += music/AVF_core-audio_midi.mm
@@ -580,7 +587,7 @@ ifeq ($(BACKEND),sdl2)
   ifeq ($(SDL2_CONFIG),)
     ifeq ($(OSTYPE),mac)
       SDL_CFLAGS  := -I/Library/Frameworks/SDL2.framework/Headers
-      SDL_LDFLAGS := -framework SDL2
+      SDL_LDFLAGS := -F/Library/Frameworks -framework SDL2
     else
       SDL_CFLAGS  := -I$(MINGDIR)/include/SDL2 -Dmain=SDL_main
       SDL_LDFLAGS := -lSDL2main -lSDL2
@@ -616,7 +623,7 @@ endif
 ifeq ($(BACKEND),opengl)
   SOURCES += simsys_opengl.cc
   ifeq ($(OSTYPE),mac)
-		ifeq ($(AV_FOUNDATION),1)
+		ifeq ($(shell expr $(AV_FOUNDATION) \>= 1), 1)
 			# Core Audio (AVFoundation) base sound system routines
 			SOURCES += sound/AVF_core-audio_sound.mm
 			SOURCES += music/AVF_core-audio_midi.mm

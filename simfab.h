@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 1997 - 2001 Hansjörg Malthaner
- *
- * This file is part of the Simutrans project under the artistic license.
- * (see license.txt)
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
  */
 
-#ifndef simfab_h
-#define simfab_h
+#ifndef SIMFAB_H
+#define SIMFAB_H
+
 
 #include <algorithm>
 
@@ -21,6 +20,7 @@
 #include "halthandle_t.h"
 #include "simworld.h"
 #include "utils/plainstring.h"
+#include "bauer/goods_manager.h"
 
 
 class player_t;
@@ -33,7 +33,7 @@ class ware_t;
  * @author Knightly
  */
 #define MAX_MONTH                  (12)
-#define FAB_PRODUCTION              (0)
+#define FAB_PRODUCTION              (0) // total boost rate - it means productivity
 #define FAB_POWER                   (1)
 #define FAB_BOOST_ELECTRIC          (2)
 #define FAB_BOOST_PAX               (3)
@@ -156,10 +156,10 @@ public:
  * hergestellt oder verbraucht wird, 0 wenn gerade none
  * hergestellt oder verbraucht wird und > 0 sonst
  * (entspricht Vorrat/Verbrauch).
- * 
+ *
  * A class of factories in Simutrans.
- *  Factories produce and consume goods and supplies near bus stops. 
- * The query functions return -1 if a product is never produced or consumed, 
+ *  Factories produce and consume goods and supplies near bus stops.
+ * The query functions return -1 if a product is never produced or consumed,
  * 0 when nothing is manufactured or consumed and> 0 otherwise (equivalent to stocks / consumption).
  * @date 1998
  * @see haltestelle_t
@@ -177,7 +177,7 @@ public:
 private:
 
 	gebaeude_t* building;
-		
+
 	/**
 	 * Factory statistics
 	 * @author Knightly
@@ -199,7 +199,7 @@ private:
 
 	/**
 	 * Die möglichen Lieferziele
-	 * 
+	 *
 	 * The possible delivery targets
 	 * @author Hj. Malthaner
 	 */
@@ -435,7 +435,7 @@ private:
 	stadt_t* city;
 
 	// Check whether this factory is in a city: return NULL if not, or the city that it is in if so.
-	stadt_t* check_local_city(); 
+	stadt_t* check_local_city();
 
 	bool has_calculated_intransit_percentages;
 
@@ -507,7 +507,7 @@ public:
 
 	/**
 	 * Recalculate nearby halts
-	 * These are stashed, so must be recalced 
+	 * These are stashed, so must be recalced
 	 * when halts are built or destroyed
 	 * @author neroden
 	 */
@@ -599,15 +599,15 @@ public:
 
 	/*
 	* This method is used when visiting passengers arrive at an
-	* end consumer industry. This logs their consumption of 
+	* end consumer industry. This logs their consumption of
 	* products sold at this end-consumer industry.
 	*/
-	void add_consuming_passengers(sint32 number_of_passengers); 
-	
+	void add_consuming_passengers(sint32 number_of_passengers);
+
 	/*
 	* Returns true if this industry has no stock left.
 	* If the industry has some types of stock left but not
-	* others, whether true or false is returned is random, 
+	* others, whether true or false is returned is random,
 	* weighted by the proportions of each.
 	* This is for use in determining whether passengers may
 	* travel to this destination.
@@ -658,7 +658,7 @@ public:
 
 	/**
 	 * gibt true zurueck wenn sich ein factory im feld befindet
-	 * 
+	 *
 	 * "gives true back if factory in the field is"
 	 *
 	 * @author Hj. Malthaner
@@ -710,8 +710,11 @@ public:
 	sint32 get_base_production() const { return prodbase; }
 	void set_base_production(sint32 p, bool is_from_saved_game = false);
 
-	// This is done this way rather than reusing get_prodfactor() because the latter causes a lack of precision (everything being rounded to the nearest 16). 
+	// This is done this way rather than reusing get_prodfactor() because the latter causes a lack of precision (everything being rounded to the nearest 16).
 	sint32 get_current_production() const { return (sint32)(welt->calc_adjusted_monthly_figure(((sint64)prodbase * (sint64)(DEFAULT_PRODUCTION_FACTOR + prodfactor_electric + (get_sector() == fabrik_t::end_consumer ? 0 : prodfactor_pax + prodfactor_mail))))) >> 8l; }
+
+	// returns the current productivity relative to 100
+	sint32 get_current_productivity() const { return welt->calc_adjusted_monthly_figure(prodbase) ? get_current_production() * 100 / welt->calc_adjusted_monthly_figure(prodbase) : 0; }
 
 	/* prissi: returns the status of the current factory */
 	enum { nothing, good, water_resource, medium, water_resource_full, storage_full, inactive, shipment_stuck, material_shortage, no_material, bad, mat_overstocked, stuck, staff_shortage, MAX_FAB_STATUS };
@@ -756,6 +759,8 @@ public:
 	// Determine shortage of staff for each industry type
 	bool chk_staff_shortage(uint8 abc, sint32 staffing_level_percentage) const;
 
+	sint32 get_staffing_level_percentage() const;
+
 	/**
 	 * Returns a list of goods produced by this factory.
 	 */
@@ -780,6 +785,11 @@ public:
 
 	// check connected to public or current player stop
 	bool is_connect_own_network() const;
+
+	// Returns whether this factory has potential demand for passed goods category
+	bool has_goods_catg_demand(uint8 catg_index = goods_manager_t::INDEX_NONE) const;
+
+
 };
 
 #endif

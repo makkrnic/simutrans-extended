@@ -1,12 +1,6 @@
 /*
- * Copyright (c) 1997 - 2003 Hansjörg Malthaner
- *
- * This file is part of the Simutrans project under the artistic licence.
- * (see licence.txt)
- */
-
-/*
- * Factory info dialog
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
  */
 
 #include "fabrik_info.h"
@@ -35,7 +29,7 @@
 static const char factory_status_type[fabrik_t::MAX_FAB_STATUS][64] =
 {
 	"", "", "", "", "", // status not problematic
-	"Storage full", 
+	"Storage full",
 	"Inactive", "Shipment stuck",
 	"Material shortage", "No material",
 	"stop_some_goods_arrival", "Fully stocked",
@@ -58,11 +52,11 @@ fabrik_info_t::fabrik_info_t(fabrik_t* fab_, const gebaeude_t* gb) :
 	gui_frame_t("", fab_->get_owner()),
 	fab(fab_),
 	chart(fab_),
+	lbl_factory_status(factory_status),
 	view(gb, scr_size( max(64, get_base_tile_raster_width()), max(56, (get_base_tile_raster_width() * 7) / 8))),
 	scrolly(&fab_info),
 	prod(&prod_buf),
-	txt(&info_buf),
-	lbl_factory_status(factory_status)
+	txt(&info_buf)
 {
 	lieferbuttons = supplierbuttons = NULL;
 	staffing_level = staffing_level2 = staff_shortage_factor = 0;
@@ -211,8 +205,7 @@ void fabrik_info_t::draw(scr_coord pos, scr_size size)
 		//staff_shortage_factor = 0;
 	}
 	staffing_bar.add_color_value(&staff_shortage_factor, COL_YELLOW);
-	gebaeude_t* gb = fab->get_building();
-	staffing_level = gb->get_staffing_level_percentage();
+	staffing_level = fab->get_staffing_level_percentage();
 	const goods_desc_t *wtyp = goods_manager_t::get_info((uint16)0);
 	staffing_bar.add_color_value(&staffing_level, wtyp->get_color());
 	staffing_level2 = staff_shortage_factor > staffing_level ? staffing_level : 0;
@@ -227,7 +220,7 @@ void fabrik_info_t::draw(scr_coord pos, scr_size size)
 	}
 	unsigned indikatorfarbe = fabrik_t::status_to_color[fab->get_status() % fabrik_t::staff_shortage];
 	display_fillbox_wh_clip(pos.x + D_MARGIN_LEFT, top + 2, D_INDICATOR_WIDTH, D_INDICATOR_HEIGHT, indikatorfarbe, true);
-	// Status line written text	
+	// Status line written text
 	if(skinverwaltung_t::alerts && fab_alert_level[fab->get_status() % fabrik_t::staff_shortage]){
 		left += D_H_SPACE * 2;
 		display_color_img(skinverwaltung_t::alerts->get_image_id(fab_alert_level[fab->get_status() % fabrik_t::staff_shortage]), pos.x + left, top, 0, false, false);
@@ -249,36 +242,39 @@ void fabrik_info_t::draw(scr_coord pos, scr_size size)
 		prod_buf.clear();
 	}
 
-	scr_coord_val x_view_pos = D_MARGIN_LEFT;
-	scr_coord_val x_prod_pos = view.get_pos().x - 30 - D_H_SPACE*2;
+	scr_coord_val x_boost_symbol_pos = proportional_string_width(translator::translate("Productivity")) + proportional_string_width(" : 000% ") + proportional_string_width(translator::translate("(Max. %u%%)")) + D_MARGIN_LEFT + D_H_SPACE;
 	if (skinverwaltung_t::electricity->get_image_id(0) != IMG_EMPTY) {
 		// indicator for receiving
-		if (fab->get_prodfactor_electric() > 0) {
-			display_color_img(skinverwaltung_t::electricity->get_image_id(0), pos.x + view.get_pos().x + x_view_pos, top + 4, 0, false, false);
-			x_view_pos += skinverwaltung_t::electricity->get_image(0)->get_pic()->w + 4;
-		}
-		// indicator for enabled
 		if (fab->get_desc()->get_electric_boost()) {
-			display_color_img(skinverwaltung_t::electricity->get_image_id(0), pos.x + x_prod_pos, top, 0, false, false);
-			x_prod_pos += skinverwaltung_t::electricity->get_image(0)->get_pic()->w + 4;
+			if (fab->get_prodfactor_electric() > 0) {
+				display_color_img(skinverwaltung_t::electricity->get_image_id(0), pos.x + x_boost_symbol_pos, top + LINESPACE, 0, false, false);
+			}
+			else {
+				display_img_blend(skinverwaltung_t::electricity->get_image_id(0), pos.x + x_boost_symbol_pos, top + LINESPACE, TRANSPARENT50_FLAG | OUTLINE_FLAG | COL_GREY2, false, false);
+			}
+			x_boost_symbol_pos += skinverwaltung_t::electricity->get_image(0)->get_pic()->w + 4;
 		}
 	}
+
 	if (skinverwaltung_t::passengers->get_image_id(0) != IMG_EMPTY) {
-		if (fab->get_prodfactor_pax() > 0) {
-			display_color_img(skinverwaltung_t::passengers->get_image_id(0), pos.x + view.get_pos().x + x_view_pos, top + 4, 0, false, false);
-			x_view_pos += skinverwaltung_t::passengers->get_image(0)->get_pic()->w + 4;
-		}
 		if (fab->get_desc()->get_pax_boost()) {
-			display_color_img(skinverwaltung_t::passengers->get_image_id(0), pos.x + x_prod_pos, top, 0, false, false);
-			x_prod_pos += skinverwaltung_t::passengers->get_image(0)->get_pic()->w + 4;
+			if (fab->get_prodfactor_pax() > 0) {
+				display_color_img(skinverwaltung_t::passengers->get_image_id(0), pos.x + x_boost_symbol_pos, top + LINESPACE, 0, false, false);
+			}
+			else {
+				display_img_blend(skinverwaltung_t::passengers->get_image_id(0), pos.x + x_boost_symbol_pos, top + LINESPACE, TRANSPARENT50_FLAG | OUTLINE_FLAG | COL_GREY2, false, false);
+			}
+			x_boost_symbol_pos += skinverwaltung_t::passengers->get_image(0)->get_pic()->w + 4;
 		}
 	}
 	if (skinverwaltung_t::mail->get_image_id(0) != IMG_EMPTY) {
-		if (fab->get_prodfactor_mail() > 0) {
-			display_color_img(skinverwaltung_t::mail->get_image_id(0), pos.x + view.get_pos().x + x_view_pos, top + 4, 0, false, false);
-		}
 		if (fab->get_desc()->get_mail_boost()) {
-			display_color_img(skinverwaltung_t::mail->get_image_id(0), pos.x + x_prod_pos, top, 0, false, false);
+			if (fab->get_prodfactor_mail() > 0) {
+				display_color_img(skinverwaltung_t::mail->get_image_id(0), pos.x + x_boost_symbol_pos, top + LINESPACE, 0, false, false);
+			}
+			else {
+				display_img_blend(skinverwaltung_t::mail->get_image_id(0), pos.x + x_boost_symbol_pos, top + LINESPACE, TRANSPARENT50_FLAG | OUTLINE_FLAG | COL_GREY2, false, false);
+			}
 		}
 	}
 
@@ -341,8 +337,7 @@ bool fabrik_info_t::action_triggered( gui_action_creator_t *comp, value_t v)
 }
 
 
-static inline koord const& get_coord(koord   const&       c) { return c; }
-static inline koord        get_coord(stadt_t const* const c) { return c->get_pos(); }
+static inline koord const& get_coord(const koord &c) { return c; }
 
 
 template <typename T> static void make_buttons(button_t*& dst, T const& coords, int& y_off, gui_container_t& fab_info, action_listener_t* const listener)

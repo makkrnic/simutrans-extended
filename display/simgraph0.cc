@@ -1,7 +1,7 @@
 /*
-* Copyright 2010 Simutrans contributors
-* Available under the Artistic License (see license.txt)
-*/
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
+ */
 
 #include "../simconst.h"
 #include "../simsys.h"
@@ -33,9 +33,9 @@ void set_zoom_factor(int)
 {
 }
 
-int get_zoom_factor() 
-{ 
-	return zoom_factor; 
+int get_zoom_factor()
+{
+	return zoom_factor;
 }
 
 int zoom_factor_up()
@@ -109,7 +109,7 @@ COLOR_VAL display_get_index_from_rgb(uint8, uint8, uint8)
 	return 0;
 }
 
-void register_image(struct image_t* image)
+void register_image(class image_t* image)
 {
 	image->imageid = 1;
 }
@@ -129,15 +129,15 @@ void display_get_image_offset(image_id image, KOORD_VAL *xoff, KOORD_VAL *yoff, 
 	}
 }
 
-void display_get_base_image_offset(image_id image, KOORD_VAL *xoff, KOORD_VAL *yoff, KOORD_VAL *xw, KOORD_VAL *yw)
+void display_get_base_image_offset(image_id image, scr_coord_val& xoff, scr_coord_val& yoff, scr_coord_val& xw, scr_coord_val& yw)
 {
-	if (image < 2) {
-		// initialize offsets with dummy values
-		*xoff = 0;
-		*yoff = 0;
-		*xw = 0;
-		*yw = 0;
-	}
+    if (image < 2) {
+        // initialize offsets with dummy values
+        xoff = 0;
+        yoff = 0;
+        xw = 0;
+        yw = 0;
+    }
 }
 
 /*
@@ -175,14 +175,6 @@ void display_pop_clip_wh(CLIP_NUM_DEF_NOUSE0)
 }
 
 void display_scroll_band(const KOORD_VAL, const KOORD_VAL, const KOORD_VAL)
-{
-}
-
-static inline void pixcopy(PIXVAL *, const PIXVAL *, const unsigned int)
-{
-}
-
-static inline void colorpixcopy(PIXVAL *, const PIXVAL *, const PIXVAL * const)
 {
 }
 
@@ -238,6 +230,9 @@ void display_blend_wh_rgb(KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, PIXVAL, in
 {
 }
 
+void display_color_img_with_tooltip(const image_id, KOORD_VAL, KOORD_VAL, sint8, const int, const int, const char*, sint8)
+{
+}
 
 void display_fillbox_wh_rgb(KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, PLAYER_COLOR_VAL, bool)
 {
@@ -245,6 +240,10 @@ void display_fillbox_wh_rgb(KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, PLAYER_C
 
 
 void display_fillbox_wh_clip_rgb(KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, PLAYER_COLOR_VAL, bool  CLIP_NUM_DEF_NOUSE)
+{
+}
+
+void display_veh_form_wh_clip_rgb(KOORD_VAL, KOORD_VAL, KOORD_VAL, PIXVAL, bool, uint8, uint8, bool CLIP_NUM_DEF_NOUSE)
 {
 }
 

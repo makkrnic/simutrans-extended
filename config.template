@@ -1,4 +1,9 @@
 #
+# This file is part of the Simutrans-Extended project under the Artistic License.
+# (see LICENSE.txt)
+#
+
+#
 # to compile:
 # copy this file to config.default and adjust the settings
 #
@@ -70,7 +75,6 @@ MULTI_THREAD = 1 # Enable multithreading
 # AUTOMATIC_BRIDGES and AUTOMATIC_TUNNELS: will be built also for player
 # AUTOJOIN_PUBLIC: stations next to a public stop will be joined to it
 # USE_DIFFERENT_WIND: different airplane approach directions over the map
-# DESTINATION_CITYCARS: Citycars can have a destination (enabled automatically - cannot be disabled)
 #
 # In order to use the flags, add a line like this: (-Dxxx)
 # FLAGS = -DUSE_C

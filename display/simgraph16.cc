@@ -1,7 +1,7 @@
 /*
-* Copyright 2010 Simutrans contributors
-* Available under the Artistic License (see license.txt)
-*/
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
+ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +25,8 @@
 #include "../utils/simstring.h"
 #include "simgraph.h"
 #include "../descriptor/vehicle_desc.h"
+#include "../gui/simwin.h"
+#include "../gui/gui_theme.h"
 
 
 #ifdef _MSC_VER
@@ -2104,13 +2106,13 @@ void display_get_image_offset(image_id image, KOORD_VAL *xoff, KOORD_VAL *yoff, 
 
 
 // prissi: query un-zoomed offsets
-void display_get_base_image_offset(image_id image, KOORD_VAL *xoff, KOORD_VAL *yoff, KOORD_VAL *xw, KOORD_VAL *yw)
+void display_get_base_image_offset(image_id image, scr_coord_val& xoff, scr_coord_val& yoff, scr_coord_val& xw, scr_coord_val& yw)
 {
 	if (image < anz_images) {
-		*xoff = images[image].base_x;
-		*yoff = images[image].base_y;
-		*xw = images[image].base_w;
-		*yw = images[image].base_h;
+		xoff = images[image].base_x;
+		yoff = images[image].base_y;
+		xw = images[image].base_w;
+		yw = images[image].base_h;
 	}
 }
 
@@ -2827,6 +2829,13 @@ void display_color_img(const image_id n, KOORD_VAL xp, KOORD_VAL yp, sint8 playe
 	} // number ok
 }
 
+void display_color_img_with_tooltip(const image_id n, KOORD_VAL xp, KOORD_VAL yp, sint8 player_nr_raw, const int daynight, const int dirty, const char *text  CLIP_NUM_DEF)
+{
+	display_color_img(n, xp, yp, player_nr_raw, daynight, dirty);
+	if (text && n < anz_images && ( xp <= get_mouse_x() && yp <= get_mouse_y() && (xp+ images[n].w) > get_mouse_x() && (yp+ images[n].h) > get_mouse_y())) {
+		win_set_tooltip(get_mouse_x() + TOOLTIP_MOUSE_OFFSET_X/2, yp + images[n].y + images[n].h + TOOLTIP_MOUSE_OFFSET_Y/2, text);
+	}
+}
 
 /**
 * draw unscaled images, replaces base color
@@ -3932,7 +3941,7 @@ void display_array_wh(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, KOORD_VAL h, cons
 	}
 }
 
-void display_veh_form_wh_clip_rgb(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, PIXVAL color, bool dirty, uint8 basic_constraint_flags, uint8 interactivity, bool is_rightside  CLIP_NUM_DEF)
+void display_veh_form_wh_clip_rgb(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, PIXVAL color, bool dirty, uint8 basic_constraint_flags, uint8 interactivity, bool is_rightside  CLIP_NUM_DEF_NOUSE)
 {
 	uint8 h = VEHICLE_BAR_HEIGHT;
 	uint8 width = (w + 1) * 0.9;
@@ -4599,7 +4608,7 @@ void display_ddd_proportional(KOORD_VAL xpos, KOORD_VAL ypos, KOORD_VAL width, K
 	display_vline_wh(xpos - 2, ypos - halfheight - hgt - 1, halfheight * 2 + 1, ddd_farbe + 1, dirty);
 	display_vline_wh(xpos + width - 3, ypos - halfheight - hgt - 1, halfheight * 2 + 1, ddd_farbe - 1, dirty);
 
-	display_proportional(xpos + 2, ypos - halfheight + 1, text, ALIGN_LEFT, text_farbe, dirty, -1);
+	display_proportional(xpos + 2, ypos - halfheight + 1, text, ALIGN_LEFT, text_farbe, dirty);
 }
 
 
@@ -4816,6 +4825,27 @@ void display_filled_circle_rgb(KOORD_VAL x0, KOORD_VAL  y0, int radius, const PI
 		display_fb_internal(x0 - y, y0 - x, y + y, 1, colval, false, CR0.clip_rect.x, CR0.clip_rect.xx, CR0.clip_rect.y, CR0.clip_rect.yy);
 	}
 	//	mark_rect_dirty_wc( x0-radius, y0-radius, x0+radius+1, y0+radius+1 );
+}
+
+
+int display_fluctuation_triangle_rgb(KOORD_VAL x, KOORD_VAL y, uint8 height, const bool dirty, sint64 value)
+{
+	if (!value) { return 0; } // nothing to draw
+	COLOR_VAL col = value > 0 ? COL_LIGHT_TURQUOISE : COL_LIGHT_ORANGE;
+	uint8 width = height - height % 2;
+	for (uint i = 0; i < width; i++) {
+		uint8 h = height - 2 * abs(int(width / 2 - i));
+		KOORD_VAL y0 = value > 0 ? y + 2 + height - h : y+2;
+		KOORD_VAL y1 = value > 0 ? y0 - 1 : y + h +1;
+
+		if (h > 1) {
+			display_vline_wh(x + i, y0, h - 1, col, dirty);
+		}
+		if (h > 0) {
+			display_blend_wh(x + i, y1, 1, 1, col, 50);
+		}
+	}
+	return width;
 }
 
 

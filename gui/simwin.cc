@@ -1,8 +1,6 @@
 /*
- * Copyright (c) 1997 - 2003 Hansjorg Malthaner
- *
- * This file is part of the Simutrans project under the artistic license.
- * (see license.txt)
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
  */
 
 /*
@@ -982,7 +980,7 @@ static void remove_old_win()
 }
 
 
-static inline void snap_check_distance( sint16 *r, const sint16 a, const sint16 b )
+static inline void snap_check_distance( scr_coord_val *r, const scr_coord_val a, const scr_coord_val b )
 {
 	if(  abs(a-b)<=env_t::window_snap_distance  ) {
 		*r = a;
@@ -1264,7 +1262,7 @@ bool check_pos_win(event_t *ev)
 	}
 
 	// cursor event only go to top window (but not if rolled up)
-	if(  ev->ev_class == EVENT_KEYBOARD  &&  !wins.empty()  ) {
+	if ((ev->ev_class == EVENT_KEYBOARD || ev->ev_class == EVENT_STRING) && !wins.empty()) {
 		simwin_t &win  = wins.back();
 		if(  !win.rollup  )  {
 			inside_event_handling = win.gui;
@@ -1288,13 +1286,13 @@ bool check_pos_win(event_t *ev)
 	}
 
 	// swallow all other events in the infobar
-	if(  ev->ev_class != EVENT_KEYBOARD  &&  y > display_get_height()-16  ) {
+	if (!(ev->ev_class == EVENT_KEYBOARD || ev->ev_class == EVENT_STRING) && y > display_get_height() - 16) {
 		// swallow event
 		return true;
 	}
 
 	// swallow all other events in ticker (if there)
-	if(  ev->ev_class != EVENT_KEYBOARD  &&  show_ticker  &&  y > display_get_height()-32  ) {
+	if (!(ev->ev_class == EVENT_KEYBOARD || ev->ev_class == EVENT_STRING) && show_ticker && y > display_get_height() - 32) {
 		if(  IS_LEFTCLICK(ev)  ) {
 			// goto infowin koordinate, if ticker is active
 			koord p = ticker::get_welt_pos();

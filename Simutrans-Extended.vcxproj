@@ -2719,12 +2719,15 @@
     <ClCompile Include="display\simgraph16.cc">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug (non-graphical server)|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release (command-line server)|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="display\simview.cc" />
     <ClCompile Include="display\viewport.cc" />
     <ClCompile Include="gui\ai_option_t.cc" />
     <ClCompile Include="gui\components\gui_container.cc" />
     <ClCompile Include="gui\components\gui_convoiinfo.cc" />
+    <ClCompile Include="gui\components\gui_convoy_formation.cc" />
+    <ClCompile Include="gui\components\gui_convoy_payloadinfo.cc" />
     <ClCompile Include="gui\components\gui_image.cc" />
     <ClCompile Include="gui\components\gui_component.cc" />
     <ClCompile Include="gui\components\gui_map_preview.cc" />
@@ -3428,6 +3431,8 @@
     <ClInclude Include="gui\components\gui_action_creator.h" />
     <ClInclude Include="gui\components\gui_container.h" />
     <ClInclude Include="gui\components\gui_convoiinfo.h" />
+    <ClInclude Include="gui\components\gui_convoy_formation.h" />
+    <ClInclude Include="gui\components\gui_convoy_payloadinfo.h" />
     <ClInclude Include="gui\components\gui_fixedwidth_textarea.h" />
     <ClInclude Include="gui\components\gui_component.h" />
     <ClInclude Include="gui\components\gui_location_view_t.h" />

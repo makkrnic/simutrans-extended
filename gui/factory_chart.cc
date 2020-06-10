@@ -1,12 +1,6 @@
 /*
- * Copyright (c) 2011 Knightly
- *
- * This file is part of the Simutrans project under the artistic licence.
- * (see licence.txt)
- */
-
-/*
- * Where the current factory chart statistics are calculated
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
  */
 
 #include "../obj/leitung2.h"
@@ -65,7 +59,7 @@ static const gui_chart_t::convert_proc goods_convert[MAX_FAB_GOODS_STAT] =
 
 static const char *const prod_type[MAX_FAB_STAT+1] =
 {
-	"Produktion", "Power usage",
+	"Productivity", "Power usage",
 	"Electricity", "Jobs", "Post",
 	"", "", "Commuters", "", "Post",
 	"Post", "Consumers",
