@@ -465,7 +465,7 @@ void vehicle_base_t::get_screen_offset( int &xoff, int &yoff, const sint16 raste
 	if(dx && dy) {
 		display_steps &= 0xFFFFFC00;
 	}
-	else {
+	else { 
 		display_steps = (display_steps*diagonal_multiplier)>>10;
 	}
 
