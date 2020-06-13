@@ -233,4 +233,4 @@ bool tool_selector_t::empty(player_t *player) const
 		}
 	}
 	return true;
-}
+} 
