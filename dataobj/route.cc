@@ -348,7 +348,7 @@ bool route_t::find_route(karte_t *welt, const koord3d start, test_driver_t *tdri
 						if(!gb)
 						{
 							// Dud building
-							// Is not thread-safe to remove this here.
+							// Is not thread-safe to remove this here. 
 							continue;
 						}
 
