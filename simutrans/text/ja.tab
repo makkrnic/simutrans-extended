@@ -3763,6 +3763,8 @@ filter_mail_line
 郵便取扱い路線
 filter_freight_line
 貨物取扱い路線
+Tractive effort
+引張力
 #_______________________________unnecessary_text________________________________
 #_______________________________unnecessary_text________________________________
 Passengers %d %c, %d %c, %d no route\n\nCapacity: %i\n
