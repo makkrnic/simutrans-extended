@@ -378,6 +378,7 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 				chart.set_seed(0);
 				chart.set_x_axis_span(0 - delta_s);
 			}
+			chart.set_abort_display_x(0);
 
 			while (i > 0)
 			{
@@ -401,6 +402,7 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 			const sint32 max_speed = convoy.calc_max_speed(weight_summary_t(empty_weight, convoy.get_current_friction()));
 			const uint16 display_interval = (max_speed + SPEED_RECORDS - 1) / SPEED_RECORDS;
 			float32e8_t rolling_resistance = cnv->get_adverse_summary().fr;
+			chart.set_abort_display_x((max_speed + display_interval)/ display_interval);
 
 			if (env_t::left_to_right_graphs) {
 				chart.set_seed(display_interval * (SPEED_RECORDS - 1));
@@ -1080,6 +1082,7 @@ void convoi_info_t::init_chart_mode(enum chart_mode_t mode)
 #endif
 			chart.set_dimension(MAX_MONTHS, 10000);
 			chart.set_seed(0);
+			chart.set_abort_display_x(0);
 			chart.set_x_label_span();
 			chart.set_x_axis_span();
 			break;

@@ -102,6 +102,8 @@ public:
 	void set_x_label_span(uint8 span = 1) { x_label_span = span; }
 	// x-axis number increase factor. dx=2 then 0, 2, 4, 6...
 	void set_x_axis_span(sint32 dx = 1) { x_axis_span = dx; }
+	// X-axis boundary that aborts the curve drawing.
+	void set_abort_display_x(uint8 abort_x = 0) { abort_display_x = abort_x; }
 
 	void set_show_y_axis(bool yesno) { show_y_axis = yesno; }
 
@@ -148,6 +150,7 @@ private:
 	slist_tpl <line_t> lines;
 
 	int x_elements, y_elements;
+	uint8 abort_display_x = 0;
 
 	int seed;
 	uint8 x_label_span;

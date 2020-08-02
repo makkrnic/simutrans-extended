@@ -191,8 +191,10 @@ void gui_chart_t::draw(scr_coord offset)
 	FOR(slist_tpl<curve_t>, const& c, curves) {
 		if (c.show) {
 			double display_tmp;
+			int start = abort_display_x ? (env_t::left_to_right_graphs ? c.elements - abort_display_x : 0) : 0;
+			int end   = abort_display_x ? (env_t::left_to_right_graphs ? c.elements : abort_display_x) : c.elements;
 			// for each curve iterate through all elements and display curve
-			for (int i=0;i<c.elements;i++) {
+			for (int i=0; i<end; i++) {
 				//tmp=c.values[year*c.size+c.offset];
 				tmp = c.values[i*c.size+c.offset];
 				// Knightly : convert value where necessary
@@ -209,7 +211,9 @@ void gui_chart_t::draw(scr_coord offset)
 				}
 
 				// display marker(box) for financial value
-				display_fillbox_wh_clip(tmpx+factor*(size.w / (x_elements - 1))*i-2, (scr_coord_val)(offset.y+baseline- (long)(tmp/scale)-2), 5, 5, c.color, true);
+				if (i >= start && i < end) {
+					display_fillbox_wh_clip(tmpx + factor * (size.w / (x_elements - 1))*i - 2, (scr_coord_val)(offset.y + baseline - (long)(tmp / scale) - 2), 5, 5, c.color, true);
+				}
 
 				// display tooltip?
 				if(i==tooltip_n  &&  abs((int)(baseline-(int)(tmp/scale)-tooltipcoord.y))<10) {
@@ -218,14 +222,14 @@ void gui_chart_t::draw(scr_coord offset)
 				}
 
 				// draw line between two financial markers; this is only possible from the second value on
-				if (i>0) {
+				if (i>start && i < end) {
 					display_direct_line(tmpx+factor*(size.w / (x_elements - 1))*(i-1),
 						(scr_coord_val)( offset.y+baseline-(int)(last_year/scale) ),
 						tmpx+factor*(size.w / (x_elements - 1))*(i),
 						(scr_coord_val)( offset.y+baseline-(int)(tmp/scale) ),
 						c.color);
 				}
-				else {
+				else if (i == 0 && !abort_display_x || abort_display_x && i == start) {
 					// for the first element print the current value (optionally)
 					// only print value if not too narrow to min/max/zero
 					if(  c.show_value  ) {
