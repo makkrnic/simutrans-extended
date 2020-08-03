@@ -45,7 +45,7 @@ gui_chart_t::gui_chart_t() : gui_component_t()
 }
 
 
-int gui_chart_t::add_curve(int color, const sint64 *values, int size, int offset, int elements, int type, bool show, bool show_value, int precision, convert_proc proc)
+int gui_chart_t::add_curve(int color, const sint64 *values, int size, int offset, int elements, int type, bool show, bool show_value, int precision, convert_proc proc, chart_marker_t marker_type)
 {
 	curve_t new_curve;
 	new_curve.color = color;
@@ -58,12 +58,13 @@ int gui_chart_t::add_curve(int color, const sint64 *values, int size, int offset
 	new_curve.type = type;
 	new_curve.precision = precision;
 	new_curve.convert = proc;
+	new_curve.marker_type = marker_type;
 	curves.append(new_curve);
 	return curves.get_count();
 }
 
 
-uint32 gui_chart_t::add_line(int color, const sint64 *value, int times, bool show, bool show_value, int precision, convert_proc proc)
+uint32 gui_chart_t::add_line(int color, const sint64 *value, int times, bool show, bool show_value, int precision, convert_proc proc, chart_marker_t marker_type)
 {
 	line_t new_line;
 	new_line.color = color;
@@ -73,6 +74,7 @@ uint32 gui_chart_t::add_line(int color, const sint64 *value, int times, bool sho
 	new_line.show_value = show_value;
 	new_line.precision = precision;
 	new_line.convert = proc;
+	new_line.marker_type = marker_type;
 	lines.append(new_line);
 	return lines.get_count();
 }
@@ -191,8 +193,10 @@ void gui_chart_t::draw(scr_coord offset)
 	FOR(slist_tpl<curve_t>, const& c, curves) {
 		if (c.show) {
 			double display_tmp;
+			int start = abort_display_x ? (env_t::left_to_right_graphs ? c.elements - abort_display_x : 0) : 0;
+			int end   = abort_display_x ? (env_t::left_to_right_graphs ? c.elements : abort_display_x) : c.elements;
 			// for each curve iterate through all elements and display curve
-			for (int i=0;i<c.elements;i++) {
+			for (int i=0; i<end; i++) {
 				//tmp=c.values[year*c.size+c.offset];
 				tmp = c.values[i*c.size+c.offset];
 				// Knightly : convert value where necessary
@@ -209,7 +213,29 @@ void gui_chart_t::draw(scr_coord offset)
 				}
 
 				// display marker(box) for financial value
-				display_fillbox_wh_clip(tmpx+factor*(size.w / (x_elements - 1))*i-2, (scr_coord_val)(offset.y+baseline- (long)(tmp/scale)-2), 5, 5, c.color, true);
+				if (i >= start && i < end) {
+					scr_coord_val x = tmpx + factor * (size.w / (x_elements - 1))*i - 2;
+					scr_coord_val y = (scr_coord_val)(offset.y + baseline - (long)(tmp / scale) - 2);
+					switch (c.marker_type)
+					{
+						case cross:
+							display_direct_line(x, y, x+4, y+4, c.color);
+							display_direct_line(x+4, y, x, y+4, c.color);
+							break;
+						case diamond:
+							for (int j = 0; j < 5; j++) {
+								display_vline_wh_clip(x+j, y + abs(2 - j), 5-2*abs(2-j), c.color, false);
+							}
+							break;
+						case none:
+							// display nothing
+							break;
+						case square:
+						default:
+							display_fillbox_wh_clip(x, y, 5, 5, c.color, true);
+							break;
+					}
+				}
 
 				// display tooltip?
 				if(i==tooltip_n  &&  abs((int)(baseline-(int)(tmp/scale)-tooltipcoord.y))<10) {
@@ -218,14 +244,14 @@ void gui_chart_t::draw(scr_coord offset)
 				}
 
 				// draw line between two financial markers; this is only possible from the second value on
-				if (i>0) {
+				if (i>start && i < end) {
 					display_direct_line(tmpx+factor*(size.w / (x_elements - 1))*(i-1),
 						(scr_coord_val)( offset.y+baseline-(int)(last_year/scale) ),
 						tmpx+factor*(size.w / (x_elements - 1))*(i),
 						(scr_coord_val)( offset.y+baseline-(int)(tmp/scale) ),
 						c.color);
 				}
-				else {
+				else if (i == 0 && !abort_display_x || abort_display_x && i == start) {
 					// for the first element print the current value (optionally)
 					// only print value if not too narrow to min/max/zero
 					if(  c.show_value  ) {

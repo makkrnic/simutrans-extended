@@ -72,11 +72,15 @@ static const int cost_type_color[BUTTON_COUNT + ADDITIONAL_CHART] =
 	COL_PROFIT
 #ifdef ACCELERATION_BUTTON
 	, COL_DODGER_BLUE
-	, COL_MAGENTA
+	, COL_PURPLE+1
 	, COL_LIGHT_TURQUOISE // +1 for maximum acceleration curve
 	, COL_DARK_GREEN // +1 for resistance curve
 #endif
 };
+
+#ifdef ACCELERATION_BUTTON
+static const gui_chart_t::chart_marker_t marker_type[MAX_PHYSICS_CURVE] = { gui_chart_t::cross, gui_chart_t::diamond, gui_chart_t::diamond, gui_chart_t::cross };
+#endif
 
 static const bool cost_type_money[BUTTON_COUNT] =
 {
@@ -230,7 +234,7 @@ convoi_info_t::convoi_info_t(convoihandle_t cnv)
 		{
 			physics_curves[i][j] = 0;
 		}
-		chart.add_curve(cost_type_color[btn], (sint64*)physics_curves, MAX_PHYSICS_CURVE, j, SPEED_RECORDS, cost_type_money[btn], false, true, cost_type_money[btn] * 2);
+		chart.add_curve(cost_type_color[btn], (sint64*)physics_curves, MAX_PHYSICS_CURVE, j, SPEED_RECORDS, cost_type_money[btn], false, true, cost_type_money[btn] * 2, NULL, marker_type[j]);
 		if (j < 2) {
 			filterButtons[btn].init(button_t::box_state, cost_type[btn],
 				scr_coord(BUTTON1_X + (D_BUTTON_WIDTH + D_H_SPACE)*(btn % 4), offset_below_chart + (D_BUTTON_HEIGHT + D_V_SPACE)*(btn / 4)),
@@ -378,6 +382,7 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 				chart.set_seed(0);
 				chart.set_x_axis_span(0 - delta_s);
 			}
+			chart.set_abort_display_x(0);
 
 			while (i > 0)
 			{
@@ -401,6 +406,7 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 			const sint32 max_speed = convoy.calc_max_speed(weight_summary_t(empty_weight, convoy.get_current_friction()));
 			const uint16 display_interval = (max_speed + SPEED_RECORDS - 1) / SPEED_RECORDS;
 			float32e8_t rolling_resistance = cnv->get_adverse_summary().fr;
+			chart.set_abort_display_x((max_speed + display_interval)/ display_interval);
 
 			if (env_t::left_to_right_graphs) {
 				chart.set_seed(display_interval * (SPEED_RECORDS - 1));
@@ -1080,6 +1086,7 @@ void convoi_info_t::init_chart_mode(enum chart_mode_t mode)
 #endif
 			chart.set_dimension(MAX_MONTHS, 10000);
 			chart.set_seed(0);
+			chart.set_abort_display_x(0);
 			chart.set_x_label_span();
 			chart.set_x_axis_span();
 			break;
