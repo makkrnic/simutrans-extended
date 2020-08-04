@@ -406,8 +406,9 @@ void convoi_info_t::draw(scr_coord pos, scr_size size)
 			const sint32 max_speed = convoy.calc_max_speed(weight_summary_t(empty_weight, convoy.get_current_friction()));
 			const uint16 display_interval = (max_speed + SPEED_RECORDS - 1) / SPEED_RECORDS;
 			float32e8_t rolling_resistance = cnv->get_adverse_summary().fr;
-			te_curve_abort_x = (uint8)((max_speed + (display_interval-1)) / display_interval);
+			te_curve_abort_x = (uint8)((max_speed + (display_interval-1)) / display_interval)+1;
 			chart.set_abort_display_x(te_curve_abort_x);
+			chart.set_dimension(te_curve_abort_x, 10000);
 
 			if (env_t::left_to_right_graphs) {
 				chart.set_seed(display_interval * (SPEED_RECORDS - 1));
@@ -1072,7 +1073,7 @@ void convoi_info_t::init_chart_mode(enum chart_mode_t mode)
 		}
 		chart.show_curve(TRACTIVE_FORCE_BUTTON);
 		chart.show_curve(TRACTIVE_FORCE_BUTTON + 2);
-		chart.set_dimension(SPEED_RECORDS, 10000);
+		chart.set_dimension(te_curve_abort_x, 10000);
 		chart.set_abort_display_x(te_curve_abort_x);
 		chart.set_x_label_span(4);
 		break;

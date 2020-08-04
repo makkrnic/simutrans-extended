@@ -168,7 +168,8 @@ void gui_chart_t::draw(scr_coord offset)
 		const COLOR_VAL line_color = (i%2) ? SYSCOL_CHART_LINES_ODD : SYSCOL_CHART_LINES_EVEN;
 		if(  show_x_axis  ) {
 			// display x-axis
-			sprintf(digit, j % x_label_span == 0 ? "%i" : "", abs(seed - (j*x_axis_span)));
+			int val = (abort_display_x && env_t::left_to_right_graphs) ? (abort_display_x-j) * x_axis_span : seed - (j*x_axis_span);
+			sprintf(digit, j % x_label_span == 0 ? "%i" : "", abs(val));
 			scr_coord_val x =  x0 - (seed != j ? (int)(2 * log( (double)abs(seed - j) )) : 0);
 			if(  x > x_last  ) {
 				x_last = x + display_proportional_clip( x, offset.y + size.h + 6, digit, ALIGN_LEFT, line_color, true );
@@ -196,7 +197,7 @@ void gui_chart_t::draw(scr_coord offset)
 			int start = abort_display_x ? (env_t::left_to_right_graphs ? c.elements - abort_display_x : 0) : 0;
 			int end   = abort_display_x ? (env_t::left_to_right_graphs ? c.elements : abort_display_x) : c.elements;
 			// for each curve iterate through all elements and display curve
-			for (int i=0; i<end; i++) {
+			for (int i=start; i<end; i++) {
 				//tmp=c.values[year*c.size+c.offset];
 				tmp = c.values[i*c.size+c.offset];
 				// Knightly : convert value where necessary
@@ -213,8 +214,8 @@ void gui_chart_t::draw(scr_coord offset)
 				}
 
 				// display marker(box) for financial value
-				if (i >= start && i < end) {
-					scr_coord_val x = tmpx + factor * (size.w / (x_elements - 1))*i - 2;
+				if (i < end) {
+					scr_coord_val x = tmpx + factor * (size.w / (x_elements - 1))*(i- start) - 2;
 					scr_coord_val y = (scr_coord_val)(offset.y + baseline - (long)(tmp / scale) - 2);
 					switch (c.marker_type)
 					{
@@ -245,9 +246,9 @@ void gui_chart_t::draw(scr_coord offset)
 
 				// draw line between two financial markers; this is only possible from the second value on
 				if (i>start && i < end) {
-					display_direct_line(tmpx+factor*(size.w / (x_elements - 1))*(i-1),
+					display_direct_line(tmpx+factor*(size.w / (x_elements - 1))*(i-start-1),
 						(scr_coord_val)( offset.y+baseline-(int)(last_year/scale) ),
-						tmpx+factor*(size.w / (x_elements - 1))*(i),
+						tmpx+factor*(size.w / (x_elements - 1))*(i-start),
 						(scr_coord_val)( offset.y+baseline-(int)(tmp/scale) ),
 						c.color);
 				}
