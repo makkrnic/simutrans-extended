@@ -111,6 +111,7 @@ private:
 #ifdef ACCELERATION_BUTTON
 	//Bernd Gabriel, Sep, 24 2009: acceleration curve:
 	sint64 physics_curves[SPEED_RECORDS][MAX_PHYSICS_CURVE];
+	uint8 te_curve_abort_x = SPEED_RECORDS;
 #endif
 	enum chart_mode_t {
 		convoy_finance = 0,
