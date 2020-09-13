@@ -2418,7 +2418,15 @@ const way_desc_t *tool_build_way_t::get_desc( uint16 timeline_year_month, bool r
 		desc = defaults[wt & (sint8)63];
 		if(desc == NULL || !desc->is_available(timeline_year_month)) {
 			// Search for default way
-			desc = way_builder_t::weg_search(wt, 0xffffffff, timeline_year_month, type_flat);
+			if(  wt == tram_wt  ||  wt == powerline_wt  ) {
+				desc = way_builder_t::weg_search(wt, 0xffffffff, timeline_year_month, type_flat);
+			}
+			else {
+				// this triggers an assertion if wt == powerline_wt
+				weg_t *w = weg_t::alloc(wt);
+				desc = w->get_desc();
+				delete w;
+			}
 		}
 	}
 	if( desc && remember ) {
@@ -8856,7 +8864,7 @@ bool tool_change_line_t::init( player_t *player )
 				}
 
 				FOR(vector_tpl<linehandle_t>,line,lines) {
-					if(  line->get_linetype() == linetype  &&  line->get_convoys().get_count() > 3  ) {
+					if(  line->get_linetype() == linetype  &&  line->get_convoys().get_count() > 2  ) {
 						// correct waytpe and more than one,n now some up usage for the last six months
 						sint64 transported = 0, capacity = 0;
 						for(  int i=0;  i<6;  i++  ) {
@@ -8885,10 +8893,12 @@ bool tool_change_line_t::init( player_t *player )
 							sint64 new_sum_capacity = (transported * 1000 * old_sum_capacity) / (capacity * percentage * 10);
 
 							// first we remove the totally empty convois (nowbody will miss them)
-							int destroyed = 0, initial = line->get_convoys().get_count();
-							for(  int j = initial - 1;  j >= 0  &&  initial-destroyed > 3  &&  new_sum_capacity < old_sum_capacity;  j--  ) {
+							int destroyed = 0;
+							const int initial = line->get_convoys().get_count();
+							const int max_left = (initial+2) / 2;
+							for(  int j = initial - 1;  j >= 0  &&  initial-destroyed > max_left  &&  new_sum_capacity < old_sum_capacity;  j--  ) {
 								convoihandle_t cnv = line->get_convoy(j);
-								if(  cnv->get_loading_level() == 0  ||  cnv->get_state() == convoi_t::INITIAL  ) {
+								if(  cnv->get_state() == convoi_t::INITIAL  ||  cnv->get_state() >= convoi_t::WAITING_FOR_CLEARANCE_ONE_MONTH  ) {
 									for(  int i=0;  i<cnv->get_vehicle_count();  i++  ) {
 										old_sum_capacity -= cnv->get_vehicle(i)->get_desc()->get_capacity();
 									}
@@ -8897,7 +8907,7 @@ bool tool_change_line_t::init( player_t *player )
 								}
 							}
 							// not enough? Then remove from the end ...
-							for(  uint32 j=0;  j < line->get_convoys().get_count()  &&  initial-destroyed > 3  &&  new_sum_capacity < old_sum_capacity;  j++  ) {
+							for(  uint32 j=0;  j < line->get_convoys().get_count()  &&  initial-destroyed > max_left  &&  new_sum_capacity < old_sum_capacity;  j++  ) {
 								convoihandle_t cnv = line->get_convoy(j);
 								if(  cnv->get_state() != convoi_t::SELF_DESTRUCT  ) {
 									for(  int i=0;  i<cnv->get_vehicle_count();  i++  ) {

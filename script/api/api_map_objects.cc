@@ -13,6 +13,7 @@
 #include "../api_function.h"
 
 #include "../../simobj.h"
+#include "../../simdepot.h"
 #include "../../simtool.h"
 #include "../../simworld.h"
 #include "../../dataobj/scenario.h"
@@ -96,13 +97,20 @@ SQInteger exp_obj_pos_constructor(HSQUIRRELVM vm) // parameters: sint16 x, sint1
 	welt->get_scenario()->koord_sq2w(pos);
 	// find object and set instance up
 	if (grund_t *gr = welt->lookup(koord3d(pos, z))) {
-		if (obj_t *obj = gr->suche_obj( (obj_t::typ)param<uint8>::get(vm, 5) )) {
-			sq_setinstanceup(vm, -1, obj);
+		obj_t::typ type = (obj_t::typ)param<uint8>::get(vm, 5);
+		obj_t *obj = NULL;
+		if (type != obj_t::bahndepot) { // special treatment of depots
+			obj = gr->suche_obj(type);
+		}
+		else {
+			obj = gr->get_depot();
+		}
+		if (obj) {
+			sq_setinstanceup(vm, 1, obj);
 			return SQ_OK;
 		}
 	}
-	sq_raise_error(vm, "No object of requested type on tile (or no tile at this position)");
-	return SQ_ERROR;
+	return sq_raise_error(vm, "No object of requested type on tile (or no tile at this position)");
 }
 
 // we have to resolve instances of derived classes here...
@@ -128,6 +136,18 @@ SQInteger script_api::param<obj_t*>::push(HSQUIRRELVM vm, obj_t* const& obj)
 					return script_api::param<weg_t*>::push(vm, (weg_t*)obj);
 			}
 		}
+
+		case obj_t::bahndepot:
+		case obj_t::strassendepot:
+		case obj_t::schiffdepot:
+		case obj_t::airdepot:
+		case obj_t::monoraildepot:
+		case obj_t::tramdepot:
+		case obj_t::maglevdepot:
+		{
+			return script_api::param<depot_t*>::push(vm, (depot_t*)obj);
+		}
+
 		default:
 			return access_objs<obj_t>::push_with_pos(vm, obj);
 	}
@@ -154,9 +174,11 @@ template<> struct bind_code<obj_t> { static const uint8 objtype = obj_t::obj; };
 
 // implementation of get and push by macros
 getpush_obj_pos(baum_t, obj_t::baum);
+getpush_obj_pos(depot_t, obj_t::bahndepot); // use bahndepot as type-identifier
 getpush_obj_pos(gebaeude_t, obj_t::gebaeude);
 getpush_obj_pos(label_t, obj_t::label);
 getpush_obj_pos(weg_t, obj_t::way);
+
 
 // return way ribis, have to implement a wrapper, to correctly rotate ribi
 static SQInteger get_way_ribi(HSQUIRRELVM vm)
@@ -183,7 +205,7 @@ void begin_obj_class(HSQUIRRELVM vm, const char* name, const char* base = NULL)
 	// store typetag to identify pointers
 	sq_settypetag(vm, -1, obj_t_tag + objtype);
 	// export constructor
-	register_function(vm, exp_obj_pos_constructor, "constructor", 5, "xiiii");
+	register_function_fv(vm, exp_obj_pos_constructor, "constructor", 4, "xiiii", freevariable<uint8>(objtype));
 	// now functions can be registered
 }
 
@@ -224,6 +246,23 @@ void_ label_set_text(label_t* l, const char* text)
 } */
 
 
+vector_tpl<convoihandle_t> const& depot_get_convoy_list(depot_t *depot)
+{
+	static vector_tpl<convoihandle_t> list;
+	list.clear();
+	if (depot==NULL) {
+		return list;
+	}
+	// fill list
+	slist_tpl<convoihandle_t> const& slist = depot->get_convoy_list();
+
+	for(slist_tpl<convoihandle_t>::const_iterator i = slist.begin(), end = slist.end(); i!=end; ++i) {
+		list.append(*i);
+	}
+	return list;
+}
+
+
 void export_map_objects(HSQUIRRELVM vm)
 {
 	/**
@@ -242,7 +281,7 @@ void export_map_objects(HSQUIRRELVM vm)
 	 * @param z
 	 * @typemask void(integer,integer,integer)
 	 */
-	register_function(vm, exp_obj_pos_constructor, "constructor", 5, "xiiii");
+	register_function_fv(vm, exp_obj_pos_constructor, "constructor", 4, "xiiii", freevariable<uint8>(objtype));
 	/**
 	 * @returns owner of the object.
 	 */
@@ -334,6 +373,16 @@ void export_map_objects(HSQUIRRELVM vm)
 	 */
 	register_method(vm, &gebaeude_t::is_same_building, "is_same_building");
 
+	end_class(vm);
+
+	/**
+	 * Class to access depots.
+	 */
+	begin_obj_class<depot_t>(vm, "depot_x", "building_x");
+	/**
+	 * @returns list of convoys sitting in this depot
+	 */
+	register_method(vm, &depot_get_convoy_list, "get_convoy_list", true);
 	end_class(vm);
 
 	/**

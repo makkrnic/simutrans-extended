@@ -12,15 +12,16 @@
 #include "../squirrel/squirrel.h"
 #include "../simobj.h"
 #include "../simtypes.h"
-#include "../halthandle_t.h"
-#include "../linehandle_t.h"
+#include "../tpl/quickstone_tpl.h"
 #include "../utils/cbuffer_t.h"
 
 class baum_t;
 class convoi_t;
+class depot_t;
 class fabrik_t;
 class gebaeude_t;
 class grund_t;
+class haltestelle_t;
 class karte_t;
 class karte_ptr_t;
 class koord;
@@ -271,6 +272,14 @@ namespace script_api {
 		}
 	};
 
+	/**
+	 * partial specialization for *handle_t types
+	 */
+	// declared here, implementation in api_class.h,
+	// which has to be included if necessary
+	template<class T> struct param< quickstone_tpl<T> >;
+
+
 #define declare_types(mask, sqtype) \
 	static const char* typemask() { return mask; } \
 	static const char* squirrel_type() \
@@ -330,7 +339,6 @@ namespace script_api {
 	declare_specialized_param(convoi_t*, "t|x|y", "convoy_x");
 	declare_specialized_param(fabrik_t*, "t|x|y", "factory_x");
 	declare_specialized_param(grund_t*, "t|x|y", "tile_x");
-	declare_specialized_param(halthandle_t, "t|x|y", "halt_x");
 	declare_specialized_param(const haltestelle_t*, "t|x|y", "halt_x");
 	declare_param_mask(haltestelle_t*, "t|x|y", "halt_x");
 	declare_specialized_param(karte_t*, ".", "world");
@@ -342,7 +350,6 @@ namespace script_api {
 	declare_specialized_param(mytime_t, "i|t|x|y", "time_x");
 	declare_specialized_param(mytime_ticks_t, "i|t|x|y", "time_ticks_x");
 	declare_specialized_param(scenario_t*, "t|x|y", "");
-	declare_specialized_param(linehandle_t, "t|x|y", "line_x");
 	declare_specialized_param(simline_t*, "t|x|y", "line_x");
 	declare_specialized_param(player_t*, "t|x|y", "player_x");
 	declare_specialized_param(stadt_t*, "t|x|y", "city_x");
@@ -352,6 +359,7 @@ namespace script_api {
 	// export of obj_t derived classes in api/map_objects.cc
 	declare_specialized_param(obj_t*, "t|x|y", "map_object_x");
 	declare_specialized_param(baum_t*, "t|x|y", "tree_x");
+	declare_specialized_param(depot_t*, "t|x|y", "depot_x");
 	declare_specialized_param(gebaeude_t*, "t|x|y", "building_x");
 	declare_specialized_param(label_t*, "t|x|y", "label_x");
 	declare_specialized_param(weg_t*, "t|x|y", "way_x");
