@@ -1138,15 +1138,27 @@ void reliefkarte_t::calc_map_pixel(const koord k)
 }
 
 
-void reliefkarte_t::calc_map_size()
+scr_size reliefkarte_t::get_min_size() const
+{
+	return get_max_size(); //scr_size(0,0);
+}
+
+
+scr_size reliefkarte_t::get_max_size() const
 {
 	scr_coord size = karte_to_screen( koord( welt->get_size().x, 0 ) );
-	scr_coord down= karte_to_screen( koord( welt->get_size().x, welt->get_size().y ) );
+	scr_coord down = karte_to_screen( koord( welt->get_size().x, welt->get_size().y ) );
 	size.y = down.y;
 	if(  isometric  ) {
 		size.x += zoom_in*2;
 	}
-	set_size( scr_size(size.x, size.y) ); // of the gui_komponete to adjust scroll bars
+	return scr_size(size.x, size.y);
+}
+
+
+void reliefkarte_t::calc_map_size()
+{
+	set_size( get_max_size() ); // of the gui_komponete to adjust scroll bars
 	needs_redraw = true;
 }
 
@@ -1192,7 +1204,7 @@ void reliefkarte_t::calc_map()
 	// since we do iterate the tourist info list, this must be done here
 	// find tourist spots
 	if(mode==MAP_TOURIST) {
-		const weighted_vector_tpl<gebaeude_t *> &world_attractions = welt->get_ausflugsziele();
+		const weighted_vector_tpl<gebaeude_t *> &world_attractions = welt->get_attractions();
 		// find the current maximum
 		max_tourist_ziele = 1;
 		FOR(weighted_vector_tpl<gebaeude_t*>, const i, world_attractions) {
@@ -1861,7 +1873,7 @@ void reliefkarte_t::draw(scr_coord pos)
 	// since we do iterate the tourist info list, this must be done here
 	// find tourist spots
 	if(  mode & MAP_TOURIST  ) {
-		FOR(  weighted_vector_tpl<gebaeude_t*>, const gb, welt->get_ausflugsziele()  ) {
+		FOR(  weighted_vector_tpl<gebaeude_t*>, const gb, welt->get_attractions()  ) {
 			if(  gb->get_first_tile() == gb  ) {
 				scr_coord gb_pos = karte_to_screen( gb->get_pos().get_2d() );
 				gb_pos = gb_pos + pos;
@@ -2000,6 +2012,7 @@ void reliefkarte_t::rdwr(loadsave_t *file)
 {
 	file->rdwr_short(zoom_out);
 	file->rdwr_short(zoom_in);
+	file->rdwr_bool(isometric);
 }
 
 

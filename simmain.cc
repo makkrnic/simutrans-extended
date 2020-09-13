@@ -335,12 +335,17 @@ static bool no_language() { return translator::get_language()!=-1; }
 static void ask_objfilename()
 {
 	pakselector_t* sel = new pakselector_t();
-	sel->fill_list();
 	if(  sel->check_only_one_option()  ) {
 		// If there's only one option, we selected it; don't even show the window
 		delete sel;
 	}
-	else if(  sel->has_pak()  ) {
+	// notify gui to load list of paksets
+	event_t ev;
+	ev.ev_class = INFOWIN;
+	ev.ev_code  = WIN_OPEN;
+	sel->infowin_event(&ev);
+
+	if(sel->has_pak()) {
 		destroy_all_win(true);	// since eventually the successful load message is still there ....
 		dbg->important("modal_dialogue( sel, magic_none, NULL, empty_objfilename );" );
 		modal_dialogue( sel, magic_none, NULL, empty_objfilename );
@@ -1253,9 +1258,13 @@ DBG_MESSAGE("simmain","demo file not found at %s",buf.get_str() );
 	// init midi before loading sounds
 	if(  dr_init_midi()  ) {
 		dbg->important("Reading midi data ...");
-		if(!midi_init(env_t::user_dir)) {
-			if(!midi_init(env_t::program_dir)) {
-				dbg->important("Midi disabled ...");
+		char pak_dir[PATH_MAX];
+		sprintf( pak_dir, "%s%s", env_t::program_dir, env_t::objfilename.c_str() );
+		if(  !midi_init(pak_dir)  ) {
+			if(  !midi_init(env_t::user_dir)  ) {
+				if(  !midi_init(env_t::program_dir)  ) {
+					dbg->message("simmain()","Midi disabled ...");
+				}
 			}
 		}
 		if(gimme_arg(argc, argv, "-nomidi", 0)) {
@@ -1274,8 +1283,8 @@ DBG_MESSAGE("simmain","demo file not found at %s",buf.get_str() );
 	sound_set_global_volume( env_t::global_volume );
 	sound_set_midi_volume( env_t::midi_volume );
 	if(  !midi_get_mute()  ) {
-		// not muted => play first song
-		midi_play(0);
+		// not muted => play random song
+		midi_play(-1);
 		// reset volume after first play call else no/low sound or music with win32 and sdl
 		sound_set_midi_volume( env_t::midi_volume );
 	}

@@ -78,19 +78,19 @@ private:
 
 		bool infowin_event(event_t const* const ev) OVERRIDE
 		{
-			bool b = button_t::infowin_event(ev);
-			if(IS_LEFTRELEASE(ev)) {
+			bool old_pressed = pressed;
+			bool swallow = button_t::infowin_event(ev);
+			if(  IS_LEFTRELEASE(ev)  &&  swallow   ) {
 				pressed ^= 1;
 				parent->sort_list();
 			}
-			return b;
+			return swallow;
 		}
 	};
 
 	slist_tpl<ware_item_t *>all_ware;
 	static slist_tpl<const goods_desc_t *>active_ware;
 
-	static scr_coord filter_buttons_pos[FILTER_BUTTONS];
 	static filter_flag_t filter_buttons_types[FILTER_BUTTONS];
 	static const char *filter_buttons_text[FILTER_BUTTONS];
 
@@ -113,8 +113,8 @@ private:
 	button_t ware_keine;
 	button_t ware_invers;
 
+	gui_aligned_container_t  ware_cont;
 	gui_scrollpane_t ware_scrolly;
-	gui_container_t ware_cont;
 
 public:
 	void sort_list();
@@ -130,11 +130,6 @@ public:
 	 * @return true if such a button is needed
 	 */
 	bool has_min_sizer() const OVERRIDE {return true;}
-
-	/**
-	 * resize window in response to a resize event
-	 */
-	void resize(const scr_coord delta) OVERRIDE;
 
 	/**
 	 * Set the window associated helptext

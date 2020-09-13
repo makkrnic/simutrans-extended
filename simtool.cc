@@ -1871,7 +1871,7 @@ const char *tool_add_city_t::work( player_t *player, koord3d pos )
 				// buildings the game crashes. To avoid this problem cities
 				// always belong to player 1
 
-				int const citizens = (int)(welt->get_settings().get_mean_einwohnerzahl() * 0.9);
+				int const citizens = (int)(welt->get_settings().get_mean_citizen_count() * 0.9);
 				//  stadt_t *stadt = new stadt_t(welt->get_public_player();, pos,citizens/10+simrand(2*citizens+1));
 
 				// always start with 1/10 citizens
@@ -5525,6 +5525,12 @@ const char *tool_build_station_t::check_pos( player_t*,  koord3d pos )
 		}
 		sint8 rotation;
 		const building_desc_t *desc = get_desc(rotation);
+		if(desc == NULL) {
+			// tool is in bad state, eg due to invalid tool parameters
+			DBG_DEBUG("tool_build_station_t::check_pos()", "Cannot resolve building descriptor, default_param=\"%s\".", default_param);
+			return "ENGINE ERROR: Build station tool cannot resolve a building descriptor.";
+		}
+
 		if(  grund_t *bd = welt->lookup_kartenboden( pos.get_2d() )  ) {
 			const bool underground = bd->get_hoehe()>gr->get_hoehe();
 			if(  underground  ) {

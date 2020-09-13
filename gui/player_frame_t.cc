@@ -85,6 +85,7 @@ ki_kontroll_t::ki_kontroll_t() :
 
 		// Player select button (arrow)
 		player_change_to[i].init(button_t::arrowright_state, "", cursor);
+		player_change_to[i].set_size(D_CHECKBOX_SIZE);
 		player_change_to[i].add_listener(this);
 
 		// Allow player change to human and public only (no AI)
@@ -101,11 +102,11 @@ ki_kontroll_t::ki_kontroll_t() :
 		player_select[i].set_focusable( true );
 
 		// Create combobox list data
-		player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("slot empty"), SYSCOL_TEXT ) );
-		player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("Manual (Human)"), SYSCOL_TEXT ) );
+		player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("slot empty"), SYSCOL_TEXT );
+		player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("Manual (Human)"), SYSCOL_TEXT );
 		if(  !welt->get_public_player()->is_locked()  ||  !env_t::networkmode  ) {
-			player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("Goods AI"), SYSCOL_TEXT ) );
-			player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("Passenger AI"), SYSCOL_TEXT ) );
+			player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("Goods AI"), SYSCOL_TEXT );
+			player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("Passenger AI"), SYSCOL_TEXT );
 		}
 		assert(  player_t::MAX_AI==4  );
 
@@ -170,7 +171,7 @@ ki_kontroll_t::ki_kontroll_t() :
 
 		// Income label
 		account_str[i][0] = 0;
-		ai_income[i] = new gui_label_t(account_str[i], MONEY_PLUS, gui_label_t::money);
+		ai_income[i] = new gui_label_t(account_str[i], MONEY_PLUS, gui_label_t::money_right);
 		ai_income[i]->align_to(&player_select[i],ALIGN_CENTER_V);
 		add_component( ai_income[i] );
 
@@ -434,7 +435,7 @@ void ki_kontroll_t::update_data()
 		}
 		cursor.x += D_CHECKBOX_WIDTH + D_H_SPACE;
 
-		player_change_to[i].set_pos(cursor);
+		player_change_to[i].set_pos( cursor );
 		cursor.x += D_ARROW_RIGHT_WIDTH + D_H_SPACE;
 
 		player_get_finances[i].set_pos(cursor);
@@ -649,8 +650,8 @@ void ki_kontroll_t::update_data()
 				{
 					if(  player_select[i].count_elements()==2  )
 					{
-						player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("Goods AI"), SYSCOL_TEXT ) );
-						player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("Passenger AI"), SYSCOL_TEXT ) );
+						player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("Goods AI"), SYSCOL_TEXT );
+						player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("Passenger AI"), SYSCOL_TEXT );
 					}
 				}
 				else
@@ -658,8 +659,8 @@ void ki_kontroll_t::update_data()
 					if(  player_select[i].count_elements()==4  )
 					{
 						player_select[i].clear_elements();
-						player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("slot empty"), SYSCOL_TEXT ) );
-						player_select[i].append_element( new gui_scrolled_list_t::const_text_scrollitem_t( translator::translate("Manual (Human)"), SYSCOL_TEXT ) );
+						player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("slot empty"), SYSCOL_TEXT );
+						player_select[i].new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("Manual (Human)"), SYSCOL_TEXT );
 					}
 				}
 
@@ -715,7 +716,7 @@ void ki_kontroll_t::draw(scr_coord pos, scr_size size)
 				money_to_string(account_str[i], account );
 				ai_income[i]->set_color( account>=0.0 ? MONEY_PLUS : MONEY_MINUS );
 			}
-			ai_income[i]->set_pos( scr_coord( size.w-D_MARGIN_RIGHT-L_FRACTION_WIDTH, ai_income[i]->get_pos().y ) );
+			ai_income[i]->set_pos( scr_coord(get_windowsize().w - ai_income[i]->get_size().w - D_MARGIN_RIGHT, access_in[i].get_pos().y));
 
 			access_out[i].pressed = welt->get_active_player()->allows_access_to(i);
 			if(access_out[i].pressed && player)
