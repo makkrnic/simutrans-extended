@@ -17,7 +17,6 @@
 
 class baum_t;
 class convoi_t;
-class depot_t;
 class fabrik_t;
 class gebaeude_t;
 class grund_t;
@@ -246,7 +245,7 @@ namespace script_api {
 	};
 
 	/**
-	 * partial specialization for vector_tpl types
+	 * partial specialization for container types
 	 */
 	template< template<class> class vector, class T> struct param< vector<T> > {
 		/**
@@ -256,8 +255,9 @@ namespace script_api {
 		static SQInteger push(HSQUIRRELVM vm, vector<T> const& v)
 		{
 			sq_newarray(vm, 0);
-			for(uint32 i=0; i<v.get_count(); i++) {
-				param<T>::push(vm, v[i]);
+
+			FORT(const vector<T>, const&i, v) {
+				param<T>::push(vm, i);
 				sq_arrayappend(vm, -2);
 			}
 			return 1;
@@ -359,7 +359,6 @@ namespace script_api {
 	// export of obj_t derived classes in api/map_objects.cc
 	declare_specialized_param(obj_t*, "t|x|y", "map_object_x");
 	declare_specialized_param(baum_t*, "t|x|y", "tree_x");
-	declare_specialized_param(depot_t*, "t|x|y", "depot_x");
 	declare_specialized_param(gebaeude_t*, "t|x|y", "building_x");
 	declare_specialized_param(label_t*, "t|x|y", "label_x");
 	declare_specialized_param(weg_t*, "t|x|y", "way_x");

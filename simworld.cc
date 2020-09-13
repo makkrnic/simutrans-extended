@@ -2801,6 +2801,10 @@ void karte_t::enlarge_map(settings_t const* sets, sint8 const* const h_field)
 	 * the same height the adjacent old grid point was and lowering to the
 	 * same height again. This doesn't preserve the old area 100%, but it respects it
 	 * somehow.
+	 *
+	 * This does not work for water tiles as for them get_hoehe will return the
+	 * z-coordinate of the water surface, not the height of the underwater
+	 * landscape.
 	 */
 
 	sint32 i;
@@ -4297,6 +4301,7 @@ void karte_t::local_set_tool( tool_t *tool_in, player_t * player )
 		selected_tool[player->get_player_nr()] = tool_in;
 	}
 	tool_in->flags = 0;
+	toolbar_last_used_t::last_used_tools->append( tool_in, player );
 }
 
 
@@ -8927,6 +8932,7 @@ DBG_MESSAGE("karte_t::load()","Savegame version is %d", file.get_version());
 		mute_sound(false);
 
 		tool_t::update_toolbars();
+		toolbar_last_used_t::last_used_tools->clear();
 		set_tool( tool_t::general_tool[TOOL_QUERY], get_active_player() );
 	}
 
@@ -10028,6 +10034,13 @@ void karte_t::update_underground_intern( sint16 x_min, sint16 x_max, sint16 y_mi
 		for(  sint16 x = x_min; x < x_max;  x++  ) {
 			const sint16 nr = y * cached_grid_size.x + x;
 			plan[nr].get_kartenboden()->check_update_underground();
+			// update tunnel tiles
+			for(uint8 i=1; i<plan[nr].get_boden_count(); i++) {
+				grund_t *gr = plan[nr].get_boden_bei(i);
+				if (gr->ist_tunnel()) {
+					gr->check_update_underground();
+				}
+			}
 		}
 	}
 }
@@ -11072,15 +11085,6 @@ bool karte_t::interactive(uint32 quit_month)
 
 		DBG_DEBUG4("karte_t::interactive", "point of loop return");
 	} while(!finish_loop  &&  get_current_month()<quit_month);
-
-	if(  env_t::quit_simutrans  &&  env_t::reload_and_save_on_quit  ) {
-		// construct from pak name an autosave if requested
-		std::string pak_name( "autosave-" );
-		pak_name.append( env_t::objfilename );
-		pak_name.erase( pak_name.length()-1 );
-		pak_name.append( ".sve" );
-		save( pak_name.c_str(), loadsave_t::autosave_mode, SERVER_SAVEGAME_VER_NR, EXTENDED_VER_NR, EXTENDED_REVISION_NR, false );
-	}
 
 	if(  get_current_month() >= quit_month  ) {
 		env_t::quit_simutrans = true;

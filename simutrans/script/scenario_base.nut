@@ -261,7 +261,7 @@ class ttext {
 
 	function _set(key, val)
 	{
-		var_values.rawset(key, val);
+		var_values[key] <- val
 	}
 
 	function _tostring()
@@ -278,7 +278,7 @@ class ttext {
 		foreach(val in var_strings) {
 			local key = val.name
 			if ( key in var_values ) {
-				local valx = { begin = val.begin, end = val.end, value = var_values.rawget(key) }
+				local valx = { begin = val.begin, end = val.end, value = var_values[key] }
 				values.append(valx)
 			}
 		}
@@ -324,8 +324,8 @@ function _extend_get(index) {
 		return
 	}
 	local fname = "get_" + index
-	if (rawin(fname)) {
-		local func = rawget(fname)
+	if (fname in this) {
+		local func = this[fname]
 		if (typeof(func)=="function") {
 			return func.call(this)
 		}
@@ -656,7 +656,7 @@ class coord3d extends coord {
 	function _save()     { return "coord3d(" + x + ", " + y + ", " + z + ")" }
 	function href(text)  { return "<a href='(" + x + ", " + y + ", " + z + ")'>" + text + "</a>" }
 
-	function getz(other) { return (z in other) ? other.z : 0 }
+	function getz(other) { return ("z" in other) ? other.z : 0 }
 }
 
 /**

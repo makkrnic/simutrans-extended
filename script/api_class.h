@@ -152,14 +152,25 @@ namespace script_api {
 		 */
 		static SQInteger push(HSQUIRRELVM vm, quickstone_tpl<T> const& h)
 		{
-			return push_instance(vm, param<T*>::squirrel_type(), h.get_id());
+			if (h.is_bound()) {
+				return push_instance(vm, param<T*>::squirrel_type(), h.get_id());
+			}
+			else {
+				sq_pushnull(vm);
+				return 1;
+			}
 		}
 		static const quickstone_tpl<T> get(HSQUIRRELVM vm, SQInteger index)
 		{
 			uint16 id = 0;
 			get_slot(vm, "id", id, index);
 			quickstone_tpl<T> h;
-			h.set_id(id);
+			if (id < quickstone_tpl<T>::get_size()) {
+				h.set_id(id);
+			}
+			else {
+				sq_raise_error(vm, "Invalid id %d, too large", id);
+			}
 			return h;
 		}
 		static const char* squirrel_type()

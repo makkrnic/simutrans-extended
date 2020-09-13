@@ -1137,9 +1137,11 @@ int simu_main(int argc, char** argv)
 		}
 	}
 
+	bool old_restore_UI = env_t::restore_UI;
 	if(  new_world  &&  env_t::reload_and_save_on_quit  ) {
 		// construct from pak name an autosave if requested
 		loadsave_t file;
+
 		std::string pak_name( "autosave-" );
 		pak_name.append( env_t::objfilename );
 		pak_name.erase( pak_name.length()-1 );
@@ -1259,6 +1261,7 @@ DBG_MESSAGE("simmain","demo file not found at %s",buf.get_str() );
 	setsimrand(dr_time(), dr_time());
 	clear_random_mode( 7 );	// allow all
 
+
 	if(  loadgame==""  ||  !welt->load(loadgame.c_str())  ) {
 		// create a default map
 		DBG_MESSAGE("init with default map","(failing will be a pak error!)");
@@ -1354,8 +1357,12 @@ DBG_MESSAGE("simmain","demo file not found at %s",buf.get_str() );
 	// the real fonts for the current language
 	sprachengui_t::init_font_from_lang();
 
-	destroy_all_win(true);
-	if(  !env_t::networkmode  &&  !env_t::server  ) {
+	if (!(env_t::reload_and_save_on_quit && !new_world)) {
+		destroy_all_win(true);
+	}
+	env_t::restore_UI = old_restore_UI;
+
+	if(  !env_t::networkmode  &&  !env_t::server  &&  new_world  ) {
 		welt->get_message()->clear();
 	}
 	while(  !env_t::quit_simutrans  ) {

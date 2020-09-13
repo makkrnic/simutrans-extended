@@ -2443,8 +2443,21 @@ const way_desc_t *tool_build_way_t::get_desc( uint16 timeline_year_month, bool r
 image_id tool_build_way_t::get_icon(player_t *) const
 {
 	const way_desc_t *desc = way_builder_t::get_desc(default_param,0);
-	bool const elevated = desc ? desc->get_styp() == type_elevated  &&  desc->get_wtyp() != air_wt : false;
-	return (grund_t::underground_mode == grund_t::ugm_all && elevated) ? IMG_EMPTY : icon;
+	image_id image = icon;
+	bool is_tram = false;
+	if(  desc  ) {
+		is_tram = (desc->get_wtyp()==tram_wt) || (desc->get_styp() == type_tram);
+		if(  image ==  IMG_EMPTY  ) {
+			image = desc->get_cursor()->get_image_id(1);
+		}
+		if(  !desc->is_available( world()->get_timeline_year_month() )  ) {
+			return IMG_EMPTY;
+		}
+	}
+	if(  grund_t::underground_mode==grund_t::ugm_all && !is_tram ) {
+		return IMG_EMPTY;
+	}
+	return image;
 }
 
 const char* tool_build_way_t::get_tooltip(const player_t *) const
@@ -3039,7 +3052,7 @@ void tool_build_bridge_t::mark_tiles(  player_t *player, const koord3d &start, c
 	// flat -> height is 1 if conversion factor 1, 2 if conversion factor 2
 	// single height -> height is 1
 	// double height -> height is 2
-	const slope_t::type slope = gr->get_grund_hang();
+	const slope_t::type slope = gr->get_weg_hang();
 	uint8 max_height = slope ?  slope_t::max_diff(slope) : bridge_height;
 
 	zeiger_t *way = new zeiger_t(start, player );
@@ -8352,6 +8365,16 @@ void tool_show_underground_t::draw_after(scr_coord k, bool dirty) const
 	}
 }
 
+
+void tool_rotate90_t::draw_after(scr_coord pos, bool dirty) const
+{
+	if(  !env_t::networkmode  ) {
+		if(  skinverwaltung_t::compass_map  ) {
+			display_img_aligned( skinverwaltung_t::compass_map->get_image_id( welt->get_settings().get_rotation()+4 ), scr_rect(pos, env_t::iconsize), ALIGN_CENTER_V|ALIGN_CENTER_H, false );
+		}
+		tool_t::draw_after( pos, dirty );
+	}
+}
 
 bool tool_rotate90_t::init( player_t * )
 {
