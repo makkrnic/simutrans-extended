@@ -6,6 +6,7 @@
 #include <string>
 #include "environment.h"
 #include "loadsave.h"
+#include "../pathes.h"
 #include "../simversion.h"
 #include "../simconst.h"
 #include "../simtypes.h"
@@ -23,7 +24,7 @@ bool env_t::simple_drawing_fast_forward = true;
 sint16 env_t::simple_drawing_normal = 4;
 sint16 env_t::simple_drawing_default = 24;
 
-char env_t::program_dir[1024];
+char env_t::program_dir[PATH_MAX];
 plainstring env_t::default_theme;
 const char *env_t::user_dir = 0;
 const char *env_t::savegame_version_str = SAVEGAME_VER_NR;
@@ -37,9 +38,12 @@ uint16 const &env_t::server = network_server_port;
 
 // Disable announce by default
 uint32 env_t::server_announce = 0;
+bool env_t::easy_server = false;
 // Minimum is every 60 seconds, default is every 15 minutes (900 seconds), maximum is 86400 (1 day)
 sint32 env_t::server_announce_interval = 900;
+int env_t::server_port = 13353;
 std::string env_t::server_dns;
+std::string env_t::server_alt_dns; // for dualstack systems
 std::string env_t::server_name;
 std::string env_t::server_comments;
 std::string env_t::server_email;
@@ -153,6 +157,9 @@ uint8 env_t::cities_like_water = 60;
 bool env_t::left_to_right_graphs = true;
 uint32 env_t::tooltip_delay;
 uint32 env_t::tooltip_duration;
+
+std::string env_t::fontname = FONT_PATH_X "prop.fnt";
+uint8 env_t::fontsize = 11;
 
 uint32 env_t::front_window_text_color_rgb;
 PIXVAL env_t::front_window_text_color;
@@ -512,6 +519,13 @@ void env_t::rdwr(loadsave_t *file)
 		file->rdwr_long(bottom_window_text_color_rgb);
 		file->rdwr_byte(bottom_window_darkness);
 	}
-
-// server settings are not saved, since they are server specific and could be different on different servers on the save computers
+	if (file->get_version() >= 120006) {
+		plainstring str = fontname.c_str();
+		file->rdwr_str(str);
+		if (file->is_loading()) {
+			fontname = str ? str.c_str() : "";
+		}
+		file->rdwr_byte(fontsize);
+	}
+	// server settings are not saved, since they are server specific and could be different on different servers on the save computers
 }

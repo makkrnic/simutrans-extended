@@ -441,6 +441,7 @@ int simu_main(int argc, char** argv)
 			" -async              asynchronous images, only for SDL\n"
 			" -use_hw             hardware double buffering, only for SDL\n"
 			" -debug NUM          enables debugging (1..5)\n"
+			" -easyserver         set up every for server (query own IP, port forwarding)\n"
 			" -freeplay           play with endless money\n"
 			" -fullscreen         starts simutrans in fullscreen mode\n"
 			" -fps COUNT          framerate (from 5 to 100)\n"
@@ -552,7 +553,7 @@ int simu_main(int argc, char** argv)
 	{
 		// Settings file not found. Try the Debian default instead, in which
 		// data files are in /usr/share/games/simutrans
-        char backup_program_dir[1024];
+		char backup_program_dir[PATH_MAX];
 		strcpy(backup_program_dir, env_t::program_dir);
 		strcpy( env_t::program_dir, "/usr/share/games/simutrans-ex/" );
 		dr_chdir( env_t::program_dir );
@@ -586,6 +587,9 @@ int simu_main(int argc, char** argv)
 		env_t::user_dir = env_t::program_dir;
 	}
 	dr_chdir( env_t::user_dir );
+	dr_mkdir("maps");
+	dr_mkdir(SAVE_PATH);
+	dr_mkdir(SCREENSHOT_PATH);
 
 
 #ifdef REVISION
@@ -658,7 +662,7 @@ int simu_main(int argc, char** argv)
 	if(!xml_settings_found)
 	{
 		// Again, attempt to use the Debian directory.
-		char backup_program_dir[1024];
+		char backup_program_dir[PATH_MAX];
 		strcpy(backup_program_dir, env_t::program_dir);
 		strcpy( env_t::program_dir, "/usr/share/games/simutrans-extended/" );
 		dr_chdir( env_t::program_dir );
@@ -697,8 +701,12 @@ int simu_main(int argc, char** argv)
 	dr_chdir( env_t::program_dir );
 	if(  found_simuconf  ) {
 		if(simuconf.open(path_to_simuconf)) {
-			printf("parse_simuconf() in program dir (%s): ", path_to_simuconf);
+			// we do not allow to change the global font name
+			std::string old_fontname = env_t::fontname;
+			printf("parse_simuconf() at config/simuconf.tab: ");
 			env_t::default_settings.parse_simuconf( simuconf, disp_width, disp_height, fullscreen, env_t::objfilename );
+			simuconf.close();
+			env_t::fontname = old_fontname;
 		}
 	}
 
@@ -747,19 +755,47 @@ int simu_main(int argc, char** argv)
 	}
 
 	// starting a server?
-	if(  gimme_arg(argc, argv, "-server", 0)  ) {
-		const char *p = gimme_arg(argc, argv, "-server", 1);
+	if(  gimme_arg(argc, argv, "-easyserver", 0)  ) {
+		const char *p = gimme_arg(argc, argv, "-easyserver", 1);
 		int portadress = p ? atoi( p ) : 13353;
-		if(  portadress==0  ) {
-			portadress = 13353;
+		if(  portadress!=0  ) {
+			env_t::server_port = portadress;
 		}
 		// will fail fatal on the opening routine ...
-		dbg->message( "simmain()", "Server started on port %i", portadress );
-		env_t::networkmode = network_init_server( portadress );
+		dbg->message( "simmain()", "Server started on port %i", env_t::server_port );
+		env_t::networkmode = network_init_server( env_t::server_port );
+		// query IP and try to open ports on router
+		char IP[256], altIP[256];
+		altIP[0] = 0;
+		if(  prepare_for_server( IP, altIP, env_t::server_port )  ) {
+			// we have forwarded a port in router, so we can continue
+			env_t::server_dns = IP;
+			if(  env_t::server_name.empty()  ) {
+				env_t::server_name = std::string("Server at ")+IP;
+			}
+			env_t::server_announce = 1;
+			env_t::easy_server = 1;
+			env_t::server_dns = IP;
+			env_t::server_alt_dns = altIP;
+		}
 	}
-	else {
-		// no announce for clients ...
-		env_t::server_announce = 0;
+
+		// starting a server?
+	if(  !env_t::server  ) {
+		if(  gimme_arg(argc, argv, "-server", 0)  ) {
+			const char *p = gimme_arg(argc, argv, "-server", 1);
+			int portadress = p ? atoi( p ) : 13353;
+			if(  portadress!=0  ) {
+				env_t::server_port = portadress;
+			}
+			// will fail fatal on the opening routine ...
+			dbg->message( "simmain()", "Server started on port %i", env_t::server_port );
+			env_t::networkmode = network_init_server( env_t::server_port );
+		}
+		else {
+			// no announce for clients ...
+			env_t::server_announce = 0;
+		}
 	}
 
 #ifdef DEBUG
@@ -858,9 +894,12 @@ int simu_main(int argc, char** argv)
 	// default simuconf.tab
 	if(  found_simuconf  ) {
 		if(simuconf.open(path_to_simuconf)) {
+			// we do not allow to change the global font name also from the pakset ...
+			std::string old_fontname = env_t::fontname;
 			printf("parse_colours() at config/simuconf.tab: ");
 			env_t::default_settings.parse_colours( simuconf );
 			simuconf.close();
+			env_t::fontname = old_fontname;
 		}
 	}// a portable installation could have a personal simuconf.tab in the main dir of simutrans
 	// otherwise it is in ~/simutrans/simuconf.tab
@@ -876,29 +915,29 @@ int simu_main(int argc, char** argv)
 	if(  const char *themestr = gimme_arg(argc, argv, "-theme", 1)  ) {
 		dr_chdir( env_t::user_dir );
 		dr_chdir( "themes" );
-		themes_ok = gui_theme_t::themes_init(themestr);
+		themes_ok = gui_theme_t::themes_init(themestr, true);
 		if(  !themes_ok  ) {
 			dr_chdir( env_t::program_dir );
 			dr_chdir( "themes" );
-			themes_ok = gui_theme_t::themes_init(themestr);
+			themes_ok = gui_theme_t::themes_init(themestr, true);
 		}
 	}
 	// next try the last used theme
 	if(  !themes_ok  &&  env_t::default_theme.c_str()!=NULL  ) {
 		dr_chdir( env_t::user_dir );
 		dr_chdir( "themes" );
-		themes_ok = gui_theme_t::themes_init( env_t::default_theme );
+		themes_ok = gui_theme_t::themes_init( env_t::default_theme, true  );
 		if(  !themes_ok  ) {
 			dr_chdir( env_t::program_dir );
 			dr_chdir( "themes" );
-			themes_ok = gui_theme_t::themes_init( env_t::default_theme );
+			themes_ok = gui_theme_t::themes_init( env_t::default_theme, true  );
 		}
 	}
 	// specified themes not found => try default themes
 	if(  !themes_ok  ) {
 		dr_chdir( env_t::program_dir );
 		dr_chdir( "themes" );
-		themes_ok = gui_theme_t::themes_init("themes.tab");
+		themes_ok = gui_theme_t::themes_init("themes.tab",true);
 	}
 	if(  !themes_ok  ) {
 		dbg->fatal( "simmain()", "No GUI themes found! Please re-install!" );
@@ -1069,9 +1108,8 @@ int simu_main(int argc, char** argv)
 		translator::set_language( env_t::language_iso );
 	}
 
-	// Hajo: simgraph init loads default fonts, now we need to load
-	// the real fonts for the current language
-	sprachengui_t::init_font_from_lang();
+	// Hajo: simgraph init loads default fonts, now we need to load (if not set otherwise)
+	sprachengui_t::init_font_from_lang( strcmp(env_t::fontname.c_str(), FONT_PATH_X "prop.fnt")==0 );
 	dr_chdir(env_t::program_dir);
 
 	dbg->important("Reading city configuration ...");
@@ -1375,8 +1413,8 @@ DBG_MESSAGE("simmain","demo file not found at %s",buf.get_str() );
 	welt->set_dirty();
 
 	// Hajo: simgraph init loads default fonts, now we need to load
-	// the real fonts for the current language
-	sprachengui_t::init_font_from_lang();
+	// the real fonts for the current language, if not set otherwise
+	sprachengui_t::init_font_from_lang( strcmp(env_t::fontname.c_str(), FONT_PATH_X "prop.fnt")==0 );
 
 	if (!(env_t::reload_and_save_on_quit && !new_world)) {
 		destroy_all_win(true);
@@ -1457,6 +1495,7 @@ DBG_MESSAGE("simmain","demo file not found at %s",buf.get_str() );
 
 	translator::delete_all_lists();
 
+	remove_port_forwarding( env_t::server );
 	network_core_shutdown();
 
 	simgraph_exit();

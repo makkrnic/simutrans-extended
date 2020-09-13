@@ -240,7 +240,7 @@ clipping_info_t clips;
 
 #define CR clips CLIP_NUM_INDEX
 
-static font_type large_font;
+static font_t  large_font;
 
 // needed for resizing gui
 int large_font_ascent = 9;
@@ -4335,42 +4335,31 @@ void display_veh_form_wh_clip_rgb(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, PIXVA
 
 uint16 display_load_font(const char* fname)
 {
-	font_type fnt;
+	font_t  fnt;
 
 	if(  fname == NULL  ) {
-		// reload last font
-		if(  load_font(&fnt, large_font.fname)  ) {
-			free(large_font.screen_width);
-			free(large_font.char_data);
-			large_font = fnt;
-			large_font_ascent = large_font.height + large_font.descent;
-			large_font_total_height = large_font.height;
-			return large_font.num_chars;
-		}
-		else {
-			return 0;
-		}
+		dbg->error( "display_load_font", "NULL filename" );
+		return 0;
 	}
-	else {
-
-		// skip reloading if already in memory
-		if (strcmp(large_font.fname, fname) == 0) {
-			return large_font.num_chars;
-		}
-		tstrncpy(large_font.fname, fname, lengthof(large_font.fname));
-
-		if (load_font(&fnt, fname)) {
-			free(large_font.screen_width);
-			free(large_font.char_data);
-			large_font = fnt;
-			large_font_ascent = large_font.height + large_font.descent;
-			large_font_total_height = large_font.height;
-			return large_font.num_chars;
-		}
-		else {
-			return 0;
-		}
+	// skip reloading if already in memory, if bdf font
+	if(  large_font.num_chars>0  &&  strcmp( large_font.fname, fname ) == 0  ) {
+		return large_font.num_chars;
 	}
+
+	tstrncpy( large_font.fname, fname, lengthof(large_font.fname) );
+	if(  load_font(&fnt, fname)  ) {
+
+		free(large_font.screen_width);
+		free(large_font.char_data);
+		large_font = fnt;
+		large_font_ascent = large_font.height + large_font.descent;
+		large_font_total_height = large_font.height;	// this is the actual LINESPACE
+
+		env_t::fontname = fname;
+
+		return large_font.num_chars;
+	}
+	return 0;
 }
 
 
@@ -4457,11 +4446,11 @@ bool has_character(utf16 char_code)
 
 
 /*
-* returns the index of the last character that would fit within the width
-* If an eclipse len is given, it will only return the last character up to this len if the full length cannot be fitted
-* @returns index of next character. if text[index]==0 the whole string fits
-*/
-size_t display_fit_proportional(const char *text, scr_coord_val max_width, scr_coord_val eclipse_width)
+ * returns the index of the last character that would fit within the width
+ * If an ellipsis len is given, it will only return the last character up to this len if the full length cannot be fitted
+ * @returns index of next character. if text[index]==0 the whole string fits
+ */
+size_t display_fit_proportional( const char *text, scr_coord_val max_width, scr_coord_val ellipsis_width )
 {
 	size_t max_idx = 0;
 
@@ -4470,14 +4459,14 @@ size_t display_fit_proportional(const char *text, scr_coord_val max_width, scr_c
 	scr_coord_val current_offset = 0;
 
 	const char *tmp_text = text;
-	while (get_next_char_with_metrics(tmp_text, byte_length, pixel_width) && max_width > (current_offset + eclipse_width + pixel_width)) {
+	while(  get_next_char_with_metrics(tmp_text, byte_length, pixel_width)  &&  max_width > (current_offset+ellipsis_width+pixel_width)  ) {
 		current_offset += pixel_width;
 		max_idx += byte_length;
 	}
-	size_t eclipse_idx = max_idx;
+	size_t ellipsis_idx = max_idx;
 
 	// now check if the text would fit completely
-	if (eclipse_width  &&  pixel_width > 0) {
+	if(  ellipsis_width  &&  pixel_width > 0  ) {
 		// only when while above failed because of exceeding length
 		current_offset += pixel_width;
 		max_idx += byte_length;
@@ -4491,7 +4480,7 @@ size_t display_fit_proportional(const char *text, scr_coord_val max_width, scr_c
 			return max_idx + byte_length;
 		}
 	}
-	return eclipse_idx;
+	return ellipsis_idx;
 }
 
 
@@ -4537,7 +4526,7 @@ utf32 get_prev_char_with_metrics(const char* &text, const char *const text_start
  */
 int display_calc_proportional_string_len_width(const char *text, size_t len)
 {
-	const font_type* const fnt = &large_font;
+	const font_t * const fnt = &large_font;
 	unsigned int width = 0;
 	int w;
 
@@ -4596,7 +4585,7 @@ static unsigned char get_h_mask(const int xL, const int xR, const int cL, const 
 */
 int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char* txt, control_alignment_t flags, const PIXVAL color, bool dirty, sint32 len  CLIP_NUM_DEF)
 {
-	const font_type* const fnt = &large_font;
+	const font_t * const fnt = &large_font;
 	KOORD_VAL cL, cR, cT, cB;
 	utf32 c;
 	size_t iTextPos = 0; // pointer on text position: prissi
@@ -4737,7 +4726,7 @@ int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char*
 
 	if (dirty) {
 		// here, because only now we know the length also for ALIGN_LEFT text
-		mark_rect_dirty_clip(x0, y, x - 1, y + 10 - 1  CLIP_NUM_PAR);
+		mark_rect_dirty_clip( x0, y, x - 1, y + large_font_total_height - 1  CLIP_NUM_PAR);
 	}
 	// warning: actual len might be longer, due to clipping!
 	return x - x0;
@@ -4745,13 +4734,13 @@ int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char*
 
 
 /*
-* Displays a string which is abbreviated by the (language specific) ellipse character if too wide
-* If enough space is given then it just displays the full string
-* @returns screen_width
-*/
-KOORD_VAL display_proportional_ellipse_rgb(scr_rect r, const char *text, int align, const PIXVAL color, const bool dirty)
+ * Displays a string which is abbreviated by the (language specific) ellipsis character if too wide
+ * If enough space is given then it just displays the full string
+ * @returns screen_width
+ */
+KOORD_VAL display_proportional_ellipsis_rgb( scr_rect r, const char *text, int align, const PIXVAL color, const bool dirty )
 {
-	const scr_coord_val eclipse_width = translator::get_lang()->eclipse_width;
+	const scr_coord_val ellipsis_width = translator::get_lang()->ellipsis_width;
 	const scr_coord_val max_screen_width = r.w;
 	size_t max_idx = 0;
 
@@ -4765,32 +4754,32 @@ KOORD_VAL display_proportional_ellipse_rgb(scr_rect r, const char *text, int ali
 	}
 
 	const char *tmp_text = text;
-	while (get_next_char_with_metrics(tmp_text, byte_length, pixel_width) && max_screen_width > (current_offset + eclipse_width + pixel_width)) {
+	while(  get_next_char_with_metrics(tmp_text, byte_length, pixel_width)  &&  max_screen_width >= (current_offset+ellipsis_width+pixel_width)  ) {
 		current_offset += pixel_width;
 		max_idx += byte_length;
 	}
-	size_t max_idx_before_ellipse = max_idx;
-	scr_coord_val max_offset_before_ellipse = current_offset;
+	size_t max_idx_before_ellipsis = max_idx;
+	scr_coord_val max_offset_before_ellipsis = current_offset;
 
 	// now check if the text would fit completely
-	if (eclipse_width  &&  pixel_width > 0) {
+	if(  ellipsis_width  &&  pixel_width > 0  ) {
 		// only when while above failed because of exceeding length
 		current_offset += pixel_width;
 		max_idx += byte_length;
 		// check the rest ...
-		while (get_next_char_with_metrics(tmp_text, byte_length, pixel_width) && max_screen_width > (current_offset + pixel_width)) {
+		while(  get_next_char_with_metrics(tmp_text, byte_length, pixel_width)  &&  max_screen_width >= (current_offset+pixel_width)  ) {
 			current_offset += pixel_width;
 			max_idx += byte_length;
 		}
 		// if it does not fit
-		if (max_screen_width <= (current_offset + pixel_width)) {
+		if(  max_screen_width < (current_offset+pixel_width)  ) {
 			KOORD_VAL w = 0;
 			// since we know the length already, we try to center the text with the remaining pixels of the last character
-			if (align & ALIGN_CENTER_H) {
-				w = (max_screen_width - max_offset_before_ellipse - eclipse_width) / 2;
+			if(  align & ALIGN_CENTER_H  ) {
+				w = (max_screen_width-max_offset_before_ellipsis-ellipsis_width)/2;
 			}
-			w += display_text_proportional_len_clip_rgb(r.x + w, r.y, text, ALIGN_LEFT | DT_CLIP, color, dirty, max_idx_before_ellipse  CLIP_NUM_DEFAULT);
-			w += display_text_proportional_len_clip_rgb(r.x + w, r.y, translator::translate("..."), ALIGN_LEFT | DT_CLIP, color, dirty, -1  CLIP_NUM_DEFAULT);
+			w += display_text_proportional_len_clip_rgb( r.x+w, r.y, text, ALIGN_LEFT | DT_CLIP, color, dirty, max_idx_before_ellipsis  CLIP_NUM_DEFAULT);
+			w += display_text_proportional_len_clip_rgb( r.x+w, r.y, translator::translate("..."), ALIGN_LEFT | DT_CLIP, color, dirty, -1  CLIP_NUM_DEFAULT);
 			return w;
 		}
 		else {
@@ -5383,8 +5372,9 @@ void simgraph_init(KOORD_VAL width, KOORD_VAL height, int full_screen)
 		// init, load, and check fonts
 		large_font.screen_width = NULL;
 		large_font.char_data = NULL;
-		if (!display_load_font(FONT_PATH_X "prop.fnt")) {
-			dr_fatal_notify("No fonts found!");
+
+		if(  !display_load_font(env_t::fontname.c_str())  &&  !display_load_font(FONT_PATH_X "prop.fnt") ) {
+			dr_fatal_notify( "No fonts found!" );
 			fprintf(stderr, "Error: No fonts found!");
 			exit(-1);
 		}
@@ -5561,17 +5551,15 @@ void display_snapshot(int x, int y, int w, int h)
 
 	char buf[80];
 
-	dr_mkdir(SCRENSHOT_PATH);
-
 	// find the first not used screenshot image
 	do {
-		sprintf(buf, SCRENSHOT_PATH_X "simscr%02d.png", number);
-		if (access(buf, W_OK) == -1) {
-			sprintf(buf, SCRENSHOT_PATH_X "simscr%02d.bmp", number);
+		sprintf(buf, SCREENSHOT_PATH_X "simscr%02d.png", number);
+		if(access(buf, W_OK) == -1) {
+			sprintf(buf, SCREENSHOT_PATH_X "simscr%02d.bmp", number);
 		}
 		number++;
 	} while (access(buf, W_OK) != -1);
-	sprintf(buf, SCRENSHOT_PATH_X "simscr%02d.bmp", number - 1);
+	sprintf(buf, SCREENSHOT_PATH_X "simscr%02d.bmp", number-1);
 
 	dr_screenshot(buf, x, y, w, h);
 }

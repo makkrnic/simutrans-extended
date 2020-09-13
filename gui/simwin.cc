@@ -70,6 +70,9 @@
 #include "message_option_t.h"
 #include "fabrik_info.h"
 #include "themeselector.h"
+#include "goods_frame_t.h"
+#include "loadfont_frame.h"
+#include "scenario_info.h"
 
 #include "../simversion.h"
 
@@ -518,6 +521,9 @@ void rdwr_all_win(loadsave_t *file)
 					case magic_messageframe:   w = new message_frame_t(); break;
 					case magic_message_options: w = new message_option_t(); break;
 					case magic_factory_info:   w = new fabrik_info_t(); break;
+					case magic_goodslist:      w = new goods_frame_t(); break;
+					case magic_font:           w = new loadfont_frame_t(); break;
+					case magic_scenario_info:  w = new scenario_info_t(); break;
 
 					default:
 						if(  id>=magic_finances_t  &&  id<magic_finances_t+MAX_PLAYER_COUNT  ) {
@@ -1026,9 +1032,9 @@ void snap_check_win( const int win, scr_coord *r, const scr_coord from_pos, cons
 			other_pos.x = 0;
 			other_pos.y = env_t::iconsize.h;
 			other_size.x = display_get_width();
-			other_size.y = display_get_height()-16-other_pos.y; // 16 = bottom ticker height?
+			other_size.y = display_get_height()-win_get_statusbar_height()-other_pos.y;
 			if(  show_ticker  ) {
-				other_size.y -= 16;
+				other_size.y -= TICKER_HEIGHT;
 			}
 		}
 		else {
@@ -1127,7 +1133,7 @@ void move_win(int win, event_t *ev)
 
 	// CLIP(wert,min,max)
 	to_pos.x = CLIP( to_pos.x, 8-to_size.x, display_get_width()-16 );
-	to_pos.y = CLIP( to_pos.y, env_t::iconsize.h, display_get_height()-24 );
+	to_pos.y = CLIP( to_pos.y, env_t::iconsize.h, display_get_height() - D_TITLEBAR_HEIGHT - win_get_statusbar_height() - TICKER_HEIGHT);
 
 	// delta is actual window movement.
 	const scr_coord delta = to_pos - from_pos;
@@ -1271,7 +1277,7 @@ bool check_pos_win(event_t *ev)
 	}
 
 	// cursor event only go to top window (but not if rolled up)
-	if ((ev->ev_class == EVENT_KEYBOARD /*|| ev->ev_class == EVENT_STRING*/) && !wins.empty()) { // The commented out section caused problems with Japanese text input - but is this necessary for something else?
+	if(  (ev->ev_class == EVENT_KEYBOARD  ||  ev->ev_class == EVENT_STRING)  &&  !wins.empty()  ) {
 		simwin_t &win  = wins.back();
 		if(  !win.rollup  )  {
 			inside_event_handling = win.gui;
@@ -1295,13 +1301,13 @@ bool check_pos_win(event_t *ev)
 	}
 
 	// swallow all other events in the infobar
-	if (!(ev->ev_class == EVENT_KEYBOARD || ev->ev_class == EVENT_STRING) && y > display_get_height() - 16) {
+	if(  !(ev->ev_class == EVENT_KEYBOARD  ||  ev->ev_class == EVENT_STRING)  &&  y > display_get_height()- win_get_statusbar_height()  ) {
 		// swallow event
 		return true;
 	}
 
 	// swallow all other events in ticker (if there)
-	if (!(ev->ev_class == EVENT_KEYBOARD || ev->ev_class == EVENT_STRING) && show_ticker && y > display_get_height() - 32) {
+	if(  !(ev->ev_class == EVENT_KEYBOARD  ||  ev->ev_class == EVENT_STRING)  &&  show_ticker  &&  y > display_get_height()- win_get_statusbar_height() - TICKER_HEIGHT  ) {
 		if(  IS_LEFTCLICK(ev)  ) {
 			// goto infowin koordinate, if ticker is active
 			koord p = ticker::get_welt_pos();
@@ -1480,9 +1486,15 @@ void win_poll_event(event_t* const ev)
 			}
 		}
 		ev->ev_class = EVENT_NONE;
+		ticker::redraw_ticker();
 	}
 }
 
+
+uint16 win_get_statusbar_height()
+{
+	return max(LINESPACE + 2, 15);
+}
 
 // finally updates the display
 void win_display_flush(double konto)
@@ -1594,18 +1606,22 @@ void win_display_flush(double konto)
 	char const *time = tick_to_string( wl->get_ticks(), true );
 
 	// statusbar background
+	KOORD_VAL const status_bar_height = win_get_statusbar_height();
+	KOORD_VAL const status_bar_y = disp_height - status_bar_height;
+	KOORD_VAL const status_bar_text_y = status_bar_y + (status_bar_height - LINESPACE) / 2;
+	KOORD_VAL const status_bar_icon_y = status_bar_y + (status_bar_height - 15) / 2;
 	display_set_clip_wh( 0, 0, disp_width, disp_height );
-	display_fillbox_wh_rgb(0, disp_height-16, disp_width, 1, SYSCOL_STATUSBAR_DIVIDER, false);
-	display_fillbox_wh_rgb(0, disp_height-15, disp_width, 15, SYSCOL_STATUSBAR_BACKGROUND, false);
+	display_fillbox_wh_rgb(0, status_bar_y - 1, disp_width, 1, SYSCOL_STATUSBAR_DIVIDER, false);
+	display_fillbox_wh_rgb(0, status_bar_y, disp_width, status_bar_height, SYSCOL_STATUSBAR_BACKGROUND, false);
 
-	bool tooltip_check = get_mouse_y()>disp_height-15;
+	bool tooltip_check = get_mouse_y() > status_bar_y;
 	if(  tooltip_check  ) {
 		tooltip_xpos = get_mouse_x();
-		tooltip_ypos = disp_height-15-10-TICKER_HEIGHT*show_ticker;
+		tooltip_ypos = status_bar_y-10-TICKER_HEIGHT*show_ticker;
 	}
 
 	// season color
-	display_color_img( skinverwaltung_t::seasons_icons->get_image_id(wl->get_season()), 2, disp_height-15, 0, false, true );
+	display_color_img( skinverwaltung_t::seasons_icons->get_image_id(wl->get_season()), 2, status_bar_icon_y, 0, false, true );
 	if(  tooltip_check  &&  tooltip_xpos<14  ) {
 		static char const* const seasons[] = { "q2", "q3", "q4", "q1" };
 		tooltip_text = translator::translate(seasons[wl->get_season()]);
@@ -1617,7 +1633,7 @@ void win_display_flush(double konto)
 	// shown if timeline game
 	if(  wl->use_timeline()  &&  skinverwaltung_t::timelinesymbol  ) {
 		right_border -= 14;
-		display_color_img( skinverwaltung_t::timelinesymbol->get_image_id(0), right_border, disp_height-15, 0, false, true );
+		display_color_img( skinverwaltung_t::timelinesymbol->get_image_id(0), right_border, status_bar_icon_y, 0, false, true );
 		if(  tooltip_check  &&  tooltip_xpos>=right_border  ) {
 			tooltip_text = translator::translate("timeline");
 			tooltip_check = false;
@@ -1627,7 +1643,7 @@ void win_display_flush(double konto)
 	// shown if connected
 	if(  env_t::networkmode  &&  skinverwaltung_t::networksymbol  ) {
 		right_border -= 14;
-		display_color_img( skinverwaltung_t::networksymbol->get_image_id(0), right_border, disp_height-15, 0, false, true );
+		display_color_img( skinverwaltung_t::networksymbol->get_image_id(0), right_border, status_bar_icon_y, 0, false, true );
 		if(  tooltip_check  &&  tooltip_xpos>=right_border  ) {
 			tooltip_text = translator::translate("Connected with server");
 			tooltip_check = false;
@@ -1637,7 +1653,7 @@ void win_display_flush(double konto)
 	// put pause icon
 	if(  wl->is_paused()  &&  skinverwaltung_t::pausesymbol  ) {
 		right_border -= 14;
-		display_color_img( skinverwaltung_t::pausesymbol->get_image_id(0), right_border, disp_height-15, 0, false, true );
+		display_color_img( skinverwaltung_t::pausesymbol->get_image_id(0), right_border, status_bar_icon_y, 0, false, true );
 		if(  tooltip_check  &&  tooltip_xpos>=right_border  ) {
 			tooltip_text = translator::translate("GAME PAUSED");
 			tooltip_check = false;
@@ -1647,7 +1663,7 @@ void win_display_flush(double konto)
 	// put fast forward icon
 	if(  wl->is_fast_forward()  &&  skinverwaltung_t::fastforwardsymbol  ) {
 		right_border -= 14;
-		display_color_img( skinverwaltung_t::fastforwardsymbol->get_image_id(0), right_border, disp_height-15, 0, false, true );
+		display_color_img( skinverwaltung_t::fastforwardsymbol->get_image_id(0), right_border, status_bar_icon_y, 0, false, true );
 		if(  tooltip_check  &&  tooltip_xpos>=right_border  ) {
 			tooltip_text = translator::translate("Fast forward");
 			tooltip_check = false;
@@ -1694,16 +1710,15 @@ void win_display_flush(double konto)
 		}
 	}
 #endif
-
-	scr_coord_val w_left = 20+display_proportional_rgb(20, disp_height-12, time, ALIGN_LEFT, SYSCOL_STATUSBAR_TEXT, true);
-	scr_coord_val w_right  = display_proportional_rgb(right_border-4, disp_height-12, info, ALIGN_RIGHT, SYSCOL_STATUSBAR_TEXT, true);
+	scr_coord_val w_left = 20+display_proportional_rgb(20, status_bar_text_y, time, ALIGN_LEFT, SYSCOL_STATUSBAR_TEXT, true);
+	scr_coord_val w_right  = display_proportional_rgb(right_border-4, status_bar_text_y, info, ALIGN_RIGHT, SYSCOL_STATUSBAR_TEXT, true);
 	scr_coord_val middle = (disp_width+((w_left+8)&0xFFF0)-((w_right+8)&0xFFF0))/2;
 
 	if(wl->get_active_player()) {
 		char buffer[256];
-		display_proportional_rgb( middle-5, disp_height-12, wl->get_active_player()->get_name(), ALIGN_RIGHT, PLAYER_FLAG|color_idx_to_rgb(wl->get_active_player()->get_player_color1()+0), true);
-		money_to_string(buffer, konto);
-		display_proportional_rgb( middle+5, disp_height-12, buffer, ALIGN_LEFT, konto >= 0.0?MONEY_PLUS:MONEY_MINUS, true);
+		display_proportional_rgb( middle-5, status_bar_text_y, wl->get_active_player()->get_name(), ALIGN_RIGHT, PLAYER_FLAG|color_idx_to_rgb(wl->get_active_player()->get_player_color1()+0), true);
+		money_to_string(buffer, konto );
+		display_proportional_rgb( middle+5, status_bar_text_y, buffer, ALIGN_LEFT, konto >= 0.0?MONEY_PLUS:MONEY_MINUS, true);
 	}
 }
 

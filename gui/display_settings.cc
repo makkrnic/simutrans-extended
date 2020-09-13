@@ -26,63 +26,65 @@
 #include "../simmenu.h"
 #include "../player/simplay.h"
 #include "../utils/simstring.h"
+
 #include "themeselector.h"
+#include "loadfont_frame.h"
 #include "simwin.h"
 #include "../obj/gebaeude.h"
 
 // y coordinates
 #define GRID_MODE						(6)
-#define UNDERGROUND						(GRID_MODE+13)
-#define SLICE							(UNDERGROUND+13)
-#define SLICE_LABEL						(SLICE+13)
-#define DAY_NIGHT						(SLICE_LABEL+13)
-#define BRIGHTNESS						(DAY_NIGHT+13)
-#define SCROLL_INVERS					(BRIGHTNESS+13)
-#define SCROLL_SPEED					(SCROLL_INVERS+13)
-#define LEFT_TO_RIGHT_GRAPHS			(SCROLL_SPEED+13)
+#define UNDERGROUND						(GRID_MODE+LINESPACE+2)
+#define SLICE							(UNDERGROUND+LINESPACE+2)
+#define SLICE_LABEL						(SLICE+LINESPACE+2)
+#define DAY_NIGHT						(SLICE_LABEL+LINESPACE+2)
+#define BRIGHTNESS						(DAY_NIGHT+LINESPACE+2)
+#define SCROLL_INVERS					(BRIGHTNESS+LINESPACE+2)
+#define SCROLL_SPEED					(SCROLL_INVERS+LINESPACE+2)
+#define LEFT_TO_RIGHT_GRAPHS			(SCROLL_SPEED+LINESPACE+2)
 
-#define SEPERATE1						(LEFT_TO_RIGHT_GRAPHS+13)
+#define SEPERATE1						(LEFT_TO_RIGHT_GRAPHS+LINESPACE)
 
 #define USE_TRANSPARENCY	(SEPERATE1+4)
-#define HIDE_TREES			(USE_TRANSPARENCY+13)
-#define HIDE_CITY_HOUSES	(HIDE_TREES+13)
-#define HIDE_UNDER_CURSOR	(HIDE_CITY_HOUSES+13)
+#define HIDE_TREES			(USE_TRANSPARENCY+LINESPACE+2)
+#define HIDE_CITY_HOUSES	(HIDE_TREES+LINESPACE+2)
+#define HIDE_UNDER_CURSOR	(HIDE_CITY_HOUSES+LINESPACE+2)
 #define CURSOR_HIDE_RANGE	(HIDE_UNDER_CURSOR)
 
-#define SEPERATE2 (CURSOR_HIDE_RANGE+13)
+#define SEPERATE2 (CURSOR_HIDE_RANGE+LINESPACE)
 
 #define USE_TRANSPARENCY_STATIONS		(SEPERATE2+4)
-#define SHOW_STATION_COVERAGE			(USE_TRANSPARENCY_STATIONS+13)
-#define SHOW_STATION_SIGNS				(SHOW_STATION_COVERAGE+13)
-#define SHOW_STATION_GOODS				(SHOW_STATION_SIGNS+13)
-#define SHOW_SIGNALBOX_COVERAGE				(SHOW_STATION_GOODS+13)
+#define SHOW_STATION_COVERAGE			(USE_TRANSPARENCY_STATIONS+LINESPACE+2)
+#define SHOW_STATION_SIGNS				(SHOW_STATION_COVERAGE+LINESPACE+2)
+#define SHOW_STATION_GOODS				(SHOW_STATION_SIGNS+LINESPACE+2)
+#define SHOW_SIGNALBOX_COVERAGE				(SHOW_STATION_GOODS+LINESPACE+2)
 
-#define SEPERATE3						(SHOW_SIGNALBOX_COVERAGE+13)
+#define SEPERATE3						(SHOW_SIGNALBOX_COVERAGE+LINESPACE)
 
 #define CITY_WALKER								(SEPERATE3+4)
-#define STOP_WALKER								(CITY_WALKER+13)
-#define DENS_TRAFFIC							(STOP_WALKER+13)
-#define CONVOI_TOOLTIPS							(DENS_TRAFFIC+13)
-#define CONVOI_NAMEPLATES						(CONVOI_TOOLTIPS+13)
-#define CONVOI_LOADINGBAR						(CONVOI_NAMEPLATES+13)
-#define HIGHLITE_SCHEDULE						(CONVOI_LOADINGBAR+13)
+#define STOP_WALKER								(CITY_WALKER+LINESPACE+2)
+#define DENS_TRAFFIC							(STOP_WALKER+LINESPACE+2)
+#define CONVOI_TOOLTIPS							(DENS_TRAFFIC+LINESPACE+2)
+#define CONVOI_NAMEPLATES						(CONVOI_TOOLTIPS+LINESPACE+2)
+#define CONVOI_LOADINGBAR						(CONVOI_NAMEPLATES+LINESPACE+2)
+#define HIGHLITE_SCHEDULE						(CONVOI_LOADINGBAR+LINESPACE+2)
 
-#define SEPERATE4	(HIGHLITE_SCHEDULE+13)
+#define SEPERATE4	(HIGHLITE_SCHEDULE+D_BUTTON_HEIGHT*3)
 
 #define FPS_DATA						(SEPERATE4+4)
-#define IDLE_DATA						(FPS_DATA+13)
-#define FRAME_DATA						(IDLE_DATA+13)
-#define LOOP_DATA						(FRAME_DATA+13)
+#define IDLE_DATA						(FPS_DATA+LINESPACE)
+#define FRAME_DATA						(IDLE_DATA+LINESPACE)
+#define LOOP_DATA						(FRAME_DATA+LINESPACE)
 
-#define SEPERATE5						(LOOP_DATA+13)
+#define SEPERATE5						(LOOP_DATA+LINESPACE)
 
 #define PHASE_REBUILD_CONNEXIONS		(SEPERATE5+7)
-#define PHASE_FILTER_ELIGIBLE			(PHASE_REBUILD_CONNEXIONS+13)
-#define PHASE_FILL_MATRIX				(PHASE_FILTER_ELIGIBLE+13)
-#define PHASE_EXPLORE_PATHS				(PHASE_FILL_MATRIX+13)
-#define PHASE_REROUTE_GOODS				(PHASE_EXPLORE_PATHS+13)
-#define PATH_EXPLORE_STATUS				(PHASE_REROUTE_GOODS+13)
-#define PATH_EXPLORE_STATUS_TEXT		(PATH_EXPLORE_STATUS+13)
+#define PHASE_FILTER_ELIGIBLE			(PHASE_REBUILD_CONNEXIONS+LINESPACE)
+#define PHASE_FILL_MATRIX				(PHASE_FILTER_ELIGIBLE+LINESPACE)
+#define PHASE_EXPLORE_PATHS				(PHASE_FILL_MATRIX+LINESPACE)
+#define PHASE_REROUTE_GOODS				(PHASE_EXPLORE_PATHS+LINESPACE)
+#define PATH_EXPLORE_STATUS				(PHASE_REROUTE_GOODS+D_BUTTON_HEIGHT)
+#define PATH_EXPLORE_STATUS_TEXT		(PATH_EXPLORE_STATUS+D_BUTTON_HEIGHT)
 
 
 #define L_DIALOG_HEIGHT					(PATH_EXPLORE_STATUS_TEXT+30)
@@ -293,6 +295,18 @@ gui_frame_t( translator::translate("Helligk. u. Farben") )
 	buttons[b].set_text( "Highlite schedule" );
 	buttons[b].set_tooltip( "Highlight the locations of stops on the current schedule" );
 
+	// Show thememanager
+	buttons[29].set_pos(scr_coord(10, HIGHLITE_SCHEDULE+ D_BUTTON_HEIGHT));
+	buttons[29].set_typ(button_t::roundbox_state);
+	buttons[29].set_text("Select a theme for display");
+	buttons[29].set_width(L_DIALOG_WIDTH - D_MARGINS_X);
+
+	// Change font
+	buttons[30].set_pos(scr_coord(10, HIGHLITE_SCHEDULE+D_BUTTON_HEIGHT*2));
+	buttons[30].set_typ(button_t::roundbox_state);
+	buttons[30].set_text("Select display font");
+	buttons[30].set_width(L_DIALOG_WIDTH - D_MARGINS_X);
+
 	for(int i=0;  i<COLORS_MAX_BUTTONS;  i++ ) {
 		buttons[i].add_listener(this);
 	}
@@ -328,6 +342,8 @@ gui_frame_t( translator::translate("Helligk. u. Farben") )
 	add_component(buttons + 26);
 	add_component(buttons + 27);
 	add_component(buttons + 28);
+	add_component(buttons + 29);
+	add_component(buttons + 30);
 
 	// unused buttons
 	// add_component( buttons+2 );
@@ -507,7 +523,12 @@ bool color_gui_t::action_triggered( gui_action_creator_t *comp, value_t v)
 	else if ((buttons + 28) == comp) {
 		env_t::show_cnv_loadingbar = (env_t::show_cnv_loadingbar + 1) % MAX_LOADING_BAR_OPTIONS;
 	}
-
+	else if ((buttons + 29) == comp) {
+		create_win(new themeselector_t(), w_info, magic_themes);
+	}
+	else if ((buttons + 30) == comp) {
+		create_win(new loadfont_frame_t(), w_info, magic_font);
+	}
 	welt->set_dirty();
 	return true;
 }

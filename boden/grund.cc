@@ -1557,7 +1557,7 @@ void grund_t::display_obj_all(const sint16 xpos, const sint16 ypos, const sint16
 	}
 
 	// display background
-	if (!tunnel_portal) {
+	if (!tunnel_portal  ||  slope == 0) {
 		activate_ribi_clip( (ribi_t::northwest & ribi) | 16 CLIP_NUM_PAR );	}
 	else {
 		// also clip along the upper edge of the tunnel tile
@@ -1655,7 +1655,7 @@ void grund_t::display_obj_all(const sint16 xpos, const sint16 ypos, const sint16
 	}
 
 	// foreground
-	if (tunnel_portal) {
+	if (tunnel_portal  &&  slope != 0) {
 		// clip at the upper edge
 		activate_ribi_clip( (ribi & (corner_se(slope)>0 ?  ribi_t::southeast : ribi_t::northwest) )| 16 CLIP_NUM_PAR );
 	}
@@ -1760,13 +1760,13 @@ void grund_t::display_overlay(const sint16 xpos, const sint16 ypos)
 
 			switch( env_t::show_names >> 2 ) {
 				case 0:
-					display_ddd_proportional_clip( new_xpos, ypos, width, 0, pc, SYSCOL_TEXT, text, dirty );
+					display_ddd_proportional_clip( new_xpos, ypos, width, 0, pc, color_idx_to_rgb(COL_BLACK), text, dirty );
 					break;
 				case 1:
-					display_outline_proportional_rgb( new_xpos, ypos-(LINESPACE/2), pc+3, SYSCOL_TEXT, text, dirty );
+					display_outline_proportional_rgb( new_xpos, ypos-(LINESPACE/2), pc+3, color_idx_to_rgb(COL_BLACK), text, dirty );
 					break;
 				case 2:
-					display_outline_proportional_rgb( 16+new_xpos, ypos-(LINESPACE/2), color_idx_to_rgb(COL_YELLOW), SYSCOL_TEXT, text, dirty );
+					display_outline_proportional_rgb( new_xpos + LINESPACE + D_H_SPACE, ypos-(LINESPACE/2), color_idx_to_rgb(COL_YELLOW), color_idx_to_rgb(COL_BLACK), text, dirty );
 					display_ddd_box_clip_rgb( new_xpos, ypos-(LINESPACE/2), LINESPACE, LINESPACE, pc-2, pc+2 );
 					display_fillbox_wh_rgb( new_xpos+1, ypos-(LINESPACE/2)+1, LINESPACE-2, LINESPACE-2, pc, dirty );
 					break;

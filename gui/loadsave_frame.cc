@@ -17,10 +17,17 @@
 #include "../sys/simsys.h"
 #include "../simworld.h"
 #include "../simversion.h"
+#include "../pathes.h"
+
 #include "../dataobj/loadsave.h"
 #include "../dataobj/translator.h"
 #include "../dataobj/environment.h"
-#include "../pathes.h"
+
+#include "../network/network.h"
+#include "../network/network_cmd.h"
+#include "../network/network_cmd_ingame.h"
+#include "../network/network_socket_list.h"
+
 #include "../utils/simstring.h"
 
 #include "components/gui_button.h"
@@ -88,15 +95,33 @@ void sve_info_t::rdwr(loadsave_t *file)
 
 /**
  * Action that's started with a button click
- * @author Hansj�rg Malthaner
+ * @author Hansj?rg Malthaner
  */
 bool loadsave_frame_t::item_action(const char *filename)
 {
 	if(do_load) {
-		welt->load(filename);
+		welt->switch_server( easy_server.pressed, true );
+		if(  !welt->load(filename)  ) {
+			welt->switch_server( false, true );
+		}
+		else if(  env_t::server  ) {
+			welt->announce_server(0);
+		}
 	}
 	else {
-		welt->save( filename, loadsave_t::save_mode, env_t::savegame_version_str, env_t::savegame_ex_version_str, env_t::savegame_ex_revision_str, false );
+		// saving a game
+		if(  env_t::server  ||  socket_list_t::get_playing_clients() > 0  ) {
+			network_reset_server();
+#if 0
+// TODO: saving without kicking all clients off ...
+			// we have connected clients, so we do a sync
+			const uint32 new_map_counter = welt->generate_new_map_counter();
+			nwc_sync_t *nw_sync = new nwc_sync_t(welt->get_sync_steps() + 1, welt->get_map_counter(), -1, new_map_counter);
+			network_send_all(nw_sync, false);
+			// and now we need to copy the servergame to the map ...
+#endif
+		}
+		welt->save(filename, loadsave_t::save_mode, env_t::savegame_version_str, env_t::savegame_ex_version_str, env_t::savegame_ex_revision_str, false);
 		welt->set_dirty();
 		welt->reset_timer();
 	}
@@ -119,6 +144,8 @@ loadsave_frame_t::loadsave_frame_t(bool do_load) : savegame_frame_t(".sve", fals
 	init(".sve", NULL);
 	if(do_load) {
 		set_name(translator::translate("Laden"));
+		easy_server.init( button_t::square_automatic, "Start this as a server", scr_coord(D_MARGIN_LEFT,0) );
+		add_component(&easy_server);
 	}
 	else {
 		set_filename(welt->get_settings().get_filename());
@@ -163,6 +190,16 @@ loadsave_frame_t::loadsave_frame_t(bool do_load) : savegame_frame_t(".sve", fals
 		}
 	}
 #endif
+}
+
+
+/**
+ * need to shift the start server button to the lower left
+ */
+void loadsave_frame_t::set_windowsize(scr_size size)
+{
+	savegame_frame_t::set_windowsize(size);
+	easy_server.align_to(&savebutton, ALIGN_CENTER_V, scr_coord( 0, 0 ) );
 }
 
 

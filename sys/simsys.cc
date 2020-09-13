@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #ifdef __HAIKU__
 #include <Message.h>
@@ -22,6 +23,7 @@
 #include "../macros.h"
 #include "../simmain.h"
 #include "simsys.h"
+#include "../pathes.h"
 #include "../simevent.h"
 
 
@@ -35,11 +37,10 @@
 #	else
 #		include <sys\unistd.h>
 #	endif
-#   undef PATH_MAX
-#	define PATH_MAX MAX_PATH
-#include "../simdebug.h"
+#	include "../simdebug.h"
 #else
 #	include <limits.h>
+#	include <dirent.h>
 #	if !defined __AMIGA__ && !defined __BEOS__
 #		include <unistd.h>
 #	endif
@@ -346,7 +347,7 @@ char const *dr_query_homedir()
 		return NULL;
 	}
 
-	// Append Sumutrans folder.
+	// Append Simutrans folder.
 	char const foldername[] = "Simutrans";
 	if (lengthof(buffer) < strlen(buffer) + strlen(foldername) + 2 * strlen(PATH_SEPARATOR) + 1) {
 		return NULL;
@@ -366,22 +367,20 @@ char const *dr_query_homedir()
 
 	// create other subdirectories
 	dr_mkdir(buffer);
-	strcat(buffer, "PATH_SEPARATOR");
-	dr_chdir(buffer);
 	strcat(buffer, PATH_SEPARATOR);
-	dr_chdir(buffer);
-	dr_mkdir("maps");
-	dr_mkdir("save");
-	dr_mkdir("screenshots");
 
 	return buffer;
 }
 
 
-const char *dr_query_fontpath(const char *fontname)
+const char *dr_query_fontpath(int which)
 {
-#ifdef _WIN32
 	static char buffer[PATH_MAX];
+#ifdef _WIN32
+	if(  which>0  ) {
+		return NULL;
+	}
+
 	WCHAR fontdir[MAX_PATH];
 	if (FAILED(SHGetFolderPathW(NULL, CSIDL_FONTS, NULL, SHGFP_TYPE_CURRENT, fontdir))) {
 		wcscpy(fontdir, L"C:\\Windows\\Fonts");
@@ -390,20 +389,49 @@ const char *dr_query_fontpath(const char *fontname)
 	// Convert UTF-16 to UTF-8.
 	int const convert_size = WideCharToMultiByte(CP_UTF8, 0, fontdir, -1, buffer, sizeof(buffer), NULL, NULL);
 	if (convert_size == 0) {
-		return fontname;
-	}
-
-	// Prevent possible buffer overrun error.
-	if (lengthof(buffer) < strlen(buffer) + strlen(fontname) + strlen(PATH_SEPARATOR) + 1) {
-		return fontname;
+		return 0;
 	}
 
 	strcat(buffer, PATH_SEPARATOR);
-	strcat(buffer, fontname);
 	return buffer;
 #else
-	// seems non-trivial to work on any system ...
-	return fontname;
+	// linux has more than one path
+	// sometimes there is the file "/etc/fonts/fonts.conf" and we can read it
+	// however, since we cannot rely on it, we just try a few candiates
+
+	// Apple only uses three locals, and Haiku has no standard ...
+	const char *trypaths[] = {
+#ifdef __APPLE__
+		"~/Library/",
+		"/Library/Fonts/",
+		"/System/Library/Fonts/",
+#elif defined __HAIKU__
+		"/boot/system/non-packaged/data/fonts/",
+		"/boot/home/config/non-packaged/data/fonts/",
+		"~/config/non-packaged/data/fonts/",
+		"/boot/system/data/fonts/ttfonts/",
+#else
+		"~/.fonts/",
+		"~/.local/share/fonts/",
+		"/usr/share/fonts/truetype/",
+		"/usr/X11R6/lib/X11/fonts/ttfonts/",
+		"/usr/local/sharefonts/truetype/",
+		"/usr/share/fonts/",
+		"/usr/X11R6/lib/X11/fonts/",
+#endif
+		NULL
+	};
+	for (int i = 0; trypaths[i]; i++) {
+		DIR *dir = opendir(trypaths[i]);
+		if (dir) {
+			closedir(dir);
+			if (which == 0) {
+				return trypaths[i];
+			}
+			which--;
+		}
+	}
+	return NULL;
 #endif
 }
 

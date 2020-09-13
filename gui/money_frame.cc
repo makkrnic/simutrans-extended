@@ -121,7 +121,9 @@ const uint8 money_frame_t::cost_type[3*MAX_PLAYER_COST_BUTTON] =
 };
 
 
-/* order has to be same as in enum transport_type in file player/finance.h */
+/* order has to be same as in enum transport_type in file finance.h */
+/* Also these have to match the strings in simline_t::linetype2name! */
+/* (and it is sad that the order between those do not match ...) */
 const char * money_frame_t::transport_type_values[TT_MAX] = {
 	"All",
 	"Truck",
@@ -270,7 +272,7 @@ money_frame_t::money_frame_t(player_t *player) :
 	headquarter_view(koord3d::invalid, scr_size(120, 64))
 {
 	if(welt->get_player(0)!=player) {
-		sprintf(money_frame_title,translator::translate("Finances of %s"),translator::translate(player->get_name()) );
+		money_frame_title.printf(translator::translate("Finances of %s"), translator::translate(player->get_name()) );
 		set_name(money_frame_title);
 	}
 
@@ -295,9 +297,9 @@ money_frame_t::money_frame_t(player_t *player) :
 
 	const scr_size lbl_size(BUTTONWIDTH, D_LABEL_HEIGHT);
 	// left column
-	tylabel.set_pos(scr_coord(c1_x,top-1*BUTTONSPACE));
+	tylabel.set_pos(scr_coord(tyl_x-35,top-1*BUTTONSPACE));
 	tylabel.set_size(lbl_size);
-	lylabel.set_pos(scr_coord(c1_x+100,top-1*BUTTONSPACE));
+	lylabel.set_pos(scr_coord(tyl_x+100-35,top-1*BUTTONSPACE));
 	lylabel.set_size(lbl_size);
 
 	imoney.set_pos(scr_coord(tyl_x,top+0*BUTTONSPACE));  // revenue
@@ -320,9 +322,9 @@ money_frame_t::money_frame_t(player_t *player) :
 	old_interest.set_pos(scr_coord(lyl_x,top+8*BUTTONSPACE));
 	tmoney.set_pos(scr_coord(tyl_x,top+9*BUTTONSPACE));  // cash flow
 	old_tmoney.set_pos(scr_coord(lyl_x,top+9*BUTTONSPACE));
-	transport.set_pos(scr_coord(c1_x, top+10*BUTTONSPACE)); // units transported
+	transport.set_pos(scr_coord(tyl_x-20, top+10*BUTTONSPACE)); // units transported
 	transport.set_size(lbl_size);
-	old_transport.set_pos(scr_coord(c1_x + 100, top+10*BUTTONSPACE));
+	old_transport.set_pos(scr_coord(tyl_x+100-20, top+10*BUTTONSPACE));
 	old_transport.set_size(lbl_size);
 
 	transport_type_c.set_pos(scr_coord(c2_x - 14 - D_H_SPACE, 0)); // below fixed costs
@@ -342,9 +344,9 @@ money_frame_t::money_frame_t(player_t *player) :
 	set_focus(&transport_type_c);
 
 	// center column (above selector box)
-	maintenance_label.set_pos(scr_coord(c2_x, top-1*BUTTONSPACE));
+	maintenance_label.set_pos(scr_coord(c2_num_x-35, top-1*BUTTONSPACE));
 	maintenance_label.set_size(lbl_size);
-	maintenance_label2.set_pos(scr_coord(c2_x, top+0*BUTTONSPACE));
+	maintenance_label2.set_pos(scr_coord(c2_num_x-35, top+0*BUTTONSPACE));
 	maintenance_label2.set_size(lbl_size);
 	// vehicle maintenance money should be the same height as running costs
 	//vehicle_maintenance_money.set_pos(scr_coord(c2_num_x, top+1*BUTTONSPACE));
@@ -757,7 +759,7 @@ uint32 money_frame_t::get_rdwr_id()
 
 void money_frame_t::rdwr( loadsave_t *file )
 {
-	bool monthly = mchart.is_visible();;
+	bool monthly = mchart.is_visible();
 	file->rdwr_bool( monthly );
 
 	// button state already collected
