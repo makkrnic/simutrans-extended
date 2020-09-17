@@ -34,7 +34,6 @@ class gui_scrolled_list_t :
 public:
 	enum type { windowskin, listskin };
 
-
 	/**
 	 * Base class for elements in lists. Virtual inheritance.
 	 */
@@ -90,9 +89,13 @@ private:
 	// NOTE: Don't remove this. Extended is still using this
 	PIXVAL highlight_color;
 
+	bool maximize;	// true if to expand to bottom right corner
 	scr_coord_val max_width; // need for overlength entries
 
 	item_compare_func compare;
+
+	bool multiple_selection; // true when multiple selection is enabled.
+	void calc_selection(scrollitem_t*, scrollitem_t*, event_t);
 
 protected:
 	scroll_container_t container;
@@ -110,18 +113,18 @@ public:
 
 	~gui_scrolled_list_t() { clear_elements(); }
 
-	/**
-	* Sets the color of selected entry
-	* @author Hj. Malthaner
-	*/
 	void set_highlight_color(PIXVAL c) { highlight_color = c; }
 
 	void show_selection(int s);
 
 	void set_selection(int s);
 	sint32 get_selection() const;
+	vector_tpl<sint32> get_selections() const;
+
 	scrollitem_t* get_selected_item() const;
 	sint32 get_count() const { return item_list.get_count(); }
+
+	void enable_multiple_selection() { multiple_selection = true; }
 
 	/*  when rebuilding a list, be sure to call recalculate the slider
 	 *  with recalculate_slider() to update the scrollbar properly. */
@@ -153,6 +156,9 @@ public:
 	void draw(scr_coord pos) OVERRIDE;
 
 	void set_max_width(scr_coord_val mw) { max_width = mw; }
+
+	bool is_marginless() const OVERRIDE { return maximize; }
+	void set_maximize(bool b) { maximize = b; }
 };
 
 #endif

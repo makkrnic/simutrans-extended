@@ -10,6 +10,7 @@
 #include "gui_frame.h"
 #include "components/action_listener.h"  // 28-Dec-2001  Markus Weber    Added
 #include "components/gui_button.h"
+#include "components/gui_combobox.h"
 #include "components/gui_convoiinfo.h"
 #include "../convoihandle_t.h"
 
@@ -39,8 +40,8 @@ private:
 	uint32 last_world_convois;
 
 	// these are part of the top UI
-	button_t	sortedby;
-	button_t	sorteddir;
+	gui_combobox_t	sortedby;
+	button_t	sort_asc, sort_desc;
 	button_t	display_mode;
 	button_t	filter_on;
 	button_t	filter_details;
@@ -128,6 +129,8 @@ public:
 
 	static bool get_reverse() { return sortreverse; }
 	static void set_reverse(bool reverse) { sortreverse = reverse; }
+
+	bool has_min_sizer() const OVERRIDE {return true;}
 
 	bool action_triggered(gui_action_creator_t*, value_t) OVERRIDE;
 };

@@ -143,9 +143,7 @@ welt_gui_t::welt_gui_t(settings_t* const sets_par) :
 
 
 		// Map X size edit
-		lbl_x_size.init();
-		lbl_x_size.buf().printf(translator::translate("West To East"));
-		add_component( &lbl_x_size );
+		new_component<gui_label_t>("West To East");
 		info_x_size.init();
 		add_component(&info_x_size);
 
@@ -154,9 +152,7 @@ welt_gui_t::welt_gui_t(settings_t* const sets_par) :
 		add_component( &inp_x_size );
 
 		// Map size Y edit
-		lbl_y_size.init();
-		lbl_y_size.buf().printf(translator::translate("North To South"));
-		add_component( &lbl_y_size );
+		new_component<gui_label_t>("North To South");
 		info_y_size.init();
 		add_component(&info_y_size);
 
@@ -164,7 +160,9 @@ welt_gui_t::welt_gui_t(settings_t* const sets_par) :
 		inp_y_size.add_listener(this);
 		add_component( &inp_y_size );
 
-		//new_component<gui_divider_t>();
+		new_component<gui_margin_t>();
+		new_component<gui_empty_t>();
+		new_component<gui_empty_t>();
 
 		// Number of towns
 		new_component_span<gui_label_t>("5WORLD_CHOOSE",2);
@@ -195,8 +193,12 @@ welt_gui_t::welt_gui_t(settings_t* const sets_par) :
 		inp_town_size.add_listener(this);
 		inp_town_size.set_limits(0,999999);
 		inp_town_size.set_increment_mode(50);
-		inp_town_size.set_value( sets->get_mean_einwohnerzahl() );
+		inp_town_size.set_value( sets->get_mean_citizen_count() );
 		add_component( &inp_town_size );
+
+		new_component<gui_margin_t>();
+		new_component<gui_empty_t>();
+		new_component<gui_empty_t>();
 
 		// Intercity road length
 		new_component_span<gui_label_t>("Intercity road len:", 2);
@@ -219,6 +221,10 @@ welt_gui_t::welt_gui_t(settings_t* const sets_par) :
 		inp_tourist_attractions.set_limits(0,999);
 		inp_tourist_attractions.set_value(abs(sets->get_tourist_attractions()) );
 		add_component( &inp_tourist_attractions );
+
+		new_component<gui_margin_t>();
+		new_component<gui_empty_t>();
+		new_component<gui_empty_t>();
 
 		// Use timeline checkbox
 		use_intro_dates.init(button_t::square_state, "Use timeline start year");
@@ -496,7 +502,7 @@ bool welt_gui_t::action_triggered( gui_action_creator_t *comp,value_t v)
 		env_t::cluster_size = v.i;
 	}
 	else if(comp==&inp_town_size) {
-		sets->set_mean_einwohnerzahl( v.i );
+		sets->set_mean_citizen_count( v.i );
 	}
 	else if(comp==&inp_intercity_road_len) {
 		env_t::intercity_road_length = v.i;

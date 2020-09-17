@@ -4109,9 +4109,9 @@ void display_cylinderbar_wh_clip_rgb(KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, KO
 	display_fb_internal(xp, yp, w, h, color, dirty, CR.clip_rect.x, CR.clip_rect.xx, CR.clip_rect.y, CR.clip_rect.yy);
 	display_blend_wh_rgb(xp, yp, w, min(3,h/2), color_idx_to_rgb(COL_WHITE), 15);
 	display_blend_wh_rgb(xp, yp + 1, w, 1, color_idx_to_rgb(COL_WHITE), 15);
-	uint8 start = h * 2 / 3;
+	uint8 start = h * 4 / 7;
 	for (uint8 i = start; i < h; i++) {
-		display_blend_wh_rgb(xp, yp + i, w, 1, color_idx_to_rgb(COL_BLACK), i*25/h);
+		display_blend_wh_rgb(xp, yp + i, w, 1, color_idx_to_rgb(COL_BLACK), 33*((i-start)+1)/(h-start));
 	}
 }
 
@@ -5086,7 +5086,7 @@ void display_filled_circle_rgb(KOORD_VAL x0, KOORD_VAL  y0, int radius, const PI
 int display_fluctuation_triangle_rgb(KOORD_VAL x, KOORD_VAL y, uint8 height, const bool dirty, sint64 value)
 {
 	if (!value) { return 0; } // nothing to draw
-	PIXVAL col = value > 0 ? COL_ADDITIONAL : COL_REDUCED_TEXT;
+	PIXVAL col = value > 0 ? SYSCOL_UP_TRIANGLE : SYSCOL_DOWN_TRIANGLE;
 	uint8 width = height - height % 2;
 	for (uint i = 0; i < width; i++) {
 		uint8 h = height - 2 * abs(int(width / 2 - i));

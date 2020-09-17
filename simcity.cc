@@ -3441,7 +3441,7 @@ class building_place_with_road_finder: public building_placefinder_t
 		// get distance to next special building
 		int find_dist_next_special(koord pos) const
 		{
-			const weighted_vector_tpl<gebaeude_t*>& attractions = welt->get_ausflugsziele();
+			const weighted_vector_tpl<gebaeude_t*>& attractions = welt->get_attractions();
 			int dist = welt->get_size().x * welt->get_size().y;
 			FOR(  weighted_vector_tpl<gebaeude_t*>, const i, attractions  ) {
 				int const d = koord_distance(i->get_pos(), pos);
@@ -5347,7 +5347,7 @@ bool stadt_t::build_road(const koord k, player_t* player_, bool forced, bool map
 			bd->calc_image();
 		}
 		// check to bridge a river, railway, etc.
-		if(ribi_t::is_single(connection_roads)) {
+		if(ribi_t::is_single(connection_roads)  &&  !bd->has_two_ways()  ) {
 			ribi_t::ribi direction = ribi_t::backward(connection_roads);
 			koord zv = koord(direction);
 			grund_t *bd_next = welt->lookup_kartenboden( k + zv );

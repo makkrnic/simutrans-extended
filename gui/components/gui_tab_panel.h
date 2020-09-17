@@ -119,6 +119,11 @@ public:
 
 	scr_size get_min_size() const;
 
+	// size of tab header
+	scr_size get_required_size() const { return required_size; }
+
+	bool is_marginless() const OVERRIDE { return true; }
+
 	/**
 	 * Take tabs from other tab.
 	 */

@@ -77,6 +77,7 @@ savegame_frame_t::savegame_frame_t(const char *suffix, bool only_directories, co
 	scrolly.set_size_corner(false);
 	scrolly.set_scrollbar_mode( scrollbar_t::show_auto );
 	add_component(&scrolly);
+	scrolly.set_maximize(true);
 
 	// Controls below will be sized and positioned in set_windowsize()
 	new_component<gui_divider_t>();
@@ -439,6 +440,9 @@ bool savegame_frame_t::infowin_event(const event_t *event)
 	if(event->ev_class == INFOWIN  &&  event->ev_code == WIN_OPEN  &&  entries.empty()) {
 		// before no virtual functions can be used ...
 		fill_list();
+
+		// Notify of the end
+		list_filled();
 	}
 	if(  event->ev_class == EVENT_KEYBOARD  &&  event->ev_code == 13  ) {
 		action_triggered(&input, (long)0);

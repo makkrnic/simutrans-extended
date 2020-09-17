@@ -1871,7 +1871,7 @@ const char *tool_add_city_t::work( player_t *player, koord3d pos )
 				// buildings the game crashes. To avoid this problem cities
 				// always belong to player 1
 
-				int const citizens = (int)(welt->get_settings().get_mean_einwohnerzahl() * 0.9);
+				int const citizens = (int)(welt->get_settings().get_mean_citizen_count() * 0.9);
 				//  stadt_t *stadt = new stadt_t(welt->get_public_player();, pos,citizens/10+simrand(2*citizens+1));
 
 				// always start with 1/10 citizens
@@ -3166,7 +3166,7 @@ void tool_build_bridge_t::mark_tiles(  player_t *player, const koord3d &start, c
 			}
 		}
 	}
-	win_set_static_tooltip( tooltip_with_price("Building costs estimates", costs ) );
+	win_set_static_tooltip( tooltip_with_price_and_distance("Building costs estimates", costs, koord_distance(start, pos) ) );
 }
 
 uint8 tool_build_bridge_t::is_valid_pos(  player_t *player, const koord3d &pos, const char *&error, const koord3d &start )
@@ -3510,7 +3510,8 @@ void tool_build_tunnel_t::mark_tiles(  player_t *player, const koord3d &start, c
 
 	if(  bauigel.get_count()>1  ) {
 		// Set tooltip first (no dummygrounds, if bauigel.calc_casts() is called).
-		win_set_static_tooltip( tooltip_with_price("Building costs estimates", -bauigel.calc_costs() ) );
+		const uint32 distance = bauigel.get_count() * welt->get_settings().get_meters_per_tile();
+		win_set_static_tooltip( tooltip_with_price_and_distance("Building costs estimates", -bauigel.calc_costs(), distance) );
 
 		// make dummy route from bauigel
 		for(  uint32 j=0;  j<bauigel.get_count();  j++  ) {
@@ -4110,7 +4111,8 @@ void tool_build_wayobj_t::mark_tiles( player_t * player, const koord3d &start, c
 				marked.insert( way_obj );
 			}
 		}
-		win_set_static_tooltip( tooltip_with_price("Building costs estimates", -cost_estimate ) );
+		const uint32 distance = verbindung.get_count() * welt->get_settings().get_meters_per_tile();
+		win_set_static_tooltip( tooltip_with_price_and_distance("Building costs estimates", -cost_estimate, distance ) );
 	}
 }
 
@@ -5726,7 +5728,7 @@ const char* tool_build_roadsign_t::check_pos_intern(player_t *player, koord3d po
 
 		signal_t *s = gr->find<signal_t>();
 
-		if( (s  &&  s->get_desc()!=desc) || (desc->is_signal()  &&  gr->find<roadsign_t>()) ) {
+		if( s  &&  (s->get_desc()!=desc || (desc->is_signal()  &&  gr->find<roadsign_t>())) ) {
 			signal_info const& sinfo = signal[player->get_player_nr()];
 
 			// only one sign per tile
@@ -7331,6 +7333,7 @@ DBG_MESSAGE("tool_headquarter()", "building headquarters at (%d,%d)", pos.x, pos
 											{
 												player_t::add_maintenance( player, -prev_desc->get_maintenance(), prev_desc->get_finance_waytype() );
 												gb->set_tile( tile, true );
+												gb->calc_image();
 												player_t::add_maintenance( player, desc->get_maintenance(), desc->get_finance_waytype() );
 											}
 										}

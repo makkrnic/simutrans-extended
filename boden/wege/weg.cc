@@ -410,7 +410,7 @@ void weg_t::rdwr(loadsave_t *file)
 	file->rdwr_byte(dummy8);
 	if(  file->is_loading()  ) {
 		ribi = dummy8 & 15;	// before: high bits was maske
-		ribi_maske = 0;	// maske will be restored by signal/roadsing
+		ribi_maske = 0;	// maske will be restored by signal/roadsign
 	}
 
 	sint16 dummy16=max_speed;
@@ -1095,6 +1095,10 @@ void weg_t::info(cbuffer_t & buf) const
 	}
 #endif
 	buf.append("\n");
+	if (char const* const maker = get_desc()->get_copyright()) {
+		buf.printf(translator::translate("Constructed by %s"), maker);
+		buf.append("\n");
+	}
 }
 
 

@@ -209,6 +209,8 @@ public:
 	static PIXVAL gui_color_text_title;                   //@< Color to draw title text (banner, h1 and a tags)
 	static PIXVAL gui_color_text_shadow;                  //@< Color to draw text shadow
 	static PIXVAL gui_color_text_strong;                  //@< Color to draw strong text (strong tags)
+	static PIXVAL gui_color_text_inactive;                //@< Color to make it a little less noticeable than regular text
+	static PIXVAL gui_color_text_placeholder;             //@< Color for displaying inconspicuous characters in the input field
 	static PIXVAL gui_color_text_minus;                   //@< Color to draw negative values
 	static PIXVAL gui_color_text_plus;                    //@< Color to draw positive values
 	static PIXVAL gui_color_text_unused;                  //@< Color to draw unused items
@@ -239,6 +241,10 @@ public:
 	static PIXVAL gui_color_statusbar_divider;            //@< Color to draw statusbar divider
 	static PIXVAL gui_highlight_color;                    //@< Color to draw highlight dividers (tabs)
 	static PIXVAL gui_shadow_color;                       //@< Color to draw shadowed dividers (tabs)
+	static PIXVAL gui_color_loadingbar_inner;
+	static PIXVAL gui_color_loadingbar_progress;
+	static PIXVAL gui_color_up_pointing_triangle;         //@< Color to draw an upward triangle indicating an increase in the number
+	static PIXVAL gui_color_down_pointing_triangle;       //@< Color to draw an downward triangle indicating an decrease in the number
 	/// @}
 
 	/// @name GUI element sizes used by gui components

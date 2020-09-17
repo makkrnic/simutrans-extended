@@ -164,6 +164,8 @@ typedef unsigned int FLAGGED_PIXVAL;
 #define SYSCOL_TEXT_SHADOW                  gui_theme_t::gui_color_text_shadow
 #define SYSCOL_TEXT_TITLE                   gui_theme_t::gui_color_text_title
 #define SYSCOL_TEXT_STRONG                  gui_theme_t::gui_color_text_strong
+#define SYSCOL_TEXT_INACTIVE                gui_theme_t::gui_color_text_inactive
+#define SYSCOL_TEXT_PLACEHOLDER             gui_theme_t::gui_color_text_placeholder
 #define MONEY_MINUS                         gui_theme_t::gui_color_text_minus
 #define MONEY_PLUS                          gui_theme_t::gui_color_text_plus
 #define SYSCOL_TEXT_UNUSED                  gui_theme_t::gui_color_text_unused
@@ -194,6 +196,10 @@ typedef unsigned int FLAGGED_PIXVAL;
 #define SYSCOL_STATUSBAR_DIVIDER            gui_theme_t::gui_color_statusbar_divider
 #define SYSCOL_HIGHLIGHT                    gui_theme_t::gui_highlight_color
 #define SYSCOL_SHADOW                       gui_theme_t::gui_shadow_color
+#define SYSCOL_LOADINGBAR_INNER             gui_theme_t::gui_color_loadingbar_inner
+#define SYSCOL_LOADINGBAR_PROGRESS          gui_theme_t::gui_color_loadingbar_progress
+#define SYSCOL_UP_TRIANGLE                  gui_theme_t::gui_color_up_pointing_triangle
+#define SYSCOL_DOWN_TRIANGLE                gui_theme_t::gui_color_down_pointing_triangle
 
 // Customer evaluation colors
 // TODO: These colors can be changed by theme or pakset (Should be considered together with the symbol design)

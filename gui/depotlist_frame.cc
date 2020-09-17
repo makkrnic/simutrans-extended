@@ -19,8 +19,9 @@ depotlist_stats_t::depotlist_stats_t(depot_t *d)
 	this->depot = d;
 	// pos button
 	set_table_layout(3,1);
-	button_t *b = new_component<button_t>();
-	b->set_typ(button_t::posbutton_automatic);
+	gotopos.set_typ(button_t::posbutton_automatic);
+	gotopos.set_targetpos(depot->get_pos().get_2d());
+	add_component(&gotopos);
 	// now add all specific tabs
 	switch(  d->get_waytype()  ) {
 	case maglev_wt:
@@ -49,7 +50,6 @@ depotlist_stats_t::depotlist_stats_t(depot_t *d)
 		break;
 	}
 	add_component(&waytype_symbol);
-	b->set_targetpos(depot->get_pos().get_2d());
 	add_component(&label);
 	update_label();
 }
@@ -58,7 +58,7 @@ depotlist_stats_t::depotlist_stats_t(depot_t *d)
 void depotlist_stats_t::update_label()
 {
 	cbuffer_t &buf = label.buf();
-	buf.append(depot->get_name());
+	buf.append( translator::translate(depot->get_name()) );
 	buf.printf( " %s ", depot->get_pos().get_2d().get_fullstr() );
 	int cnvs = depot->convoi_count();
 	if( cnvs == 0 ) {

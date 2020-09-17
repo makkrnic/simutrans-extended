@@ -369,6 +369,11 @@ void roadsign_t::info(cbuffer_t & buf) const
 	{
 		buf.append("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 	}
+
+	if (char const* const maker = desc->get_copyright()) {
+		buf.append("\n");
+		buf.printf(translator::translate("Constructed by %s"), maker);
+	}
 }
 	// Signal specific information is dealt with in void signal_t::info(cbuffer_t & buf, bool dummy) const (in signal.cc)
 
@@ -791,7 +796,7 @@ void roadsign_t::finish_rd()
 {
 	grund_t *gr=welt->lookup(get_pos());
 	if(  gr==NULL  ||  !gr->hat_weg(desc->get_wtyp()!=tram_wt ? desc->get_wtyp() : track_wt)  ) {
-		dbg->error("roadsign_t::finish_rd","roadsing: way/ground missing at %i,%i => ignore", get_pos().x, get_pos().y );
+		dbg->error("roadsign_t::finish_rd","roadsign: way/ground missing at %i,%i => ignore", get_pos().x, get_pos().y );
 	}
 	else {
 		// after loading restore directions
@@ -873,7 +878,7 @@ bool roadsign_t::register_desc(roadsign_desc_t *desc)
 
 
 /**
- * Fill menu with icons of given signals/roadsings from the list
+ * Fill menu with icons of given signals/roadsigns from the list
  * @author Hj. Malthaner
  */
 void roadsign_t::fill_menu(tool_selector_t *tool_selector, waytype_t wtyp, sint16 /*sound_ok*/)

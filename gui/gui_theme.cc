@@ -25,6 +25,8 @@ PIXVAL gui_theme_t::gui_color_text_highlight;
 PIXVAL gui_theme_t::gui_color_text_shadow;
 PIXVAL gui_theme_t::gui_color_text_title;
 PIXVAL gui_theme_t::gui_color_text_strong;
+PIXVAL gui_theme_t::gui_color_text_inactive;
+PIXVAL gui_theme_t::gui_color_text_placeholder;
 PIXVAL gui_theme_t::gui_color_text_minus;
 PIXVAL gui_theme_t::gui_color_text_plus;
 PIXVAL gui_theme_t::gui_color_text_unused;
@@ -55,6 +57,10 @@ PIXVAL gui_theme_t::gui_color_statusbar_background;
 PIXVAL gui_theme_t::gui_color_statusbar_divider;
 PIXVAL gui_theme_t::gui_highlight_color;
 PIXVAL gui_theme_t::gui_shadow_color;
+PIXVAL gui_theme_t::gui_color_loadingbar_inner;
+PIXVAL gui_theme_t::gui_color_loadingbar_progress;
+PIXVAL gui_theme_t::gui_color_up_pointing_triangle;
+PIXVAL gui_theme_t::gui_color_down_pointing_triangle;
 
 /**
  * Max Kielland
@@ -132,6 +138,8 @@ void gui_theme_t::init_gui_defaults()
 	gui_color_text_shadow                  = color_idx_to_rgb(COL_BLACK);
 	gui_color_text_title                   = color_idx_to_rgb(207);
 	gui_color_text_strong                  = color_idx_to_rgb(COL_RED);
+	gui_color_text_inactive                = color_idx_to_rgb(COL_GREY4);
+	gui_color_text_placeholder             = color_idx_to_rgb(COL_GREY5);
 	gui_color_text_minus                   = color_idx_to_rgb(COL_RED);
 	gui_color_text_plus                    = color_idx_to_rgb(COL_BLACK);
 	gui_color_text_unused                  = color_idx_to_rgb(COL_YELLOW);
@@ -172,6 +180,12 @@ void gui_theme_t::init_gui_defaults()
 
 	gui_highlight_color                    = color_idx_to_rgb(MN_GREY4);
 	gui_shadow_color                       = color_idx_to_rgb(MN_GREY0);
+
+	gui_color_loadingbar_inner             = color_idx_to_rgb(COL_GREY5);
+	gui_color_loadingbar_progress          = color_idx_to_rgb(COL_BLUE);
+
+	gui_color_up_pointing_triangle         = COL_ADDITIONAL;
+	gui_color_down_pointing_triangle       = COL_REDUCED_TEXT;
 
 	gui_button_size              = scr_size(92,14);
 	gui_color_button_size        = scr_size(92,16);
@@ -474,6 +488,8 @@ bool gui_theme_t::themes_init(const char *file_name, bool init_fonts )
 	gui_theme_t::gui_color_text_shadow                  = (PIXVAL)contents.get_color("gui_color_text_shadow", SYSCOL_TEXT_SHADOW);
 	gui_theme_t::gui_color_text_title                   = (PIXVAL)contents.get_color("gui_color_text_title", SYSCOL_TEXT_TITLE);
 	gui_theme_t::gui_color_text_strong                  = (PIXVAL)contents.get_color("gui_color_text_strong", SYSCOL_TEXT_STRONG);
+	gui_theme_t::gui_color_text_inactive                = (PIXVAL)contents.get_color("gui_color_text_inactive", SYSCOL_TEXT_INACTIVE);
+	gui_theme_t::gui_color_text_placeholder             = (PIXVAL)contents.get_color("gui_color_text_placeholder", SYSCOL_TEXT_PLACEHOLDER);
 	gui_theme_t::gui_color_text_minus                   = (PIXVAL)contents.get_color("gui_color_text_minus", MONEY_MINUS);
 	gui_theme_t::gui_color_text_plus                    = (PIXVAL)contents.get_color("gui_color_text_plus", MONEY_PLUS);
 	gui_theme_t::gui_color_text_unused                  = (PIXVAL)contents.get_color("gui_color_text_unused", SYSCOL_TEXT_UNUSED);
@@ -504,6 +520,10 @@ bool gui_theme_t::themes_init(const char *file_name, bool init_fonts )
 	gui_theme_t::gui_color_statusbar_divider            = (PIXVAL)contents.get_color("gui_color_statusbar_divider", SYSCOL_STATUSBAR_DIVIDER);
 	gui_theme_t::gui_highlight_color                    = (PIXVAL)contents.get_color("gui_highlight_color", SYSCOL_HIGHLIGHT);
 	gui_theme_t::gui_shadow_color                       = (PIXVAL)contents.get_color("gui_shadow_color", SYSCOL_SHADOW);
+	gui_theme_t::gui_color_loadingbar_inner             = (PIXVAL)contents.get_color("gui_color_loadingbar_inner", SYSCOL_LOADINGBAR_INNER);
+	gui_theme_t::gui_color_loadingbar_progress          = (PIXVAL)contents.get_color("gui_color_loadingbar_progress", SYSCOL_LOADINGBAR_PROGRESS);
+	gui_theme_t::gui_color_up_pointing_triangle         = (PIXVAL)contents.get_color("gui_color_up_pointing_triangle", SYSCOL_UP_TRIANGLE);
+	gui_theme_t::gui_color_down_pointing_triangle       = (PIXVAL)contents.get_color("gui_color_down_pointing_triangle", SYSCOL_DOWN_TRIANGLE);
 
 	gui_theme_t::gui_waitingbar_width = (uint32)contents.get_int("gui_waitingbar_width", gui_theme_t::gui_waitingbar_width);
 

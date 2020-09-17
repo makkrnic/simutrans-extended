@@ -8,16 +8,15 @@
 
 
 #include "gui_frame.h"
-#include "components/gui_container.h"
 #include "halt_list_stats.h"
-#include "components/gui_scrollpane.h"
 #include "components/gui_button.h"
-#include "components/gui_label.h"
+#include "components/gui_combobox.h"
 #include "components/action_listener.h"
 #include "../tpl/vector_tpl.h"
 
 class player_t;
 class goods_desc_t;
+class gui_scrolled_halt_list_t;
 
 /*
  * Displays a scrollable list of all stations of a player
@@ -50,22 +49,16 @@ private:
 
     static const char *sort_text[SORT_MODES];
 
-	vector_tpl<halt_list_stats_t> stops;
 	uint32 last_world_stops;
-	int num_filtered_stops;
 
 	/*
      * All gui elements of this dialog:
      */
-
-	scrollbar_t vscroll;
-
-    gui_label_t sort_label;
-    button_t	sortedby;
-    button_t	sorteddir;
-    gui_label_t filter_label;
-    button_t	filter_on;
+	gui_combobox_t	sortedby;
+	button_t	sort_asc, sort_desc;
+	button_t	filter_on;
     button_t	filter_details;
+	gui_scrolled_halt_list_t *scrolly;
 
     /*
      * Child window, if open
@@ -79,16 +72,22 @@ private:
     static sort_mode_t sortby;
     static bool sortreverse;
 
-    static int filter_flags;
+	bool filter_is_on;
+	static int filter_flags;
 
     static char name_filter_value[64];
 
     static slist_tpl<const goods_desc_t *> waren_filter_ab;
     static slist_tpl<const goods_desc_t *> waren_filter_an;
 
-    static bool compare_halts(halthandle_t, halthandle_t);
+
+	/// refill the list of halt info elements
+	void fill_list();
 
 public:
+
+	static bool compare_halts(halthandle_t, halthandle_t);
+
 	halt_list_frame_t(player_t *player);
 
 	virtual ~halt_list_frame_t();
@@ -103,12 +102,6 @@ public:
 	bool infowin_event(event_t const*) OVERRIDE;
 
 	/**
-	 * This method is called if the size of the window should be changed
-	 * @author Markus Weber
-	 */
-	void resize(const scr_coord size_change) OVERRIDE;
-
-	/**
 	 * Draw new component. The values to be passed refer to the window
 	 * i.e. It's the screen coordinates of the window where the
 	 * component is displayed.
@@ -116,11 +109,8 @@ public:
 	 */
 	void draw(scr_coord pos, scr_size size) OVERRIDE;
 
-	/**
-	 * This function refreshes the station-list
-	 * @author Markus Weber
-	 */
-	void display_list();  //13-Feb-02  Added
+	/// sort & filter halts in list
+	void sort_list();
 
 	/**
 	 * Set the window associated helptext
@@ -128,9 +118,6 @@ public:
 	 * @author V. Meyer
 	 */
 	const char *get_help_filename() const OVERRIDE {return "haltlist.txt"; }
-
-	static sort_mode_t get_sortierung() { return sortby; }
-	static void set_sortierung(sort_mode_t sm) { sortby = sm; }
 
 	static bool get_reverse() { return sortreverse; }
 	static void set_reverse(bool reverse) { sortreverse = reverse; }
@@ -149,6 +136,8 @@ public:
 	static void set_alle_ware_filter_an(int mode);
 
 	bool action_triggered(gui_action_creator_t*, value_t) OVERRIDE;
+
+	bool has_min_sizer() const OVERRIDE {return true;}
 };
 
 #endif
