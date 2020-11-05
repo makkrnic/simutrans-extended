@@ -15,29 +15,38 @@
 #include "scr_coord.h"
 
 
-/*
- * Attempt of graphics for the Simulation game
- * Hj. Malthaner, Aug. 1997
- *
- *
- * 3D, isometric representation
- */
+#if COLOUR_DEPTH != 0
+
+extern int default_font_ascent;
+extern int default_font_linespace;
+
+#  define LINEASCENT (default_font_ascent)
+#  define LINESPACE  (default_font_linespace)
+#else
+#  define LINEASCENT 0
+// a font height of zero could cause division by zero errors, even though it should not be used in a server
+#  define LINESPACE  1
+#endif
 
 
-extern int large_font_ascent;
-extern int large_font_total_height;
+// Basic size of small symbols such as alerts, goods categories, evaluations, etc.
+// Same value for height
+#define D_FIXED_SYMBOL_WIDTH 12
+#define FIXED_SYMBOL_YOFF ((LINESPACE-D_FIXED_SYMBOL_WIDTH)/2)
 
-#define LINEASCENT (large_font_ascent)
-#define LINESPACE (large_font_total_height)
+#define GOODS_COLOR_BOX_HEIGHT 8
+#define GOODS_COLOR_BOX_YOFF ((LINESPACE-GOODS_COLOR_BOX_HEIGHT)/2)
 
 #define VEHICLE_BAR_HEIGHT 7
+
+#define LOADINGBAR_HEIGHT 6
+#define WAITINGBAR_HEIGHT 4
+#define LOADINGBAR_WIDTH 100
 
 /**
 * Alignment enum to align controls against each other
 * Vertical and horizontal alignment can be masked together
 * Unused bits are reserved for future use, set to 0.
-*
-* @author Max Kielland
 */
 enum control_alignments_t {
 
@@ -111,17 +120,15 @@ uint32 get_color_rgb(uint8 idx);
 void env_t_rgb_to_system_colors();
 
 /**
-* Helper functions for clipping along tile borders.
-* @author Dwachs
-*/
-void add_poly_clip(int x0_, int y0_, int x1, int y1, int ribi  CLIP_NUM_DEF);
+ * Helper functions for clipping along tile borders.
+ */
+void add_poly_clip(int x0_,int y0_, int x1, int y1, int ribi  CLIP_NUM_DEF);
 void clear_all_poly_clip(CLIP_NUM_DEF0);
 void activate_ribi_clip(int ribi  CLIP_NUM_DEF);
 
 /* Do no access directly, use the get_tile_raster_width()
-* macro instead.
-* @author Hj. Malthaner
-*/
+ * macro instead.
+ */
 #define get_tile_raster_width()    (tile_raster_width)
 extern KOORD_VAL tile_raster_width;
 
@@ -136,9 +143,8 @@ int zoom_factor_down();
 int get_zoom_factor();
 
 /**
-* Initialises the graphics module
-* @author Hj. Malthaner
-*/
+ * Initialises the graphics module
+ */
 void simgraph_init(KOORD_VAL width, KOORD_VAL height, int fullscreen);
 int is_display_init();
 void simgraph_exit();
@@ -149,7 +155,7 @@ void reset_textur(void *new_textur);
  * Loads the font, returns the number of characters in it
  * @param reload if true forces reload
  */
-uint16 display_load_font(const char* fname, bool reload = false);
+bool display_load_font(const char *fname, bool reload = false);
 
 image_id get_image_count();
 void register_image(class image_t *);
@@ -175,10 +181,6 @@ void      display_set_actual_width(KOORD_VAL);
 // force a certain size on a image (for rescaling tool images)
 void display_fit_img_to_width(const image_id n, sint16 new_w);
 
-
-int display_get_light();
-void display_set_light(int new_light_level);
-
 void display_day_night_shift(int night);
 
 
@@ -195,9 +197,8 @@ void display_img_aligned(const image_id n, scr_rect area, int align, const int d
 void display_img_aux(const image_id n, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const int daynight, const int dirty  CLIP_NUM_DEF);
 
 /**
-* draws the images with alpha, either blended or as outline
-* @author kierongreen
-*/
+ * draws the images with alpha, either blended or as outline
+ */
 void display_rezoomed_img_blend(const image_id n, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const FLAGGED_PIXVAL color_index, const int daynight, const int dirty  CLIP_NUM_DEF);
 #define display_img_blend( n, x, y, c, dn, d ) display_rezoomed_img_blend( (n), (x), (y), 0, (c), (dn), (d)  CLIP_NUM_DEFAULT)
 
@@ -225,27 +226,27 @@ void display_img_stretch(const stretch_map_t &imag, scr_rect area);
 // this displays a 3x3 array of images to fit the scr_rect like above, but blend the color
 void display_img_stretch_blend(const stretch_map_t &imag, scr_rect area, FLAGGED_PIXVAL color);
 
-// Knightly : display unzoomed image with alpha, either blended or as outline
+// display unzoomed image with alpha, either blended or as outline
 void display_base_img_blend(const image_id n, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const FLAGGED_PIXVAL color_index, const int daynight, const int dirty  CLIP_NUM_DEF CLIP_NUM_DEFAULT_ZERO);
 void display_base_img_alpha(const image_id n, const image_id alpha_n, const unsigned alpha_flags, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const FLAGGED_PIXVAL color_index, const int daynight, const int dirty  CLIP_NUM_DEF CLIP_NUM_DEFAULT_ZERO);
 
-// Knightly : pointer to image display procedures
+// pointer to image display procedures
 typedef void(*display_image_proc)(const image_id n, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const int daynight, const int dirty  CLIP_NUM_DEF);
 typedef void(*display_blend_proc)(const image_id n, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const FLAGGED_PIXVAL color_index, const int daynight, const int dirty  CLIP_NUM_DEF);
 typedef void(*display_alpha_proc)(const image_id n, const image_id alpha_n, const unsigned alpha_flags, KOORD_VAL xp, KOORD_VAL yp, const signed char player_nr, const FLAGGED_PIXVAL color_index, const int daynight, const int dirty  CLIP_NUM_DEF);
 
-// Knightly : variables for storing currently used image procedure set and tile raster width
+// variables for storing currently used image procedure set and tile raster width
 extern display_image_proc display_normal;
 extern display_image_proc display_color;
 extern display_blend_proc display_blend;
 extern display_alpha_proc display_alpha;
 extern signed short current_tile_raster_width;
 
-// Knightly : call this instead of referring to current_tile_raster_width directly
+// call this instead of referring to current_tile_raster_width directly
 #define get_current_tile_raster_width() (current_tile_raster_width)
 
-// Knightly : for switching between image procedure sets and setting current tile raster width
-inline void display_set_image_proc(bool is_global)
+// for switching between image procedure sets and setting current tile raster width
+inline void display_set_image_proc( bool is_global )
 {
 	if (is_global) {
 		display_normal = display_img_aux;
@@ -321,19 +322,17 @@ KOORD_VAL display_get_char_width(utf32 c);
 bool has_character( utf16 char_code );
 
 /**
-* Returns the width of the widest character in a string.
-* @param text  pointer to a string of characters to evaluate.
-* @param len   length of text buffer to evaluate. If set to 0,
-*              evaluate until null termination.
-* @author      Max Kielland
-*/
-KOORD_VAL display_get_char_max_width(const char* text, size_t len = 0);
+ * Returns the width of the widest character in a string.
+ * @param text  pointer to a string of characters to evaluate.
+ * @param len   length of text buffer to evaluate. If set to 0,
+ *              evaluate until null termination.
+ */
+KOORD_VAL display_get_char_max_width(const char* text, size_t len=0);
 
 /**
  * For the next logical character in the text, returns the character code
  * as well as retrieves the char byte count and the screen pixel width
  * CAUTION : The text pointer advances to point to the next logical character
- * @author Knightly
  */
 utf32 get_next_char_with_metrics(const char* &text, unsigned char &byte_length, unsigned char &pixel_width);
 
@@ -341,7 +340,6 @@ utf32 get_next_char_with_metrics(const char* &text, unsigned char &byte_length, 
  * For the previous logical character in the text, returns the character code
  * as well as retrieves the char byte count and the screen pixel width
  * CAUTION : The text pointer recedes to point to the previous logical character
- * @author Knightly
  */
 utf32 get_prev_char_with_metrics(const char* &text, const char *const text_start, unsigned char &byte_length, unsigned char &pixel_width);
 
@@ -363,11 +361,9 @@ int display_calc_proportional_string_len_width(const char* text, size_t len);
 void display_calc_proportional_multiline_string_len_width( int &xw, int &yh, const char *text, size_t len );
 
 /*
-* len parameter added - use -1 for previous behaviour.
-* completely renovated for unicode and 10 bit width and variable height
-* @author Volker Meyer, prissi
-* @date  15.06.2003, 2.1.2005
-*/
+ * len parameter added - use -1 for previous behaviour.
+ * completely renovated for unicode and 10 bit width and variable height
+ */
 
 // #ifdef MULTI_THREAD
 int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char* txt, control_alignment_t flags, const PIXVAL color, bool dirty, sint32 len  CLIP_NUM_DEF  CLIP_NUM_DEFAULT_ZERO);
@@ -377,7 +373,7 @@ int display_text_proportional_len_clip_rgb(KOORD_VAL x, KOORD_VAL y, const char*
 
 
 /*
- * Display a string that if abbreviated by the (language specific) ellipsis character if too wide
+ * Display a string that is abbreviated by the (language specific) ellipsis character if too wide
  * If enough space is given, it just display the full string
  * @returns screen_width
  */
@@ -395,8 +391,11 @@ void display_direct_line_rgb(const KOORD_VAL x, const KOORD_VAL y, const KOORD_V
 void display_direct_line_dotted_rgb(const KOORD_VAL x, const KOORD_VAL y, const KOORD_VAL xx, const KOORD_VAL yy, const KOORD_VAL draw, const KOORD_VAL dontDraw, const PIXVAL color);
 void display_circle_rgb(KOORD_VAL x0, KOORD_VAL  y0, int radius, const PIXVAL color);
 void display_filled_circle_rgb(KOORD_VAL x0, KOORD_VAL  y0, int radius, const PIXVAL color);
+void display_right_triangle_rgb(KOORD_VAL x, KOORD_VAL y, uint8 height, const PIXVAL colval, const bool dirty);
 void draw_bezier_rgb(KOORD_VAL Ax, KOORD_VAL Ay, KOORD_VAL Bx, KOORD_VAL By, KOORD_VAL ADx, KOORD_VAL ADy, KOORD_VAL BDx, KOORD_VAL BDy, const PIXVAL colore, KOORD_VAL draw, KOORD_VAL dontDraw);
 int display_fluctuation_triangle_rgb(KOORD_VAL x, KOORD_VAL y, uint8 height, const bool dirty, sint64 value=0);
+
+void display_right_triangle_rgb(KOORD_VAL x, KOORD_VAL y, KOORD_VAL height, const PIXVAL colval, const bool dirty);
 
 void display_set_clip_wh(KOORD_VAL x, KOORD_VAL y, KOORD_VAL w, KOORD_VAL h  CLIP_NUM_DEF CLIP_NUM_DEFAULT_ZERO, bool fit = false);
 clip_dimension display_get_clip_wh(CLIP_NUM_DEF0 CLIP_NUM_DEFAULT_ZERO);

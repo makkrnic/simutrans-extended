@@ -32,7 +32,6 @@ public:
 
 	/**
 	 * Sets the text to display.
-	 * @author Hj. Malthaner
 	 */
 	void set_text(const char* text);
 
@@ -41,7 +40,7 @@ public:
 	/**
 	 * Updates size and preferred_size.
 	 */
-	void set_size(scr_size size_par);
+	void set_size(scr_size size_par) OVERRIDE;
 
 	/**
 	 * Computes and returns preferred size.
@@ -49,7 +48,7 @@ public:
 	 */
 	scr_size get_preferred_size();
 
-	bool action_triggered(gui_action_creator_t *comp, value_t extra);
+	bool action_triggered(gui_action_creator_t *comp, value_t extra) OVERRIDE;
 };
 
 

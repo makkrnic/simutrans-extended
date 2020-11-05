@@ -1,8 +1,6 @@
 ﻿/*
- * Copyright (c) 1997 - 2001 Hansjorg Malthaner
- *
- * This file is part of the Simutrans project under the artistic licence.
- * (see licence.txt)
+ * This file is part of the Simutrans-Extended project under the Artistic License.
+ * (see LICENSE.txt)
  */
 
 #include "../simdebug.h"
@@ -35,7 +33,6 @@ bool loadfont_frame_t::use_unicode=false;
 
 /**
  * Action that's started with a button click
- * @author Hansjorg Malthaner
  */
 bool loadfont_frame_t::item_action(const char *filename)
 {

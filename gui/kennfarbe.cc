@@ -25,7 +25,7 @@ public:
 	{
 		w = max(D_BUTTON_HEIGHT, display_get_char_width('X'));
 	}
-	scr_size get_min_size() const { return scr_size(w,w); }
+	scr_size get_min_size() const OVERRIDE { return scr_size(w,w); }
 };
 
 
@@ -92,7 +92,6 @@ farbengui_t::farbengui_t(player_t *player_) :
 
 /**
  * This method is called if an action is triggered
- * @author V. Meyer
  */
 bool farbengui_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 {

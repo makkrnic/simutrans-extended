@@ -15,7 +15,6 @@
 
 /**
  * label list window
- * @author Hj. Malthaner
  */
 class labellist_frame_t : public gui_frame_t, private action_listener_t
 {
@@ -29,22 +28,17 @@ private:
 public:
 	labellist_frame_t();
 
-	/**
-	 * Set the window associated helptext
-	 * @return the filename for the helptext, or NULL
-	 * @author V. Meyer
-	 */
-	const char * get_help_filename() const {return "labellist_filter.txt"; }
+	const char *get_help_filename() const OVERRIDE {return "labellist_filter.txt"; }
 
-	bool action_triggered( gui_action_creator_t *komp,value_t /* */);
+	bool action_triggered( gui_action_creator_t *comp,value_t /* */) OVERRIDE;
 
-	void draw(scr_coord pos, scr_size size);
+	void draw(scr_coord pos, scr_size size) OVERRIDE;
 
-	/**
-	 * This function refreshes the list
-	 * @author Markus Weber
-	 */
+	uint32 count_label();
+
 	void fill_list();
+
+	void map_rotate90( sint16 ) OVERRIDE { fill_list(); }
 };
 
 #endif

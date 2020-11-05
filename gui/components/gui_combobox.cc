@@ -31,7 +31,7 @@ gui_combobox_t::gui_combobox_t(gui_scrolled_list_t::item_compare_func cmp) :
 
 	bt_next.set_typ(button_t::arrowright);
 
-	set_focusable( true );	// needed, otherwise fails on closing when clicking elsewhere!
+	set_focusable( true ); // needed, otherwise fails on closing when clicking elsewhere!
 
 	editstr[0] = 0;
 	old_editstr[0] = 0;
@@ -53,7 +53,6 @@ gui_combobox_t::gui_combobox_t(gui_scrolled_list_t::item_compare_func cmp) :
 /**
  * Events werden hiermit an die GUI-components
  * gemeldet
- * @author Hj. Malthaner
  */
 bool gui_combobox_t::infowin_event(const event_t *ev)
 {
@@ -161,7 +160,12 @@ DBG_MESSAGE("event","HOWDY!");
 				int old_selection = droplist.get_selection();
 				if(  droplist.infowin_event(&ev2)  ) {
 					if(  droplist.get_selection() !=  old_selection  ) {
-						call_listeners( droplist.get_selection() );
+						// close box will anyway call
+						if( !IS_LEFTRELEASE( ev ) ) {
+							// in case of LEFTRELEASE, close_box will call it again
+							call_listeners( droplist.get_selection() );
+						}
+						finish = true;
 					}
 					// we selected something?
 					if(finish  &&  IS_LEFTRELEASE(ev)) {
@@ -172,7 +176,7 @@ DBG_MESSAGE("event","HOWDY!");
 			}
 			else {
 				// acting on "release" is better than checking for "new selection"
-				if (IS_LEFTRELEASE(ev)) {
+				if(  IS_LEFTRELEASE(ev)  ) {
 					close_box();
 					return false;
 				}
@@ -187,7 +191,7 @@ DBG_MESSAGE("gui_combobox_t::infowin_event()","close");
 	}
 	else {
 		// finally handle textinput
-		gui_scrolled_list_t::scrollitem_t *item = droplist.get_element(droplist.get_selection());
+		gui_scrolled_list_t::scrollitem_t *item = droplist.get_selected_item();
 		if(  item==NULL  ||  item->is_editable()) {
 			event_t ev2 = *ev;
 			translate_event(&ev2, -textinp.get_pos().x, -textinp.get_pos().y);
@@ -215,13 +219,12 @@ DBG_MESSAGE("gui_combobox_t::infowin_event()","scroll selected %i",p.i);
 
 /**
  * Draw the component
- * @author Hj. Malthaner
  */
 void gui_combobox_t::draw(scr_coord offset)
 {
 	last_draw_offset = offset;
 	// text changed? Then update it
-	gui_scrolled_list_t::scrollitem_t *item = droplist.get_element( droplist.get_selection() );
+	gui_scrolled_list_t::scrollitem_t *item = droplist.get_selected_item();
 	if(  item  &&  item->is_valid()  &&  item->is_editable()  &&  strncmp( item->get_text(), old_editstr, 127 )  ) {
 		reset_selected_item_name();
 	}
@@ -258,7 +261,6 @@ void gui_combobox_t::disable()
 
 /**
  * sets the selection
- * @author hsiegeln
  */
 void gui_combobox_t::set_selection(int s)
 {
@@ -284,7 +286,7 @@ void gui_combobox_t::set_selection(int s)
  */
 void gui_combobox_t::rename_selected_item()
 {
-	gui_scrolled_list_t::scrollitem_t *item = droplist.get_element(droplist.get_selection());
+	gui_scrolled_list_t::scrollitem_t *item = droplist.get_selected_item();
 	// if name was not changed in the meantime, we can rename it
 	if(  item  &&  item->is_valid()  &&  item->is_editable()  ) {
 		const char *current_str = ((gui_scrolled_list_t::const_text_scrollitem_t *)item)->get_text();
@@ -297,7 +299,7 @@ void gui_combobox_t::rename_selected_item()
 
 void gui_combobox_t::reset_selected_item_name()
 {
-	gui_scrolled_list_t::scrollitem_t *item = droplist.get_element(droplist.get_selection());
+	gui_scrolled_list_t::scrollitem_t *item = droplist.get_selected_item();
 	if(  item==NULL  ) {
 		editstr[0] = 0;
 		textinp.set_text( editstr, 0  );
@@ -326,7 +328,7 @@ void gui_combobox_t::close_box()
 		finish = false;
 	}
 	droplist.set_visible(false);
-	set_size(scr_size(size.w, D_EDIT_HEIGHT));
+	gui_component_t::set_size(closed_size);
 	first_call = true;
 }
 
@@ -356,19 +358,17 @@ void gui_combobox_t::set_size(scr_size size)
 
 	bt_prev.set_pos( scr_coord(0,(size.h-D_POS_BUTTON_HEIGHT)/2) );
 	textinp.align_to( &bt_prev, ALIGN_LEFT | ALIGN_EXTERIOR_H | ALIGN_CENTER_V, scr_coord( pos.x + D_H_SPACE / 2, pos.y ) );
-
 	bt_next.align_to( &textinp, ALIGN_LEFT | ALIGN_EXTERIOR_H | ALIGN_CENTER_V, scr_coord( -pos.x + D_H_SPACE / 2, -pos.y ) );
 }
 
 
 /**
 * set maximum size for control
-* @author hsiegeln, Dwachs
 */
 void gui_combobox_t::set_max_size(scr_size max)
 {
 	max_size = max;
-	droplist.request_size( scr_size( size.w, max_size.h - D_EDIT_HEIGHT - D_V_SPACE / 2 ) );
+	droplist.request_size( scr_size( size.w, max_size.h - closed_size.h ) );
 	if(  droplist.is_visible()  ) {
 		gui_component_t::set_size( droplist.get_size() + scr_size( 0, closed_size.h ) );
 	}

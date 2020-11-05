@@ -10,6 +10,7 @@
 #include "simtypes.h"
 #include "simware.h"
 #include "simfab.h"
+#include "simmem.h"
 #include "simworld.h"
 #include "simcity.h"
 
@@ -57,7 +58,7 @@ bool freight_list_sorter_t::compare_ware(ware_t const& w1, ware_t const& w2)
 				return order < 0;
 			}
 		}
-		// fallthrough
+		/* FALLTHROUGH */
 
 	case by_via:  // sort by via_destination name
 	case by_accommodation_via: // Initial sorting is done already in simconvoi.cc
@@ -92,7 +93,7 @@ bool freight_list_sorter_t::compare_ware(ware_t const& w1, ware_t const& w2)
 				return true;
 			}
 		}
-		// fallthrough
+		/* FALLTHROUGH */
 
 	case by_name: { // sort by destination stop name
 			halthandle_t const d1 = w1.get_ziel();
@@ -135,7 +136,7 @@ bool freight_list_sorter_t::compare_ware(ware_t const& w1, ware_t const& w2)
 				return true;
 			}
 		}
-		// fallthrough
+		/* FALLTHROUGH */
 
 	case by_wealth_detail: { // sort by class
 			int const order = w2.get_class() - w1.get_class();
@@ -143,7 +144,7 @@ bool freight_list_sorter_t::compare_ware(ware_t const& w1, ware_t const& w2)
 				return order < 0;
 			}
 		}
-		// fallthrough
+		/* FALLTHROUGH */
 
 	case by_wealth_via: { // sort by class
 		halthandle_t const v1 = w1.get_zwischenziel();
@@ -246,7 +247,6 @@ void freight_list_sorter_t::sort_freight(vector_tpl<ware_t> const& warray, cbuff
 {
 	sortby = sort_mode;
 
-	// hsiegeln
 	// added sorting to ware's destination list
 	int pos = 0;
 	ware_t* wlist;

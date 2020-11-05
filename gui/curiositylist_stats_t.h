@@ -20,7 +20,6 @@ namespace curiositylist {
 
 /**
  * Where curiosity (attractions) stats are calculated for list dialog
- * @author Hj. Malthaner
  */
 class curiositylist_stats_t : public gui_aligned_container_t, public gui_scrolled_list_t::scrollitem_t
 {
@@ -42,13 +41,12 @@ public:
 	gui_image_t img_enabled[4];
 
 	char const* get_text() const OVERRIDE;
-	virtual bool is_valid() const OVERRIDE;
+	bool is_valid() const OVERRIDE;
 
 	bool infowin_event(event_t const*) OVERRIDE;
 
 	/**
 	* Draw the component
-	* @author Hj. Malthaner
 	*/
 	void draw(scr_coord offset) OVERRIDE;
 };

@@ -12,9 +12,6 @@
 
 /**
  * A horizontal divider line
- *
- * @date 30-Oct-01
- * @author Markus Weber
  */
 class gui_divider_t : public gui_component_t
 {
@@ -25,11 +22,11 @@ public:
 		set_size( scr_size( width, height ) );
 	};
 
-	scr_size get_min_size() const;
+	scr_size get_min_size() const OVERRIDE;
 
-	scr_size get_max_size() const;
+	scr_size get_max_size() const OVERRIDE;
 
-	void draw(scr_coord offset);
+	void draw(scr_coord offset) OVERRIDE;
 };
 
 #endif

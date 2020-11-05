@@ -11,11 +11,6 @@
 #include "../../tpl/slist_tpl.h"
 
 
-/**
- *
- * @author Volker Meyer
- * @date  12.06.2003
- */
 class gui_speedbar_t : public gui_component_t
 {
 private:
@@ -42,7 +37,7 @@ public:
 	/**
 	 * Draw the component
 	 */
-	void draw(scr_coord offset);
+	void draw(scr_coord offset) OVERRIDE;
 
 	scr_size get_min_size() const OVERRIDE;
 
@@ -84,6 +79,54 @@ public:
 	void set_assembling_incomplete(bool incomplete);
 
 	void draw(scr_coord offset);
+};
+
+
+// route progress bar
+class gui_routebar_t : public gui_component_t
+{
+private:
+	const sint32 *value;
+	sint32 base;
+	uint8 state;
+
+public:
+	gui_routebar_t() { base = 100; state = 0; }
+	void set_base(sint32 base);
+	void init(const sint32 *value, uint8 state);
+
+	void set_state(uint8 state);
+
+	/**
+	 * Draw the component
+	 */
+	void draw(scr_coord offset) OVERRIDE;
+
+	scr_size get_min_size() const OVERRIDE;
+
+	scr_size get_max_size() const OVERRIDE;
+};
+
+class gui_bandgraph_t : public gui_component_t
+{
+private:
+	sint32 total;
+	struct info_t {
+		PIXVAL color;
+		const sint32 *value;
+	};
+	slist_tpl <info_t> values;
+
+public:
+	gui_bandgraph_t() { total = 0; }
+
+	void add_color_value(const sint32 *value, PIXVAL color);
+
+	void draw(scr_coord offset) OVERRIDE;
+
+	scr_size get_min_size() const OVERRIDE;
+
+	scr_size get_max_size() const OVERRIDE;
 };
 
 #endif

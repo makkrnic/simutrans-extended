@@ -24,14 +24,14 @@ extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 #define SIM_BUILD_RELEASE           2
 
 #define SIM_VERSION_MAJOR 120
-#define SIM_VERSION_MINOR   3
-#define SIM_VERSION_PATCH   0
+#define SIM_VERSION_MINOR   4
+#define SIM_VERSION_PATCH   1
 #define SIM_VERSION_BUILD SIM_BUILD_NIGHTLY
 
 // Beware: SAVEGAME minor is often ahead of version minor when there were patches.
 //  These have no direct connection at all!
-#define SIM_SAVE_MINOR      6
-#define SIM_SERVER_MINOR    6
+#define SIM_SAVE_MINOR      7
+#define SIM_SERVER_MINOR    7
 
 #define EX_VERSION_MAJOR	14
 #define EX_VERSION_MINOR	12
@@ -39,7 +39,7 @@ extern "C" FILE * __cdecl __iob_func(void) { return _iob; }
 
 // Do not forget to increment the save game versions in settings_stats.cc when changing this
 
-#define MAKEOBJ_VERSION "60.06"
+#define MAKEOBJ_VERSION "60.1"
 // Transparency and new factories(60.0), railcar_tab(60.01), basic constraint + mixed_load_prohibition(60.06). NOTE: standard now 60.2
 
 #ifndef QUOTEME

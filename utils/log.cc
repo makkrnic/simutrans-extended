@@ -16,7 +16,6 @@
 
 #include "log.h"
 #include "../simdebug.h"
-#include "../sys/simsys.h"
 
 
 #ifdef MAKEOBJ
@@ -34,52 +33,14 @@
 #include "../gui/messagebox.h"
 #include "../display/simgraph.h"
 #include "../gui/simwin.h"
+#include "../sys/simsys.h"
 
 #include "../dataobj/environment.h"
 #endif // NETTOOL
 #endif // MAKEOBJ
 
 /**
- * writes important messages to stdout/logfile
- * use instead of printf()
- */
-void log_t::important(const char* format, ...)
-{
-	va_list argptr;
-
-	va_start( argptr, format );
-	if (  log  ) {
-		// If logfile, output there
-		vfprintf( log, format, argptr );
-		fprintf( log, "\n" );
-		if (  force_flush  ) { fflush( log ); }
-	}
-	va_end(argptr);
-
-#ifdef SYSLOG
-	va_start( argptr, format );
-	if (  syslog  ) {
-		// Send to syslog if available
-		vsyslog( LOG_NOTICE, format, argptr );
-	}
-	va_end(argptr);
-#endif
-
-	va_start( argptr, format );
-
-	// Print to stdout for important messages
-	if (  log != stderr  ) {
-		vfprintf( stdout, format, argptr );
-		fprintf( stdout, "\n" );
-		if (  force_flush  ) { fflush( stdout ); }
-	}
-
-	va_end( argptr );
-}
-
-/**
  * writes a debug message into the log.
- * @author Hj. Malthaner
  */
 void log_t::debug(const char *who, const char *format, ...)
 {
@@ -110,7 +71,7 @@ void log_t::debug(const char *who, const char *format, ...)
 		va_start( argptr, format );
 		if (  syslog  ) {
 			// Replace with dynamic memory allocation
-			char buffer[256];
+			char buffer[4096];
 			sprintf( buffer, "Debug: %s\t%s", who, format );
 			vsyslog( LOG_DEBUG, buffer, argptr );
 		}
@@ -122,7 +83,6 @@ void log_t::debug(const char *who, const char *format, ...)
 
 /**
  * writes a message into the log.
- * @author Hj. Malthaner
  */
 void log_t::message(const char *who, const char *format, ...)
 {
@@ -153,7 +113,7 @@ void log_t::message(const char *who, const char *format, ...)
 		va_start( argptr, format );
 		if (  syslog  ) {
 			// Replace with dynamic memory allocation
-			char buffer[256];
+			char buffer[4096];
 			sprintf( buffer, "Message: %s\t%s", who, format );
 			vsyslog( LOG_INFO, buffer, argptr );
 		}
@@ -165,7 +125,6 @@ void log_t::message(const char *who, const char *format, ...)
 
 /**
  * writes a warning into the log.
- * @author Hj. Malthaner
  */
 void log_t::warning(const char *who, const char *format, ...)
 {
@@ -196,7 +155,7 @@ void log_t::warning(const char *who, const char *format, ...)
 		va_start( argptr, format );
 		if (  syslog  ) {
 			// Replace with dynamic memory allocation
-			char buffer[256];
+			char buffer[4096];
 			sprintf( buffer, "Warning: %s\t%s", who, format );
 			vsyslog( LOG_WARNING, buffer, argptr );
 		}
@@ -208,7 +167,6 @@ void log_t::warning(const char *who, const char *format, ...)
 
 /**
  * writes an error into the log.
- * @author Hj. Malthaner
  */
 void log_t::error(const char *who, const char *format, ...)
 {
@@ -246,7 +204,7 @@ void log_t::error(const char *who, const char *format, ...)
 		if (  syslog  ) {
 
 			// Replace with dynamic memory allocation
-			char buffer[256];
+			char buffer[4096];
 			sprintf( buffer, "ERROR: %s\t%s", who, format );
 			vsyslog( LOG_ERR, buffer, argptr );
 		}
@@ -258,7 +216,6 @@ void log_t::error(const char *who, const char *format, ...)
 
 /**
  * writes an error into the log, aborts the program.
- * @author Hj. Malthaner
  */
 void log_t::fatal(const char *who, const char *format, ...)
 {
@@ -299,7 +256,8 @@ void log_t::fatal(const char *who, const char *format, ...)
 #elif defined NETTOOL
 	// no display available
 	puts( buffer );
-#else // MAKEOJB/NETTOOL
+#else
+	// not MAKEOBJ/NETTOOL
 #  ifdef MSG_LEVEL
 	int old_level = env_t::verbose_debug;
 #  endif
@@ -335,35 +293,24 @@ void log_t::fatal(const char *who, const char *format, ...)
 		dr_fatal_notify(buffer);
 	}
 
-#ifdef DEBUG
-	if (old_level > 4) {
-		// generate a division be zero error, if the user request it
-		static int make_this_a_division_by_zero = 0;
-		printf("%i", 15 / make_this_a_division_by_zero);
-		make_this_a_division_by_zero &= 0xFF;
-	}
-#endif
 #endif
 	abort();
 }
 
 
 
+#ifdef NETTOOL
+void log_t::vmessage(const char *, const char *, const char *, va_list )
+{
+}
+
+#else
+
 void log_t::vmessage(const char *what, const char *who, const char *format, va_list args )
 {
 	if(debuglevel>0) {
 		va_list args2;
-
-#if defined(va_copy)
 		va_copy(args2, args);
-#elif defined(__va_copy)
-		// Deprecated macro possibly used by older compilers.
-		__va_copy(args2, args);
-#else
-		// Undefined behaviour that might work.
-		args2 = args; // If this throws an error then C++11 conformance may be required.
-#endif
-
 		if( log ) {                               /* only log when a log */
 			fprintf(log ,"%s: %s:\t", what, who); /* is already open */
 			vfprintf(log, format, args);
@@ -381,6 +328,8 @@ void log_t::vmessage(const char *what, const char *who, const char *format, va_l
 		va_end(args2);
 	}
 }
+
+#endif
 
 
 // create a logfile for log_debug=true

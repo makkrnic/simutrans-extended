@@ -796,7 +796,7 @@ void bridge_builder_t::build_bridge(player_t *player, const koord3d start, const
 
 	DBG_MESSAGE("bridge_builder_t::build()", "build from %s", start.get_str());
 
-	grund_t *start_gr = welt->lookup( start );
+	grund_t* const start_gr = welt->lookup( start );
 	const slope_t::type slope = start_gr->get_weg_hang();
 
 	// get initial height of bridge from start tile
@@ -809,6 +809,7 @@ void bridge_builder_t::build_bridge(player_t *player, const koord3d start, const
 		dbg->error("void bridge_builder_t::build_bridge()", "Cannot find the end of a bridge at %u,%u)", end.x, end.y);
 		return;
 	}
+
 	slope_t::type end_slope = end_gr->get_weg_hang();
 	sint8 end_slope_height = end.z;
 	if(  end_slope != slope_type(zv) && end_slope != slope_type(zv)*2  ) {
@@ -1190,7 +1191,7 @@ const char *bridge_builder_t::remove(player_t *player, koord3d pos_start, waytyp
 	do {
 		pos = tmp_list.remove_first();
 
-		// V.Meyer: weg_position_t changed to grund_t::get_neighbour()
+		// weg_position_t changed to grund_t::get_neighbour()
 		grund_t *from = welt->lookup(pos);
 		grund_t *to;
 		koord zv = koord::invalid;

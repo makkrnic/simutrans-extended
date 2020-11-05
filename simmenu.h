@@ -72,7 +72,7 @@ enum {
 	TOOL_ERROR_MESSAGE,
 	TOOL_CHANGE_WATER_HEIGHT,
 	TOOL_SET_CLIMATE,
-	TOOL_BUILD_SIGNALBOX_DEPRECATED,
+	TOOL_ROTATE_BUILDING,
 	TOOL_REASSIGN_SIGNAL_DEPRECATED,
 	GENERAL_TOOL_STANDARD_COUNT,
 	// Extended entries from here:
@@ -120,7 +120,7 @@ enum {
 	TOOL_TOGGLE_RESERVATION,
 	TOOL_VIEW_OWNER,
 	TOOL_HIDE_UNDER_CURSOR,
-	TOOL_CHANGE_ROADSIGN_DEPRECATED,
+	TOOL_MOVE_MAP,
 	TOOL_SHOW_RIBI_DEPRECATED,
 	TOOL_RECOLOUR_TOOL_DEPRECATED,
 	TOOL_ACCESS_TOOL_DEPRECATED,
@@ -173,9 +173,11 @@ enum {
 	DIALOG_SCENARIO_INFO,
 	DIALOG_LIST_DEPOT,
 	DIALOG_LIST_VEHICLE,
+	//DIALOG_SCRIPT_TOOL,
 	DIALOG_TOOL_STANDARD_COUNT,
 	// Extended entries from here:
-	DIALOG_TOOL_COUNT=0x0080,
+	DIALOG_LIST_SIGNALBOX =0x0080,
+	DIALOG_TOOL_COUNT,
 	DIALOG_TOOL = 0x4000
 };
 
@@ -226,8 +228,8 @@ public:
 		WFL_SHIFT  = 1, ///< shift-key was pressed when mouse-click happened
 		WFL_CTRL   = 2, ///< ctrl-key was pressed when mouse-click happened
 		WFL_LOCAL  = 4, ///< tool call was issued by local client
-		WFL_SCRIPT = 8,  ///< tool call was issued by script (no password checks)
-		WFL_NO_CHK = 16, ///< tool call needs no password or scenario checks
+		WFL_SCRIPT = 8, ///< tool call was issued by script
+		WFL_NO_CHK = 16 ///< tool call needs no password or scenario checks
 	};
 	uint8 flags; // flags are set before init/work/move is called
 
@@ -285,14 +287,14 @@ public:
 	virtual bool is_selected() const;
 
 	// when true, local execution would do no harm
-	virtual bool is_init_network_save() const { return false; }
-	virtual bool is_move_network_save(player_t *) const { return true; }
+	virtual bool is_init_network_safe() const { return false; }
+	virtual bool is_move_network_safe(player_t *) const { return true; }
 
-	// if is_work_network_save()==false
-	// and is_work_here_network_save(...)==false
+	// if is_work_network_safe()==false
+	// and is_work_here_network_safe(...)==false
 	// then work-command is sent over network
-	virtual bool is_work_network_save() const { return false; }
-	virtual bool is_work_here_network_save(player_t *, koord3d) { return false; }
+	virtual bool is_work_network_safe() const { return false; }
+	virtual bool is_work_here_network_safe(player_t *, koord3d) { return false; }
 
 	// will draw a dark frame, if selected
 	virtual void draw_after(scr_coord pos, bool dirty) const;
@@ -363,10 +365,10 @@ public:
 	char const* check_pos(player_t*, koord3d) OVERRIDE;
 };
 
-/*
+
+/**
  * Class for tools needing two clicks (e.g. building ways).
  * Dragging is also possible.
- * @author Gerd Wachsmuth
  */
 class two_click_tool_t : public tool_t {
 public:
@@ -383,7 +385,7 @@ public:
 	char const* move(player_t*, uint16 /* buttonstate */, koord3d) OVERRIDE;
 	bool move_has_effects() const OVERRIDE { return true; }
 
-	bool is_work_here_network_save(player_t *, koord3d) OVERRIDE;
+	bool is_work_here_network_safe(player_t *, koord3d) OVERRIDE;
 
 	/**
 	 * @returns true if cleanup() needs to be called before another tool can be executed
@@ -457,8 +459,8 @@ public:
 	tool_selector_t *get_tool_selector() const { return tool_selector; }
 	image_id get_icon(player_t*) const OVERRIDE;
 	bool is_selected() const OVERRIDE;
-	bool is_init_network_save() const OVERRIDE { return true; }
-	bool is_work_network_save() const OVERRIDE { return true; }
+	bool is_init_network_safe() const OVERRIDE { return true; }
+	bool is_work_network_safe() const OVERRIDE { return true; }
 	// show this toolbar
 	bool init(player_t*) OVERRIDE;
 	// close this toolbar
@@ -474,8 +476,8 @@ private:
 	slist_tpl<tool_t *>all_tools[MAX_PLAYER_COUNT];
 public:
 	toolbar_last_used_t(uint16 const id, char const* const t, char const* const h) : toolbar_t(id,t,h) {}
-	static toolbar_last_used_t * last_used_tools;
-	void update(player_t *);    // just refresh content
+	static toolbar_last_used_t *last_used_tools;
+	void update(player_t *) OVERRIDE;	// just refresh content
 	void append(tool_t *, player_t *);
 	void clear();
 };

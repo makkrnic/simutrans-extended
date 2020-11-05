@@ -3,8 +3,6 @@
  * (see LICENSE.txt)
  */
 
-/* completely overhauled by prissi Oct-2005 */
-
 #include <stdio.h>
 #include <ctype.h>
 
@@ -23,22 +21,13 @@
 #include "../player/simplay.h"
 #include "../simdepot.h"
 #include "loadsave.h"
+#include "translator.h"
 
 #include "schedule.h"
 
 #include "../tpl/slist_tpl.h"
 
 schedule_entry_t schedule_t::dummy_entry(koord3d::invalid, 0, 0, 0, -1, false);
-
-schedule_t::schedule_t(loadsave_t* const file)
-{
-	rdwr(file);
-	if(file->is_loading()) {
-		cleanup();
-	}
-}
-
-
 
 // copy all entries from schedule src to this and adjusts current_stop
 void schedule_t::copy_from(const schedule_t *src)
@@ -402,10 +391,8 @@ void schedule_t::rotate90( sint16 y_size )
 }
 
 
-
-/*
+/**
  * compare this schedule (schedule) with another, passed in schedule
- * @author hsiegeln
  */
 bool schedule_t::matches(karte_t *welt, const schedule_t *schedule)
 {
@@ -546,9 +533,8 @@ public:
 };
 
 
-/*
+/**
  * compare this schedule (schedule) with another, ignoring order and exact positions and waypoints
- * @author prissi
  */
 bool schedule_t::similar( const schedule_t *schedule, const player_t *player )
 {
@@ -684,6 +670,129 @@ bool schedule_t::sscanf_schedule( const char *ptr )
 	}
 	return true;
 }
+
+
+void schedule_t::gimme_stop_name(cbuffer_t & buf, karte_t* welt, const player_t *player_, const schedule_entry_t &entry, bool no_control_tower )
+{
+	halthandle_t halt = haltestelle_t::get_halt(entry.pos, player_);
+	if(halt.is_bound())
+	{
+		char modified_name[320];
+		if(no_control_tower)
+		{
+			sprintf(modified_name, "%s [%s]", halt->get_name(), translator::translate("NO CONTROL TOWER"));
+		}
+		else
+		{
+			sprintf(modified_name, "%s", halt->get_name());
+		}
+
+		if(entry.wait_for_time)
+		{
+			buf.printf("[*] ");
+		}
+
+		if (entry.minimum_loading != 0)
+		{
+			buf.printf("%d%% ", entry.minimum_loading);
+		}
+		buf.printf("%s (%s)", modified_name, entry.pos.get_str() );
+	}
+	else {
+		const grund_t* gr = welt->lookup(entry.pos);
+		if(  gr==NULL  ) {
+			buf.printf("%s (%s)", translator::translate("Invalid coordinate"), entry.pos.get_str() );
+		}
+		else if(  gr->get_depot() != NULL  ) {
+			buf.printf("%s (%s)", translator::translate("Depot"), entry.pos.get_str() );
+		}
+		else if(  const char *label_text = gr->get_text()  ){
+			buf.printf("%s %s (%s)", translator::translate("Wegpunkt"), label_text, entry.pos.get_str() );
+		}
+		else {
+			buf.printf("%s (%s)", translator::translate("Wegpunkt"), entry.pos.get_str() );
+		}
+	}
+
+	if(entry.reverse == 1)
+	{
+		buf.printf(" [<<]");
+	}
+}
+
+void schedule_t::gimme_short_stop_name(cbuffer_t& buf, karte_t* welt, player_t const* const player_, const schedule_t *schedule, int i, int max_chars)
+{
+	if (i < 0 || schedule == NULL || i >= schedule->get_count()) {
+		dbg->warning("void schedule_gui_t::gimme_short_stop_name()", "tried to receive unused entry %i in schedule %p.", i, schedule);
+		return;
+	}
+	const schedule_entry_t& entry = schedule->entries[i];
+	const char* p;
+	halthandle_t halt = haltestelle_t::get_halt(entry.pos, player_);
+	if (halt.is_bound()) {
+		p = halt->get_name();
+	}
+	else {
+		const grund_t* gr = welt->lookup(entry.pos);
+		if (gr == NULL) {
+			p = translator::translate("Invalid coordinate");
+		}
+		else if (gr->get_depot() != NULL) {
+			p = translator::translate("Depot");
+		}
+		else {
+			p = translator::translate("Wegpunkt");
+		}
+	}
+
+	// Finally start to append the entry. Start with the most complicated...
+	if (entry.wait_for_time && entry.reverse == 1)
+	{
+		if (strlen(p) > (unsigned)max_chars - 8)
+		{
+			buf.printf("[*] %.*s... [<<]", max_chars - 12, p);
+		}
+		else
+		{
+			buf.append("[*] ");
+			buf.append(p);
+			buf.append(" [<<]");
+		}
+	}
+	else if (entry.wait_for_time)
+	{
+		if (strlen(p) > (unsigned)max_chars - 4)
+		{
+			buf.printf("[*] %.*s...", max_chars - 8, p);
+		}
+		else
+		{
+			buf.append("[*] ");
+			buf.append(p);
+		}
+	}
+	else if (entry.reverse == 1)
+	{
+		if (strlen(p) > (unsigned)max_chars - 4)
+		{
+			buf.printf("%.*s... [<<]", max_chars - 8, p);
+		}
+		else
+		{
+			buf.append(p);
+			buf.append(" [<<]");
+		}
+	}
+	else if (strlen(p) > (unsigned)max_chars)
+	{
+		buf.printf("%.*s...", max_chars - 3, p);
+	}
+	else
+	{
+		buf.append(p);
+	}
+}
+
 
 bool schedule_t::is_contained (koord3d pos)
 {

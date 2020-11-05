@@ -145,10 +145,11 @@ bool dr_auto_scale(bool on_off )
 bool dr_os_init(const int* parameter)
 {
 	if(  SDL_Init( SDL_INIT_VIDEO ) != 0  ) {
-		fprintf( stderr, "Couldn't initialize SDL: %s\n", SDL_GetError() );
+		dbg->error("dr_os_init(SDL2)", "Could not initialize SDL: %s", SDL_GetError() );
 		return false;
 	}
-	printf("SDL Driver: %s\n", SDL_GetCurrentVideoDriver() );
+
+	dbg->message("dr_os_init(SDL2)", "SDL Driver: %s", SDL_GetCurrentVideoDriver() );
 
 	// disable event types not interested in
 #ifndef USE_SDL_TEXTEDITING
@@ -207,7 +208,8 @@ bool internal_create_surfaces(const bool, int w, int h )
 			formatStrBuilder += ", ";
 			formatStrBuilder += SDL_GetPixelFormatName(ri.texture_formats[j]);
 		}
-		DBG_DEBUG( "internal_create_surfaces()", "Renderer: %s, Max_w: %d, Max_h: %d, Flags: %d, Formats: %d%s", ri.name, ri.max_texture_width, ri.max_texture_height, ri.flags, ri.num_texture_formats, formatStrBuilder.c_str() );
+		DBG_DEBUG( "internal_create_surfaces(SDL2)", "Renderer: %s, Max_w: %d, Max_h: %d, Flags: %d, Formats: %d%s",
+			ri.name, ri.max_texture_width, ri.max_texture_height, ri.flags, ri.num_texture_formats, formatStrBuilder.c_str() );
 	}
 #endif
 
@@ -217,25 +219,26 @@ bool internal_create_surfaces(const bool, int w, int h )
 	}
 	renderer = SDL_CreateRenderer( window, -1, flags );
 	if(  renderer == NULL  ) {
-		dbg->warning( "internal_create_surfaces()", "Couldn't create accelerated renderer: %s", SDL_GetError() );
+		dbg->warning( "internal_create_surfaces(SDL2)", "Couldn't create accelerated renderer: %s", SDL_GetError() );
 
 		flags &= ~SDL_RENDERER_ACCELERATED;
 		flags |= SDL_RENDERER_SOFTWARE;
 		renderer = SDL_CreateRenderer( window, -1, flags );
 		if(  renderer == NULL  ) {
-			dbg->error( "internal_create_surfaces()", "No suitable SDL2 renderer found!" );
+			dbg->error( "internal_create_surfaces(SDL2)", "No suitable SDL2 renderer found!" );
 			return false;
 		}
-		dbg->warning( "internal_create_surfaces()", "Using fallback software renderer instead of accelerated: Performance may be low!");
+		dbg->warning( "internal_create_surfaces(SDL2)", "Using fallback software renderer instead of accelerated: Performance may be low!");
 	}
 
 	SDL_RendererInfo ri;
 	SDL_GetRendererInfo( renderer, &ri );
-	DBG_DEBUG( "internal_create_surfaces()", "Using: Renderer: %s, Max_w: %d, Max_h: %d, Flags: %d, Formats: %d, %s", ri.name, ri.max_texture_width, ri.max_texture_height, ri.flags, ri.num_texture_formats, SDL_GetPixelFormatName(pixel_format) );
+	DBG_DEBUG( "internal_create_surfaces(SDL2)", "Using: Renderer: %s, Max_w: %d, Max_h: %d, Flags: %d, Formats: %d, %s",
+		ri.name, ri.max_texture_width, ri.max_texture_height, ri.flags, ri.num_texture_formats, SDL_GetPixelFormatName(pixel_format) );
 
 	screen_tx = SDL_CreateTexture( renderer, pixel_format, SDL_TEXTUREACCESS_STREAMING, w, h );
 	if(  screen_tx == NULL  ) {
-		dbg->error( "internal_create_surfaces()", "Couldn't create texture: %s", SDL_GetError() );
+		dbg->error( "internal_create_surfaces(SDL2)", "Couldn't create texture: %s", SDL_GetError() );
 		return false;
 	}
 
@@ -243,16 +246,16 @@ bool internal_create_surfaces(const bool, int w, int h )
 	int bpp;
 	Uint32 rmask, gmask, bmask, amask;
 	if(  !SDL_PixelFormatEnumToMasks( pixel_format, &bpp, &rmask, &gmask, &bmask, &amask )  ) {
-		dbg->error( "internal_create_surfaces()", "Pixel format error. Couldn't generate masks: %s", SDL_GetError() );
+		dbg->error( "internal_create_surfaces(SDL2)", "Pixel format error. Couldn't generate masks: %s", SDL_GetError() );
 		return false;
 	} else if(  bpp != COLOUR_DEPTH  ||  amask != 0  ) {
-		dbg->error( "internal_create_surfaces()", "Pixel format error. Bpp got %d, needed %d. Amask got %d, needed 0.", bpp, COLOUR_DEPTH, amask );
+		dbg->error( "internal_create_surfaces(SDL2)", "Pixel format error. Bpp got %d, needed %d. Amask got %d, needed 0.", bpp, COLOUR_DEPTH, amask );
 		return false;
 	}
 
 	screen = SDL_CreateRGBSurface( 0, w, h, bpp, rmask, gmask, bmask, amask );
 	if(  screen == NULL  ) {
-		dbg->error( "internal_create_surfaces()", "Couldn't get the window surface: %s", SDL_GetError() );
+		dbg->error( "internal_create_surfaces(SDL2)", "Couldn't get the window surface: %s", SDL_GetError() );
 		return false;
  	}
 
@@ -278,7 +281,7 @@ int dr_os_open(int width, int height, int const fullscreen)
 	Uint32 flags = fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP: SDL_WINDOW_RESIZABLE;
 	window = SDL_CreateWindow( SIM_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, flags );
 	if(  window == NULL  ) {
-		fprintf( stderr, "Couldn't open the window: %s\n", SDL_GetError() );
+		dbg->error("dr_os_open(SDL2)", "Could not open the window: %s", SDL_GetError() );
 		return 0;
 	}
 
@@ -286,7 +289,6 @@ int dr_os_open(int width, int height, int const fullscreen)
 		return 0;
 	}
 	DBG_MESSAGE("dr_os_open(SDL2)", "SDL realized screen size width=%d, height=%d (internal w=%d, h=%d)", width, height, w, h );
-	SDL_SetWindowSize( window, width, height );
 
 	SDL_ShowCursor(0);
 	arrow = SDL_GetCursor();
@@ -342,12 +344,13 @@ int dr_textur_resize(unsigned short** const textur, int w, int const h )
 			DBG_MESSAGE("dr_textur_resize(SDL2)", "SDL realized screen size width=%d, height=%d (requested w=%d, h=%d)", screen->w, screen->h, w, h );
 		}
 		else {
-			dbg->warning("dr_textur_resize(SDL2)", "screen is NULL. Good luck!");
+			dbg->error("dr_textur_resize(SDL2)", "screen is NULL. Good luck!");
 		}
 		fflush( NULL );
 	}
 
 	display_set_actual_width( screen->w );
+
 	*textur = dr_textur_init();
 	return screen->w;
 }
@@ -367,7 +370,6 @@ unsigned short *dr_textur_init()
 /**
  * Transform a 24 bit RGB color into the system format.
  * @return converted color value
- * @author Hj. Malthaner
  */
 unsigned int get_system_color(unsigned int r, unsigned int g, unsigned int b)
 {
@@ -433,7 +435,6 @@ void set_pointer(int loading)
  * Some wrappers can save screenshots.
  * @return 1 on success, 0 if not implemented for a particular wrapper and -1
  *         in case of error.
- * @author Hj. Malthaner
  */
 int dr_screenshot(const char *filename, int x, int y, int w, int h)
 {
@@ -481,6 +482,7 @@ static void internal_GetEvents(bool const wait)
 	// Apparently Cocoa SDL posts key events that meant to be used by IM...
 	// Ignoring SDL_KEYDOWN during preedit seems to work fine.
 	static bool composition_is_underway = false;
+	static bool ignore_previous_number = false;
 
 	SDL_Event event;
 	event.type = 1;
@@ -575,12 +577,15 @@ static void internal_GetEvents(bool const wait)
 			unsigned long code;
 #ifdef _WIN32
 			// SDL doesn't set numlock state correctly on startup. Revert to win32 function as workaround.
-			const bool numlock = (GetKeyState(VK_NUMLOCK) & 1) != 0;
+			const bool key_numlock = ((GetKeyState( VK_NUMLOCK ) & 1) != 0);
 #else
-			const bool numlock = SDL_GetModState() & KMOD_NUM;
+			const bool key_numlock = (SDL_GetModState() & KMOD_NUM);
 #endif
+			const bool numlock = key_numlock  &&  !env_t::numpad_always_moves_map;
 			sys_event.key_mod = ModifierKeys();
 			SDL_Keycode sym = event.key.keysym.sym;
+			bool np = false; // to indicate we converted a numpad key
+
 			switch(  sym  ) {
 				case SDLK_BACKSPACE:  code = SIM_KEY_BACKSPACE;             break;
 				case SDLK_TAB:        code = SIM_KEY_TAB;                   break;
@@ -605,24 +610,23 @@ static void internal_GetEvents(bool const wait)
 				case SDLK_F13:        code = SIM_KEY_F13;                   break;
 				case SDLK_F14:        code = SIM_KEY_F14;                   break;
 				case SDLK_F15:        code = SIM_KEY_F15;                   break;
-				case SDLK_KP_0:       code = numlock ? 0 : 0;               break;
-				case SDLK_KP_1:       code = numlock ? 0 : SIM_KEY_END;     break;
-				case SDLK_KP_2:       code = numlock ? 0 : SIM_KEY_DOWN;    break;
-				case SDLK_KP_3:       code = numlock ? 0 : '<';             break;
-				case SDLK_KP_4:       code = numlock ? 0 : SIM_KEY_LEFT;    break;
-				case SDLK_KP_5:       code = numlock ? 0 : 0;               break;
-				case SDLK_KP_6:       code = numlock ? 0 : SIM_KEY_RIGHT;   break;
-				case SDLK_KP_7:       code = numlock ? 0 : SIM_KEY_HOME;    break;
-				case SDLK_KP_8:       code = numlock ? 0 : SIM_KEY_UP;      break;
-				case SDLK_KP_9:       code = numlock ? 0 : '>';             break;
-				case SDLK_KP_DECIMAL: code = numlock ? 0 : SIM_KEY_DELETE;  break;
+				case SDLK_KP_0:       np = true; code = numlock ? '0' : SIM_KEY_NUMPAD_BASE + 0; break;
+				case SDLK_KP_1:       np = true; code = numlock ? '1' : SIM_KEY_NUMPAD_BASE+1; break;
+				case SDLK_KP_2:       np = true; code = numlock ? '2' : SIM_KEY_NUMPAD_BASE+2; break;
+				case SDLK_KP_3:       np = true; code = numlock ? '3' : SIM_KEY_NUMPAD_BASE+3; break;
+				case SDLK_KP_4:       np = true; code = numlock ? '4' : SIM_KEY_NUMPAD_BASE+4; break;
+				case SDLK_KP_5:       np = true; code = numlock ? '5' : SIM_KEY_NUMPAD_BASE+5; break;
+				case SDLK_KP_6:       np = true; code = numlock ? '6' : SIM_KEY_NUMPAD_BASE+6; break;
+				case SDLK_KP_7:       np = true; code = numlock ? '7' : SIM_KEY_NUMPAD_BASE+7; break;
+				case SDLK_KP_8:       np = true; code = numlock ? '8' : SIM_KEY_NUMPAD_BASE+8; break;
+				case SDLK_KP_9:       np = true; code = numlock ? '9' : SIM_KEY_NUMPAD_BASE+9; break;
 				case SDLK_KP_ENTER:   code = SIM_KEY_ENTER;                 break;
 				case SDLK_LEFT:       code = SIM_KEY_LEFT;                  break;
 				case SDLK_PAGEDOWN:   code = '<';                           break;
 				case SDLK_PAGEUP:     code = '>';                           break;
 				case SDLK_RIGHT:      code = SIM_KEY_RIGHT;                 break;
 				case SDLK_UP:         code = SIM_KEY_UP;                    break;
-				case SDLK_PAUSE:      code = 16;                            break;
+				case SDLK_PAUSE:      code = SIM_KEY_PAUSE;                 break;
 				default: {
 					// Handle CTRL-keys. SDL_TEXTINPUT event handles regular input
 					if(  (sys_event.key_mod & 2)  &&  SDLK_a <= sym  &&  sym <= SDLK_z  ) {
@@ -634,15 +638,21 @@ static void internal_GetEvents(bool const wait)
 					break;
 				}
 			}
+			ignore_previous_number = (np  &&   key_numlock  &&  env_t::numpad_always_moves_map);
 			sys_event.type    = SIM_KEYBOARD;
 			sys_event.code    = code;
 			break;
 		}
+
 		case SDL_TEXTINPUT: {
 			size_t in_pos = 0;
 			utf32 uc = utf8_decoder_t::decode((utf8 const*)event.text.text, in_pos);
 			if(  event.text.text[in_pos]==0  ) {
 				// single character
+				if( ignore_previous_number ) {
+					ignore_previous_number = false;
+					break;
+				}
 				sys_event.type    = SIM_KEYBOARD;
 				sys_event.code    = (unsigned long)uc;
 			}

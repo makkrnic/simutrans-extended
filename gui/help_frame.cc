@@ -88,6 +88,7 @@ help_frame_t::help_frame_t(char const* const filename) :
 		if(  strstart(iter->get_tool_selector()->get_help_filename(),"railtools.txt" )  ) {
 			add_helpfile( toolbars, NULL, "bridges.txt", true, 1 );
 			add_helpfile( toolbars, NULL, "signals.txt", true, 1 );
+			add_helpfile( toolbars, "set signal spacing", "signal_spacing.txt", false, 1 );
 		}
 		if(  strstart(iter->get_tool_selector()->get_help_filename(),"roadtools.txt" )  ) {
 			add_helpfile( toolbars, NULL, "privatesign_info.txt", false, 1 );
@@ -140,7 +141,7 @@ help_frame_t::help_frame_t(char const* const filename) :
 	add_helpfile( how_to_play, "Spielerliste", "players.txt", false, 0 );
 	add_helpfile( how_to_play, "Finanzen", "finances.txt", false, 1 );
 	add_helpfile( how_to_play, "Farbe", "color.txt", false, 1 );
-//		add_helpfile( how_to_play, "Scenario", "scenario.txt", false, 1 );
+//	add_helpfile( how_to_play, "Scenario", "scenario.txt", false, 1 );
 	add_helpfile( how_to_play, "Enter Password", "password.txt", false, 1 );
 	add_helpfile( how_to_play, NULL, "way_wear.txt", false, 1);
 	add_helpfile(how_to_play, NULL, "signals_overview.txt", false, 1);
@@ -182,7 +183,7 @@ void help_frame_t::open_help_on( const char *helpfilename )
 
 
 // just loads a whole help file as one chunk
-static const char *load_text(char const* const filename )
+static char *load_text(char const* const filename )
 {
 	std::string file_prefix= std::string("text") + PATH_SEPARATOR;
 	std::string fullname = file_prefix + translator::get_lang()->iso + PATH_SEPARATOR + filename;
@@ -194,7 +195,7 @@ static const char *load_text(char const* const filename )
 		file = dr_fopen((file_prefix + translator::get_lang()->iso_base + PATH_SEPARATOR + filename).c_str(), "rb");
 	}
 	if (!file) {
-		// Hajo: check fallback english
+		// check fallback english
 		file = dr_fopen((file_prefix + PATH_SEPARATOR + "en" + PATH_SEPARATOR + filename).c_str(), "rb");
 	}
 	// go back to load/save dir
@@ -213,9 +214,9 @@ static const char *load_text(char const* const filename )
 		}
 		// now we may need to translate the text ...
 		if(  len>0  ) {
-			bool is_latin = strchr( buf, 0xF6 )!=NULL;	// "o-umlaut, is forbidden for unicode
+			bool is_latin = strchr( buf, 0xF6 )!=NULL; // "o-umlaut, is forbidden for unicode
 			if(  !is_latin  &&  translator::get_lang()->is_latin2_based  ) {
-				is_latin |= strchr( buf, 0xF8 )!=NULL;	// "o-umlaut, is forbidden for unicode
+				is_latin |= strchr( buf, 0xF8 )!=NULL; // "o-umlaut, is forbidden for unicode
 			}
 			if(  is_latin  ) {
 				// we need to translate charwise ...
@@ -233,7 +234,7 @@ static const char *load_text(char const* const filename )
 					} while(  *src++  );
 					*dest = 0;
 				}
-				guarded_free( buf );
+				free( buf );
 				buf = (char *)buf2;
 			}
 		}
@@ -322,8 +323,8 @@ void help_frame_t::set_helpfile(const char *filename, bool resize_frame )
 				case '<': c = "&lt;"; break;
 				case '>': c = "&gt;"; break;
 				case 27:  c = "ESC"; break;
-				case SIM_KEY_HOME:	c=translator::translate( "[HOME]" ); break;
-				case SIM_KEY_END:	c=translator::translate( "[END]" ); break;
+				case SIM_KEY_HOME: c = translator::translate( "[HOME]" ); break;
+				case SIM_KEY_END:  c = translator::translate( "[END]" ); break;
 				default:
 					if (key < 32) {
 						sprintf(str, "%s + %c", translator::translate("[CTRL]"), '@' + key);
@@ -347,23 +348,25 @@ void help_frame_t::set_helpfile(const char *filename, bool resize_frame )
 	}
 	else if(  strcmp( filename, "general.txt" )!=0  ) {
 		// and the actual help text (if not identical)
-		if(  const char *buf = load_text( filename )  ) {
+		if(  char *buf = load_text( filename )  ) {
 			set_text( buf, resize_frame );
-			guarded_free(const_cast<char *>(buf));
+			free(buf);
 		}
-		else {
-			set_text( "<title>Error</title>Help text not found", resize_frame );
-		}
+		else {{
+			cbuffer_t buf;
+			buf.printf("<title>%s</title>%s", translator::translate("Error"), translator::translate("Help text not found"));
+			set_text(buf, resize_frame );
+		}}
 	}
 	else {
 		// default text when opening general help
-		if(  const char *buf = load_text( "about.txt" )  ) {
+		if(  char *buf = load_text( "about.txt" )  ) {
 			set_text( buf, resize_frame );
-			guarded_free(const_cast<char *>(buf));
+			free(buf);
 		}
-		else if(  const char *buf = load_text( "simutrans.txt" )  ) {
+		else if(  char *buf = load_text( "simutrans.txt" )  ) {
 			set_text( buf, resize_frame );
-			guarded_free(const_cast<char *>(buf));
+			free(buf);
 		}
 		else {
 			set_text( "", resize_frame );
@@ -385,7 +388,7 @@ FILE *help_frame_t::has_helpfile( char const* const filename, int &mode )
 		file = dr_fopen(  (file_prefix + translator::get_lang()->iso_base + PATH_SEPARATOR + filename).c_str(), "rb"  );
 	}
 	if(  !file  ) {
-		// Hajo: check fallback english
+		// check fallback english
 		file = dr_fopen((file_prefix + "en/" + filename).c_str(), "rb");
 		mode = english;
 	}
@@ -443,7 +446,8 @@ void help_frame_t::add_helpfile( cbuffer_t &section, const char *titlename, cons
 	if(  (  only_native  &&  mode!=native  )  ||  mode==missing  ) {
 		return;
 	}
-	std::string filetitle;	// just in case as temporary storage ...
+
+	std::string filetitle; // just in case as temporary storage ...
 	if(  titlename == NULL  &&  file  ) {
 		// get the title from the helpfile
 		char htmlline[1024];
@@ -479,7 +483,6 @@ void help_frame_t::add_helpfile( cbuffer_t &section, const char *titlename, cons
 /**
  * Called upon link activation
  * @param the hyper ref of the link
- * @author Hj. Malthaner
  */
 bool help_frame_t::action_triggered( gui_action_creator_t *, value_t extra)
 {

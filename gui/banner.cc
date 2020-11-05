@@ -54,12 +54,12 @@ class banner_text_t : public gui_component_t
 public:
 	banner_text_t() : last_ms(dr_time() - 70), line(0) {}
 
-	scr_size get_min_size() const
+	scr_size get_min_size() const OVERRIDE
 	{
 		return scr_size(0, L_BANNER_HEIGHT);
 	}
 
-	void draw(scr_coord offset);
+	void draw(scr_coord offset) OVERRIDE;
 };
 
 banner_t::banner_t() : gui_frame_t("")
@@ -183,7 +183,7 @@ void banner_t::draw(scr_coord pos, scr_size size )
 {
 	gui_frame_t::draw( pos, size );
 
-	// Hajo: add white line on top since this frame has no title bar.
+	// add white line on top since this frame has no title bar.
 	display_fillbox_wh_clip_rgb(pos.x, pos.y, size.w, 1, color_idx_to_rgb(COL_GREY6), false);
 }
 
@@ -207,9 +207,9 @@ void banner_text_t::draw(scr_coord offset)
 
 	PUSH_CLIP_FIT( left, cursor.y, width, height );
 
-	display_fillbox_wh_clip_rgb(left, cursor.y, width, height, color_idx_to_rgb(COL_GREY1), true);
-	display_fillbox_wh_clip_rgb(left, cursor.y - 1, width, 1, color_idx_to_rgb(COL_GREY3), false);
-	display_fillbox_wh_clip_rgb(left, cursor.y + height, width, 1, color_idx_to_rgb(COL_GREY6), false);
+	display_fillbox_wh_clip_rgb(left, cursor.y,          width, height, color_idx_to_rgb(COL_GREY1), true);
+	display_fillbox_wh_clip_rgb(left, cursor.y - 1,      width, 1,      color_idx_to_rgb(COL_GREY3), false);
+	display_fillbox_wh_clip_rgb(left, cursor.y + height, width, 1,      color_idx_to_rgb(COL_GREY6), false);
 
 	cursor.y++;
 

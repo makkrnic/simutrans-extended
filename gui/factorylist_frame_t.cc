@@ -98,7 +98,7 @@ factorylist_frame_t::factorylist_frame_t() :
 			freight_type_c.add_listener(this);
 			add_component(&freight_type_c); // (2,2,1)
 
-			btn_display_mode.init(button_t::roundbox, translator::translate(display_operation_stats ? "fl_btn_operation" : "fl_btn_storage"), scr_coord(BUTTON4_X, 14));
+			btn_display_mode.init(button_t::roundbox, translator::translate(display_operation_stats ? "fl_btn_operation" : "fl_btn_storage"), scr_coord(BUTTON4_X, 14), D_BUTTON_SIZE);
 			btn_display_mode.add_listener(this);
 			add_component(&btn_display_mode); // (2,2,2)
 		}
@@ -114,6 +114,7 @@ factorylist_frame_t::factorylist_frame_t() :
 
 	scrolly.set_maximize(true);
 	reset_min_windowsize();
+	set_min_windowsize(scr_size(D_DEFAULT_WIDTH, get_min_windowsize().h));
 	set_resizemode(diagonal_resize);
 }
 
@@ -121,7 +122,6 @@ factorylist_frame_t::factorylist_frame_t() :
 
 /**
  * This method is called if an action is triggered
- * @author Markus Weber/Volker Meyer
  */
 bool factorylist_frame_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
 {
@@ -192,6 +192,9 @@ void factorylist_frame_t::display_list()
 	if(  world()->get_fab_list().get_count() != (uint32)scrolly.get_count()  ) {
 		fill_list();
 	}
+
+	set_dirty();
+	resize(scr_size(0, 0));
 
 	gui_frame_t::draw(pos,size);
 */

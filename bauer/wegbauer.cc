@@ -177,7 +177,6 @@ const vector_tpl<const way_desc_t *>&  way_builder_t::get_way_list(const waytype
  *  - the slowest way, as fast as speed limit
  *  - if no way faster than speed limit, the fastest way.
  * The timeline is also respected.
- * @author prissi, gerw
  */
 const way_desc_t* way_builder_t::weg_search(const waytype_t wtyp, const sint32 speed_limit, const uint16 time, const systemtype_t system_type)
 {
@@ -376,7 +375,6 @@ static bool compare_ways(const way_desc_t* a, const way_desc_t* b)
 
 /**
  * Fill menu with icons of given waytype, return number of added entries
- * @author Hj. Malthaner/prissi/dariok
  */
 void way_builder_t::fill_menu(tool_selector_t *tool_selector, const waytype_t wtyp, const systemtype_t styp, sint16 /*ok_sound*/)
 {
@@ -406,8 +404,7 @@ void way_builder_t::fill_menu(tool_selector_t *tool_selector, const waytype_t wt
 }
 
 
-/* allow for railroad crossing
- * @author prissi
+/** allow for railroad crossing
  */
 bool way_builder_t::check_crossing(const koord zv, const grund_t *bd, waytype_t wtyp0, const player_t *player) const
 {
@@ -478,8 +475,7 @@ bool way_builder_t::check_crossing(const koord zv, const grund_t *bd, waytype_t 
 }
 
 
-/* crossing of powerlines, or no powerline
- * @author prissi
+/** crossing of powerlines, or no powerline
  */
 bool way_builder_t::check_powerline(const koord zv, const grund_t *bd) const
 {
@@ -594,11 +590,10 @@ bool way_builder_t::check_building( const grund_t *to, const koord dir ) const
 }
 
 
-/* This is the core routine for the way search
+/** This is the core routine for the way search
  * it will check
  * A) allowed step
  * B) if allowed, calculate the cost for the step from from to to
- * @author prissi
  */
 bool way_builder_t::is_allowed_step( const grund_t *from, const grund_t *to, sint32 *costs )
 {
@@ -1074,7 +1069,7 @@ bool way_builder_t::is_allowed_step( const grund_t *from, const grund_t *to, sin
 			}
 			break;
 
-		case luft: // hsiegeln: runway
+		case luft: // runway
 			{
 				const weg_t *w = to->get_weg(air_wt);
 				if(  w  &&  w->get_desc()->get_styp()==type_runway  &&  desc->get_styp()!=type_runway &&  ribi_t::is_single(w->get_ribi_unmasked())  ) {
@@ -1319,7 +1314,7 @@ void way_builder_t::check_for_bridge(const grund_t* parent_from, const grund_t* 
 						}
 					}
 				}
-				// fallthrough
+				/* FALLTHROUGH */
 
 			default:
 				if (way0->get_waytype()!=desc->get_wtyp()  ||  way1!=NULL) {
@@ -1404,7 +1399,6 @@ way_builder_t::way_builder_t(player_t* player) : next_gr(32)
 /**
  * If a way is built on top of another way, should the type
  * of the former way be kept or replaced (true == keep)
- * @author Hj. Malthaner
  */
 void way_builder_t::set_keep_existing_ways(bool yesno)
 {
@@ -2181,7 +2175,6 @@ void way_builder_t::build_tunnel_and_bridges()
 
 /*
  * returns the amount needed to built this way
- * author prissi
  */
 sint64 way_builder_t::calc_costs()
 {
@@ -2883,7 +2876,7 @@ void way_builder_t::build_powerline()
 			lt = new leitung_t(route[i], player_builder );
 			gr->obj_add(lt);
 
-			// prissi: into UNDO-list, so we can remove it later
+			// into UNDO-list, so we can remove it later
 			player_builder->add_undo( route[i] );
 			build_powerline = true;
 		}
@@ -2915,11 +2908,11 @@ void way_builder_t::build_powerline()
 // this can drive any river, even a river that has max_speed=0
 class fluss_test_driver_t : public test_driver_t
 {
-	bool check_next_tile(const grund_t* gr) const { return gr->get_weg_ribi_unmasked(water_wt)!=0; }
-	virtual ribi_t::ribi get_ribi(const grund_t* gr) const { return gr->get_weg_ribi_unmasked(water_wt); }
-	virtual waytype_t get_waytype() const { return invalid_wt; }
-	virtual int get_cost(const grund_t *, const sint32, koord) { return 1; }
-	virtual bool is_target(const grund_t *cur,const grund_t *) { return cur->is_water()  &&  cur->get_grund_hang()==slope_t::flat; }
+	bool check_next_tile(const grund_t* gr) const OVERRIDE { return gr->get_weg_ribi_unmasked(water_wt)!=0; }
+	ribi_t::ribi get_ribi(const grund_t* gr) const OVERRIDE { return gr->get_weg_ribi_unmasked(water_wt); }
+	waytype_t get_waytype() const OVERRIDE { return invalid_wt; }
+	int get_cost(const grund_t *, const sint32, koord) OVERRIDE { return 1; }
+	bool is_target(const grund_t *cur,const grund_t *) OVERRIDE { return cur->is_water()  &&  cur->get_grund_hang()==slope_t::flat; }
 };
 
 

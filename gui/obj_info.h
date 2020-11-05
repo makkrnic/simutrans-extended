@@ -14,9 +14,6 @@
 
 /**
  * An adapter class to display info windows for things (objects)
- *
- * @author Hj. Malthaner
- * @date 22-Nov-2001
  */
 class obj_infowin_t : public base_infowin_t
 {
@@ -28,9 +25,9 @@ public:
 
 	obj_t const* get_obj() const { return view.get_obj(); }
 
-	virtual koord3d get_weltpos(bool) { return get_obj()->get_pos(); }
+	koord3d get_weltpos(bool) OVERRIDE { return get_obj()->get_pos(); }
 
-	virtual bool is_weltpos();
+	bool is_weltpos() OVERRIDE;
 
 	// refill buffer
 	void fill_buffer();
@@ -40,7 +37,7 @@ public:
 	* i.e. It's the screen coordinates of the window where the
 	* component is displayed.
 	*/
-	virtual void draw(scr_coord pos, scr_size size);
+	void draw(scr_coord pos, scr_size size) OVERRIDE;
 };
 
 

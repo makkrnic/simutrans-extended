@@ -40,12 +40,12 @@ scr_size gui_scrolled_list_t::const_text_scrollitem_t::get_min_size() const
 
 scr_size gui_scrolled_list_t::const_text_scrollitem_t::get_max_size() const
 {
-// 	if (!is_editable()) {
-// 		return get_min_size();
-// 	}
-// 	else {
+//	if (!is_editable()) {
+//		return get_min_size();
+//	}
+//	else {
 		return scr_size(scr_size::inf.w, LINESPACE);
-// 	}
+//	}
 }
 
 // draws a single line of text
@@ -69,6 +69,9 @@ gui_scrolled_list_t::gui_scrolled_list_t(enum type type, item_compare_func cmp) 
 	item_list(container.get_components())
 {
 	container.set_table_layout(1,0);
+	container.set_margin( scr_size( D_H_SPACE, 0 ), scr_size( D_H_SPACE, 0 ) );
+	container.set_spacing( scr_size( D_H_SPACE, 0 ) );
+
 	set_component(&container);
 
 	this->type = type;
@@ -143,6 +146,7 @@ void gui_scrolled_list_t::sort( int offset )
 	cleanup_elements();
 
 	if (compare == 0  ||  item_list.get_count() <= 1) {
+		reset_container_size();
 		return;
 	}
 
@@ -159,6 +163,8 @@ void gui_scrolled_list_t::sort( int offset )
 
 void gui_scrolled_list_t::set_size(scr_size size)
 {
+	cleanup_elements();
+
 	gui_scrollpane_t::set_size(size);
 
 	// set all elements in list to same width
@@ -176,7 +182,11 @@ void gui_scrolled_list_t::set_size(scr_size size)
 void gui_scrolled_list_t::reset_container_size()
 {
 	// reset element positioning
+	container.set_margin( scr_size( D_H_SPACE, 0 ), scr_size( D_H_SPACE, 0 ) );
+	container.set_spacing( scr_size( D_H_SPACE, 0 ) );
+
 	scr_size csize = container.get_min_size();
+
 	container.set_size( csize );
 }
 

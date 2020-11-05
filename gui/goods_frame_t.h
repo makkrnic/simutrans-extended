@@ -9,11 +9,11 @@
 
 #include "gui_frame.h"
 #include "components/gui_button.h"
+#include "components/gui_numberinput.h"
+#include "components/gui_combobox.h"
 #include "components/gui_scrollpane.h"
 #include "components/gui_label.h"
-#include "components/gui_numberinput.h"
 #include "components/action_listener.h"
-#include "components/gui_combobox.h"
 #include "goods_stats_t.h"
 #include "../utils/cbuffer_t.h"
 
@@ -24,7 +24,6 @@ class goods_desc_t;
 
 /**
  * Shows statistics. Only goods so far.
- * @author Hj. Malthaner
  */
 class goods_frame_t : public gui_frame_t, private action_listener_t
 {
@@ -86,20 +85,20 @@ private:
 public:
 	goods_frame_t();
 
+	// yes we can reload
+	uint32 get_rdwr_id() OVERRIDE;
+	void rdwr( loadsave_t *file ) OVERRIDE;
+
 	bool has_min_sizer() const OVERRIDE {return true;}
 
 	/**
 	 * Set the window associated helptext
 	 * @return the filename for the helptext, or NULL
-	 * @author V. Meyer
 	 */
 	const char * get_help_filename() const OVERRIDE {return "goods_filter.txt"; }
 
 	/**
-	 * Draw new component. The values to be passed refer to the window
-	 * i.e. It's the screen coordinates of the window where the
-	 * component is displayed.
-	 * @author Hj. Malthaner
+	 * Draw the component
 	 */
 	void draw(scr_coord pos, scr_size size) OVERRIDE;
 

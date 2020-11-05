@@ -181,7 +181,7 @@ void factory_edit_frame_t::change_item_info(sint32 entry)
 
 			fac_desc = new_fac_desc;
 			production = fac_desc->get_productivity() + sim_async_rand( fac_desc->get_range() );
-			// Knightly : should also consider the effects of the minimum number of fields
+			// should also consider the effects of the minimum number of fields
 			const field_group_desc_t *const field_group_desc = fac_desc->get_field_group();
 			if(  field_group_desc  &&  field_group_desc->get_field_class_count()>0  ) {
 				const weighted_vector_tpl<uint16> &field_class_indices = field_group_desc->get_field_class_indices();
@@ -235,6 +235,27 @@ void factory_edit_frame_t::change_item_info(sint32 entry)
 
 			// now the house stuff
 			const building_desc_t *desc = fac_desc->get_building();
+
+			// region
+			if (!welt->get_settings().regions.empty()) {
+				buf.append(translator::translate("Allowed regions:"));
+				buf.append("\n");
+				const uint16 allowed_region_bits = desc->get_allowed_region_bits();
+				if (allowed_region_bits < 65535) {
+					uint32 region_idx = 0;
+					FORX(vector_tpl<region_definition_t>, region, welt->get_settings().regions, region_idx) {
+						if (allowed_region_bits & (1 << region_idx))
+						{
+							buf.printf(" - %s\n", translator::translate(region.name.c_str()));
+						}
+						region_idx++;
+					}
+				}
+				else {
+					buf.printf(" - %s\n", translator::translate("All"));
+				}
+				buf.append("\n");
+			}
 
 			// climates
 			buf.append( translator::translate("allowed climates:\n") );

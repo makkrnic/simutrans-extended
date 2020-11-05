@@ -78,9 +78,9 @@ halthandle_t ai_t::get_halt(const koord pos ) const
 }
 
 
-/* returns true,
+/**
+ * returns true,
  * if there is already a connection
- * @author prissi
  */
 bool ai_t::is_connected( const koord start_pos, const koord dest_pos, const goods_desc_t *wtyp ) const
 {
@@ -128,19 +128,6 @@ bool ai_t::is_connected( const koord start_pos, const koord dest_pos, const good
 	// no connection possible between those
 	return false;
 }
-
-
-
-// prepares a general tool just like a player work do
-bool ai_t::init_general_tool( int tool, const char *param )
-{
-	const char *old_param = tool_t::general_tool[tool]->get_default_param();
-	tool_t::general_tool[tool]->set_default_param(param);
-	bool ok = tool_t::general_tool[tool]->init( this );
-	tool_t::general_tool[tool]->set_default_param(old_param);
-	return ok;
-}
-
 
 
 // calls a general tool just like a player work do
@@ -208,9 +195,8 @@ bool ai_t::find_place(koord pos, koord &size, koord *dirs)
 
 
 
-/* needed renovation due to different sized factories
+/** needed renovation due to different sized factories
  * also try "nicest" place first
- * @author HJ & prissi
  */
 bool ai_t::find_place(koord &start, koord &size, koord target, koord off)
 {
@@ -411,7 +397,7 @@ bool ai_t::built_update_headquarter()
 /**
  * Find the last water tile using line algorithm
  * start MUST be on land!
- **/
+ */
 koord ai_t::find_shore(koord start, koord end) const
 {
 	int x = start.x;

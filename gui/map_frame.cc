@@ -40,7 +40,7 @@ bool  map_frame_t::directory_visible=false;
 bool  map_frame_t::is_cursor_hidden=false;
 bool  map_frame_t::filter_factory_list=true;
 
-// Hajo: we track our position onscreen
+// we track our position onscreen
 scr_coord map_frame_t::screenpos;
 
 #define L_BUTTON_WIDTH (button_size.w)
@@ -77,7 +77,7 @@ public:
 		return scr_size( scr_size::inf.w, label.get_max_size().h );
 	}
 
-	void draw(scr_coord offset)
+	void draw(scr_coord offset) OVERRIDE
 	{
 		scr_coord pos = get_pos() + offset;
 		display_ddd_box_clip_rgb( pos.x, pos.y+D_GET_CENTER_ALIGN_OFFSET(D_INDICATOR_BOX_HEIGHT,LINESPACE), D_INDICATOR_BOX_WIDTH, D_INDICATOR_HEIGHT, color_idx_to_rgb(MN_GREY0), color_idx_to_rgb(MN_GREY4) );
@@ -92,7 +92,7 @@ public:
 class gui_scale_t : public gui_component_t
 {
 public:
-	void draw(scr_coord offset)
+	void draw(scr_coord offset) OVERRIDE
 	{
 		scr_coord pos = get_pos() + offset;
 		double bar_width = (double)get_size().w/(double)MAX_SEVERITY_COLORS;
@@ -177,7 +177,7 @@ map_frame_t::map_frame_t() :
 	const koord ij = welt->get_viewport()->get_world_position();
 	const scr_size win_size = size-s_size; // this is the visible area
 
-	scrolly.set_scroll_position(  max(0,min(ij.x-win_size.w/2,size.w)), max(0, min(ij.y-win_size.h/2,size.h)) );
+	scrolly.set_scroll_position( clamp(ij.x-win_size.w/2, 0, size.w), clamp(ij.y-win_size.h/2, 0, size.h) );
 	scrolly.set_focusable( true );
 	scrolly.set_scrollbar_mode(scrollbar_t::show_always);
 
@@ -191,18 +191,21 @@ map_frame_t::map_frame_t() :
 		// selections button
 		b_show_legend.init(button_t::roundbox_state, "Show legend");
 		b_show_legend.set_tooltip("Shows buttons on special topics.");
+		b_show_legend.set_size(scr_size(p_scrolly->get_min_size().w/3-D_H_SPACE, D_BUTTON_HEIGHT));
 		b_show_legend.add_listener(this);
 		add_component(&b_show_legend);
 
 		// industry list button
 		b_show_directory.init(button_t::roundbox_state, "Show industry");
 		b_show_directory.set_tooltip("Shows a listing with all industries on the map.");
+		b_show_directory.set_size(scr_size(p_scrolly->get_min_size().w/3-D_H_SPACE, D_BUTTON_HEIGHT));
 		b_show_directory.add_listener(this);
 		add_component(&b_show_directory);
 
 		// scale button
 		b_show_scale.init(button_t::roundbox_state, "Show map scale");
 		b_show_scale.set_tooltip("Shows the color code for several selections.");
+		b_show_scale.set_size(scr_size(p_scrolly->get_min_size().w/3-D_H_SPACE, D_BUTTON_HEIGHT));
 		b_show_scale.add_listener(this);
 		add_component(&b_show_scale);
 	}
@@ -220,7 +223,10 @@ map_frame_t::map_frame_t() :
 		add_component( zoom_buttons+0 );
 
 		// zoom level value label
-		zoom_value_label.buf().append("1:1");
+		sint16 zoom_in, zoom_out;
+		reliefkarte_t::get_karte()->get_zoom_factors(zoom_out, zoom_in);
+		zoom_value_label.buf().printf("%i:%i", zoom_in, zoom_out );
+		zoom_value_label.set_width(proportional_string_width("10:1")); // This is intended that the selector size does not fluctuate in proportional fonts.
 		zoom_value_label.update();
 		add_component( &zoom_value_label );
 
@@ -229,7 +235,7 @@ map_frame_t::map_frame_t() :
 		zoom_buttons[1].add_listener( this );
 		add_component( zoom_buttons+1 );
 
-		// rotate map 45° (isometric view)
+		// rotate map 45 degrees (isometric view)
 		b_rotate45.init( button_t::square_state, "isometric map");
 		b_rotate45.set_tooltip("Similar view as the main window");
 		b_rotate45.add_listener(this);
@@ -270,7 +276,7 @@ map_frame_t::map_frame_t() :
 	viewable_players[ 0 ] = -1;
 	for(  int np = 0, count = 1;  np < MAX_PLAYER_COUNT;  np++  ) {
 		if(  welt->get_player( np )  &&  welt->get_player( np )->get_finance()->has_convoi()) {
-			viewed_player_c.new_component<gui_scrolled_list_t::const_text_scrollitem_t>(welt->get_player( np )->get_name(), color_idx_to_rgb(welt->get_player( np )->get_player_color1()+4));
+			viewed_player_c.new_component<gui_scrolled_list_t::const_text_scrollitem_t>(welt->get_player( np )->get_name(), color_idx_to_rgb(welt->get_player( np )->get_player_color1()+env_t::gui_player_color_dark));
 			viewable_players[ count++ ] = np;
 		}
 	}
@@ -280,9 +286,6 @@ map_frame_t::map_frame_t() :
 	filter_container.add_component(&viewed_player_c);
 
 	// freight combo for network overlay
-	freight_type_c.set_pos( scr_coord(2*D_BUTTON_WIDTH+3*D_H_SPACE, 0) );
-	freight_type_c.set_size( scr_size(D_BUTTON_WIDTH,D_BUTTON_HEIGHT) );
-	freight_type_c.set_max_size( scr_size( 116, 5 * D_BUTTON_HEIGHT) );
 	{
 		viewable_freight_types.append(NULL);
 		freight_type_c.new_component<gui_scrolled_list_t::const_text_scrollitem_t>( translator::translate("All"), SYSCOL_TEXT) ;
@@ -481,6 +484,8 @@ bool map_frame_t::action_triggered( gui_action_creator_t *comp, value_t)
 		b_rotate45.pressed = reliefkarte_t::get_karte()->isometric;
 		reliefkarte_t::get_karte()->calc_map_size();
 		scrolly.set_size( scrolly.get_size() );
+		zoomed = true;
+		old_ij = koord::invalid;
 	}
 	else if (comp == &b_show_contour) {
 		// terrain heights color scale
@@ -560,6 +565,10 @@ void map_frame_t::zoom(bool magnify)
 		zoom_value_label.buf().printf("%i:%i", zoom_in, zoom_out );
 		zoom_value_label.update();
 		zoom_row->set_size( zoom_row->get_size());
+		// recalculate scroll bar width
+		scrolly.set_size( scrolly.get_size() );
+		// invalidate old offsets
+		old_ij = koord::invalid;
 	}
 }
 
@@ -567,7 +576,6 @@ void map_frame_t::zoom(bool magnify)
 /**
  * Events werden hiermit an die GUI-components
  * gemeldet
- * @author Hj. Malthaner
  */
 bool map_frame_t::infowin_event(const event_t *ev)
 {
@@ -593,7 +601,7 @@ bool map_frame_t::infowin_event(const event_t *ev)
 		return true;
 	}
 
-	// Hajo: hack: relief map can resize upon right click
+	// hack: minimap can resize upon right click
 	// we track this here, and adjust size.
 	if(  IS_RIGHTCLICK(ev)  ) {
 		is_dragging = false;
@@ -668,8 +676,6 @@ bool map_frame_t::infowin_event(const event_t *ev)
 
 /**
  * size window in response and save it in static size
- * @author (Mathew Hounsell)
- * @date   11-Mar-2003
  */
 void map_frame_t::set_windowsize(scr_size size)
 {
@@ -682,7 +688,7 @@ void map_frame_t::set_windowsize(scr_size size)
  * Draw new component. The values to be passed refer to the window
  * i.e. It's the screen coordinates of the window where the
  * component is displayed.
- * @author Hj. Malthaner
+
  */
 void map_frame_t::draw(scr_coord pos, scr_size size)
 {

@@ -26,7 +26,7 @@ const char* sort_text[curiositylist::SORT_MODES] = {
 
 class attraction_item_t : public gui_scrolled_list_t::const_text_scrollitem_t {
 public:
-	attraction_item_t(uint8 i) : gui_scrolled_list_t::const_text_scrollitem_t(sort_text[i], SYSCOL_TEXT) { }
+	attraction_item_t(uint8 i) : gui_scrolled_list_t::const_text_scrollitem_t(translator::translate(sort_text[i]), SYSCOL_TEXT) { }
 };
 
 curiositylist_frame_t::curiositylist_frame_t() :
@@ -106,7 +106,6 @@ void curiositylist_frame_t::fill_list()
 
 /**
  * This method is called if an action is triggered
- * @author Markus Weber/Volker Meyer
  */
 bool curiositylist_frame_t::action_triggered(gui_action_creator_t *comp, value_t /* */)
 {

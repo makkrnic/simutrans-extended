@@ -17,13 +17,6 @@
 /**
  * The label component
  * just displays a text, will be auto-translated
- *
- * @author Hj. Malthaner
- * @date 04-Mar-01
- *
- * Added Alignment support
- * @author: Volker Meyer
- * @date 25.05.03
  */
 class gui_label_t : virtual public gui_component_t
 {
@@ -32,26 +25,26 @@ public:
 		left,
 		centered,
 		right,
-		money_right,
+		money_right
 	};
 
 private:
 	bool shadowed;
 	PIXVAL color_shadow;
 
-	const char * text;	// only for direct access of non-translatable things. Do not use!
+	const char * text; // only for direct access of non-translatable things. Do not use!
 
 	scr_size min_size;
 
 protected:
 	/**
 	 * Color of the Labels
-	 * @author Hansjorg Malthaner
 	 */
 	PIXVAL color;
 
 	align_t align;
 	const char * tooltip;
+
 	using gui_component_t::init;
 
 public:
@@ -66,19 +59,16 @@ public:
 
 	/**
 	 * Sets the text to display, after translating it.
-	 * @author Hansjorg Malthaner
 	 */
 	void set_text(const char *text, bool autosize=true);
 
 	/**
 	 * Sets the text without translation.
-	 * @author Hansjorg Malthaner
 	 */
 	void set_text_pointer(const char *text, bool autosize=true);
 
 	/**
 	 * returns the pointer (i.e. for freeing untranslated contents)
-	 * @author Hansjorg Malthaner
 	 */
 	const char * get_text_pointer() const { return text; }
 
@@ -89,13 +79,11 @@ public:
 
 	/**
 	 * Draws the component.
-	 * @author Hj. Malthaner
 	 */
-	virtual void draw(scr_coord offset);
+	virtual void draw(scr_coord offset) OVERRIDE;
 
 	/**
 	 * Sets the colour of the label
-	 * @author Owen Rudge
 	 */
 	void set_color(PIXVAL colour) { this->color = colour; }
 	virtual PIXVAL get_color() const { return color; }
@@ -111,13 +99,11 @@ public:
 
 	/**
 	 * Sets the alignment of the label
-	 * @author Volker Meyer
 	 */
 	void set_align(align_t align) { this->align = align; }
 
 	/**
 	 * Sets the tooltip of this component.
-	 * @author Hj. Malthaner
 	 */
 	void set_tooltip(const char * t);
 
@@ -181,7 +167,7 @@ private:
 	bool show_border_value=true;
 
 public:
-	gui_label_updown_t(const sint64 value = 0, PIXVAL color = SYSCOL_TEXT, align_t align = left, const sint64 border = 0) :
+	gui_label_updown_t(PIXVAL color = SYSCOL_TEXT, align_t align = left) :
 		gui_label_t(NULL, color, align) { }
 
 	void init(const sint64 value, scr_coord pos_par, PIXVAL color_par = SYSCOL_TEXT, align_t align_par = left, const sint64 border = 0, bool show_border_value=true) {

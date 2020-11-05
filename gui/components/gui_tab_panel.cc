@@ -3,10 +3,6 @@
  * (see LICENSE.txt)
  */
 
-/*
- * A class for distribution of tabs through the gui_component_t component.
- * @author Hj. Malthaner
- */
 
 #include "gui_tab_panel.h"
 #include "../gui_frame.h"
@@ -14,6 +10,7 @@
 #include "../../display/simgraph.h"
 #include "../../simcolor.h"
 #include "../simwin.h"
+#include "../../simworld.h"
 
 #include "../../descriptor/skin_desc.h"
 
@@ -129,7 +126,7 @@ bool gui_tab_panel_t::infowin_event(const event_t *ev)
 		return false;
 	}
 
-	// Knightly : navigate among the tabs using Ctrl-PgUp and Ctrl-PgDn
+	// navigate among the tabs using Ctrl-PgUp and Ctrl-PgDn
 	if(  ev->ev_class==EVENT_KEYBOARD  &&  IS_CONTROL_PRESSED(ev)  ) {
 		if(  ev->ev_code==SIM_KEY_PGUP  ) {
 			// Ctrl-PgUp -> go to the previous tab
@@ -206,7 +203,8 @@ void gui_tab_panel_t::draw(scr_coord parent_pos)
 				else {
 					scr_coord_val const y = ypos   - iter.img->get_pic()->y + 10            - iter.img->get_pic()->h / 2;
 					scr_coord_val const x = text_x - iter.img->get_pic()->x + IMG_WIDTH / 2 - iter.img->get_pic()->w / 2;
-					display_img_blend(iter.img->get_id(), x, y, TRANSPARENT50_FLAG, false, true);
+//					display_img_blend(iter.img->get_id(), x, y, TRANSPARENT50_FLAG, false, true);
+					display_base_img(iter.img->get_id(), x, y, world()->get_active_player_nr(), false, true);
 				}
 			}
 			else {

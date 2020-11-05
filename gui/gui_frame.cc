@@ -45,28 +45,6 @@ scr_coord floating_cursor_t::next_pos(const scr_size& size)
 }
 
 
-//// default button sizes
-//KOORD_VAL gui_frame_t::gui_button_width = 92;
-//KOORD_VAL gui_frame_t::gui_button_height = 14;
-//
-//// default titlebar height
-//KOORD_VAL gui_frame_t::gui_titlebar_height = 16;
-//
-//// dialog borders
-//KOORD_VAL gui_frame_t::gui_frame_left = 10;
-//KOORD_VAL gui_frame_t::gui_frame_top = 10;
-//KOORD_VAL gui_frame_t::gui_frame_right = 10;
-//KOORD_VAL gui_frame_t::gui_frame_bottom = 10;
-//
-//// space between two elements
-//KOORD_VAL gui_frame_t::gui_hspace = 4;
-//KOORD_VAL gui_frame_t::gui_vspace = 4;
-//
-//// size of status indicator elements (colored boxes in factories, station and others)
-//KOORD_VAL gui_frame_t::gui_indicator_width = 20;
-//KOORD_VAL gui_frame_t::gui_indicator_height = 4;
-//
-
 karte_ptr_t gui_frame_t::welt;
 
 
@@ -91,7 +69,6 @@ gui_frame_t::gui_frame_t(char const* const name, player_t const* const player)
 
 /**
  * Set the window size
- * @author Hj. Malthaner
  */
 void gui_frame_t::set_windowsize(scr_size size)
 {
@@ -143,18 +120,16 @@ void gui_frame_t::reset_min_windowsize()
 /**
  * get color information for the window title
  * -borders and -body background
- * @author Hj. Malthaner
  */
 FLAGGED_PIXVAL gui_frame_t::get_titlecolor() const
 {
-	return owner ? PLAYER_FLAG|color_idx_to_rgb(owner->get_player_color1()+1) : env_t::default_window_title_color;
+	return owner ? PLAYER_FLAG|color_idx_to_rgb(owner->get_player_color1()+env_t::gui_player_color_dark) : env_t::default_window_title_color;
 }
 
 
 /**
  * Events werden hiermit an die GUI-components
  * gemeldet
- * @author Hj. Malthaner
  */
 bool gui_frame_t::infowin_event(const event_t *ev)
 {
@@ -190,8 +165,6 @@ bool gui_frame_t::infowin_event(const event_t *ev)
 
 /**
  * resize window in response to a resize event
- * @author Markus Weber, Hj. Malthaner
- * @date 11-may-02
  */
 void gui_frame_t::resize(const scr_coord delta)
 {
@@ -215,8 +188,6 @@ void gui_frame_t::resize(const scr_coord delta)
  * Draw new component. The values to be passed refer to the window
  * i.e. It's the screen coordinates of the window where the
  * component is displayed.
- *
- * @author Hj. Malthaner
  */
 void gui_frame_t::draw(scr_coord pos, scr_size size)
 {
@@ -247,7 +218,8 @@ void gui_frame_t::draw(scr_coord pos, scr_size size)
 	}
 }
 
-void  gui_frame_t::set_name(const char *name)
+
+uint32 gui_frame_t::get_rdwr_id()
 {
-	this->name = translator::translate(name);
+	return magic_reserved;
 }
