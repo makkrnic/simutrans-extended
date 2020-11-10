@@ -254,10 +254,10 @@ void convoi_info_t::init(convoihandle_t cnv)
 		}
 		freight_sort_selector.set_focusable(true);
 		freight_sort_selector.set_selection(env_t::default_sortmode);
-		freight_sort_selector.set_highlight_color(1);
+		freight_sort_selector.set_width_fixed(true);
+		freight_sort_selector.set_size(scr_size(D_BUTTON_WIDTH*2, D_EDIT_HEIGHT));
 		freight_sort_selector.add_listener(this);
 		container_freight.add_component(&freight_sort_selector);
-
 	}
 	container_freight.end_table();
 	container_freight.add_component(&text);
