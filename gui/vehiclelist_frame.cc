@@ -1,43 +1,32 @@
 // ****************** List of all vehicles ************************
 
 
-
 #include "gui_theme.h"
-#include "../descriptor/vehicle_desc.h"
-#include "../bauer/vehikelbauer.h"
-#include "../simskin.h"
-#include "../simworld.h"
-#include "../dataobj/translator.h"
-#include "../descriptor/skin_desc.h"
-#include "../descriptor/intro_dates.h"
-
-#include "../display/simgraph.h"
-#include "../utils/simstring.h"
-
 #include "vehiclelist_frame.h"
 
-enum sort_mode_t { best, by_intro, by_retire, by_power, by_capacity, by_name, SORT_MODES };
+#include "../bauer/goods_manager.h"
+#include "../bauer/vehikelbauer.h"
 
-int vehiclelist_stats_t::sort_mode = by_intro;
+#include "../simskin.h"
+#include "../simworld.h"
+
+#include "../display/simgraph.h"
+
+#include "../dataobj/translator.h"
+
+#include "../descriptor/goods_desc.h"
+#include "../descriptor/intro_dates.h"
+#include "../descriptor/skin_desc.h"
+#include "../descriptor/vehicle_desc.h"
+
+#include "../utils/simstring.h"
+
+
+int vehiclelist_stats_t::sort_mode = vehicle_builder_t::sb_intro_date;
 bool vehiclelist_stats_t::reverse = false;
 
 // for having uniform spaced columns
 int vehiclelist_stats_t::img_width = 100;
-int vehiclelist_stats_t::col1_width = 100;
-int vehiclelist_stats_t::col2_width = 100;
-
-static const char* engine_type_names[9] =
-{
-	"unknown",
-	"steam",
-	"diesel",
-	"electric",
-	"bio",
-	"sail",
-	"fuel_cell",
-	"hydrogene",
-	"battery"
-};
 
 
 vehiclelist_stats_t::vehiclelist_stats_t(const vehicle_desc_t *v)
@@ -51,18 +40,14 @@ vehiclelist_stats_t::vehiclelist_stats_t(const vehicle_desc_t *v)
 	if( w > img_width ) {
 		img_width = w + D_H_SPACE;
 	}
+	height = h;
 
 	// name is the widest entry in column 1
-	int dx = proportional_string_width( translator::translate( veh->get_name(), world()->get_settings().get_name_language_id() ) );
+	name_width = proportional_string_width( translator::translate( veh->get_name(), world()->get_settings().get_name_language_id() ) );
 	if( veh->get_power() > 0 ) {
 		char str[ 256 ];
-		const uint8 et = (uint8)veh->get_engine_type() + 1;
-		sprintf( str, " (%s)", translator::translate( engine_type_names[et] ) );
-		dx += proportional_string_width( str );
-	}
-	dx += D_H_SPACE;
-	if( dx > col1_width ) {
-		col1_width = dx;
+		sprintf( str, " (%s)", translator::translate( vehicle_builder_t::engine_type_names[ (uint8)veh->get_engine_type() + 1 ] ) );
+		name_width += proportional_string_width( str );
 	}
 
 	// column 1
@@ -77,16 +62,12 @@ vehiclelist_stats_t::vehiclelist_stats_t(const vehicle_desc_t *v)
 		money_to_string( tmp, veh->get_value() / 100.0, false );
 		part1.printf( translator::translate( "Cost: %8s (%.2f$/km)\n" ), tmp, veh->get_running_cost() / 100.0 );
 	}
-
 	if( veh->get_capacity() > 0 ) { // must translate as "Capacity: %3d%s %s\n"
 		part1.printf( translator::translate( "Capacity: %d%s %s\n" ),
 			veh->get_capacity(),
 			translator::translate( veh->get_freight_type()->get_mass() ),
 			veh->get_freight_type()->get_catg() == 0 ? translator::translate( veh->get_freight_type()->get_name() ) : translator::translate( veh->get_freight_type()->get_catg_name() )
 		);
-	}
-	else {
-		part1.append( "\n" );
 	}
 	part1.printf( "%s %3d km/h\n", translator::translate( "Max. speed:" ), veh->get_topspeed() );
 	if( veh->get_power() > 0 ) {
@@ -97,35 +78,25 @@ vehiclelist_stats_t::vehiclelist_stats_t(const vehicle_desc_t *v)
 			part1.printf( translator::translate( "Power: %4d kW\n" ), veh->get_power() );
 		}
 	}
-
+	int text1w, text1h;
+	display_calc_proportional_multiline_string_len_width( text1w, text1h, part1, part1.len() );
+	col1_width = text1w + D_H_SPACE;
 
 	// column 2
 	part2.clear();
 	part2.printf( "%s %4.1ft\n", translator::translate( "Weight:" ), veh->get_weight() / 1000.0 );
-
-	int len = part2.len();
 	part2.printf( "%s %s - ", translator::translate( "Available:" ), translator::get_short_date( veh->get_intro_year_month() / 12, veh->get_intro_year_month() % 12 ) );
 	if( veh->get_retire_year_month() != DEFAULT_RETIRE_DATE * 12 ) {
 		part2.printf( "%s\n", translator::get_short_date( veh->get_retire_year_month() / 12, veh->get_retire_year_month() % 12 ) );
 	}
-	else {
-		part2.append( "*\n" );
-	}
-
-	dx = proportional_string_width( part2.get_str() + len );
-	if( dx > col2_width ) {
-		col2_width = dx;
-	}
-
 	if( char const* const copyright = veh->get_copyright() ) {
-		len = part2.len();
 		part2.printf( translator::translate( "Constructed by %s" ), copyright );
-		dx = proportional_string_width( part2.get_str()+len );
-		if( dx > col2_width ) {
-			col2_width = dx;
-		}
 	}
-	part2.append( "\n" );
+	int text2w, text2h;
+	display_calc_proportional_multiline_string_len_width( text2w, text2h, part2, part2.len() );
+	col2_width = text2w;
+
+	height = max( height, max( text1h, text2h ) + LINESPACE );
 }
 
 
@@ -151,17 +122,15 @@ void vehiclelist_stats_t::draw( scr_coord offset )
 	);
 	if( veh->get_power() > 0 ) {
 		char str[ 256 ];
-		const uint8 et = (uint8)veh->get_engine_type() + 1;
-		sprintf( str, " (%s)", translator::translate( engine_type_names[et] ) );
+		sprintf( str, " (%s)", translator::translate( vehicle_builder_t::engine_type_names[ (uint8)veh->get_engine_type() + 1 ] ) );
 		display_proportional_rgb( offset.x+dx, offset.y, str, ALIGN_LEFT|DT_CLIP, SYSCOL_TEXT, false );
 	}
 
 	int yyy = offset.y + LINESPACE;
 	display_multiline_text_rgb( offset.x, yyy, part1, SYSCOL_TEXT );
 
-	display_multiline_text_rgb( offset.x + col1_width, yyy + LINESPACE, part2, SYSCOL_TEXT );
+	display_multiline_text_rgb( offset.x + col1_width, yyy, part2, SYSCOL_TEXT );
 }
-
 
 const char *vehiclelist_stats_t::get_text() const
 {
@@ -170,77 +139,79 @@ const char *vehiclelist_stats_t::get_text() const
 
 bool vehiclelist_stats_t::compare(const gui_component_t *aa, const gui_component_t *bb)
 {
-	const vehiclelist_stats_t* fa = dynamic_cast<const vehiclelist_stats_t*>(aa);
-	const vehiclelist_stats_t* fb = dynamic_cast<const vehiclelist_stats_t*>(bb);
-	// good luck with mixed lists
-	assert(fa != NULL  &&  fb != NULL);
-	const vehicle_desc_t*a=fa->veh, *b=fb->veh;
-
-	int cmp = 0;
-	switch( sort_mode ) {
-	default:
-	case best:
-		return 0;
-
-	case by_intro:
-		cmp = a->get_intro_year_month() - b->get_intro_year_month();
-		break;
-
-	case by_retire:
-		cmp = a->get_retire_year_month() - b->get_retire_year_month();
-		break;
-
-	case by_power:
-		cmp = a->get_power() - b->get_power();
-		break;
-
-	case by_capacity:
-		cmp = a->get_capacity() - b->get_capacity();
-		break;
-
-	case by_name:
-		break;
-
-	}
-	if(  cmp == 0  ) {
-		cmp = strcmp( translator::translate(a->get_name()), translator::translate(b->get_name()) );
-	}
-	return reverse ? cmp > 0 : cmp < 0;
+	bool result = vehicle_builder_t::compare_vehicles( dynamic_cast<const vehiclelist_stats_t*>(aa)->veh, dynamic_cast<const vehiclelist_stats_t*>(bb)->veh, (vehicle_builder_t::sort_mode_t)vehiclelist_stats_t::sort_mode );
+	return vehiclelist_stats_t::reverse ? !result : result;
 }
 
 
 
-static const char *sort_text[SORT_MODES] = {
-	"Unsorted",
-	"Intro. date:",
-	"Retire. date:",
-	"Power:",
-	"Capacity:",
-	"Name"
-};
 
 vehiclelist_frame_t::vehiclelist_frame_t() :
 	gui_frame_t( translator::translate("vh_title") ),
 	scrolly(gui_scrolled_list_t::windowskin, vehiclelist_stats_t::compare)
 {
 	current_wt = any_wt;
+	scrolly.set_cmp( vehiclelist_stats_t::compare );
 
 	set_table_layout(1,0);
-	new_component<gui_label_t>("hl_txt_sort");
 
 	add_table(3,0);
 	{
-		sortedby.init( button_t::roundbox, sort_text[ vehiclelist_stats_t::sort_mode ] );
-		sortedby.add_listener( this );
-		add_component( &sortedby );
+		new_component<gui_label_t>( "hl_txt_sort" );
+		new_component<gui_empty_t>();
+		new_component<gui_empty_t>();
+
+		// second row
+		sort_by.clear_elements();
+		for( int i = 0; i < vehicle_builder_t::sb_length; i++ ) {
+			sort_by.new_component<gui_scrolled_list_t::const_text_scrollitem_t>(translator::translate(vehicle_builder_t::vehicle_sort_by[i]), SYSCOL_TEXT);
+		}
+		sort_by.set_selection( vehiclelist_stats_t::sort_mode );
+		sort_by.add_listener( this );
+		add_component( &sort_by );
 
 		sorteddir.init( button_t::roundbox, vehiclelist_stats_t::reverse ? "hl_btn_sort_desc" : "hl_btn_sort_asc" );
 		sorteddir.add_listener( this );
 		add_component( &sorteddir );
 
+		ware_filter.clear_elements();
+		ware_filter.new_component<gui_scrolled_list_t::const_text_scrollitem_t>(translator::translate("All"), SYSCOL_TEXT);
+		idx_to_ware.append( NULL );
+		for(  int i=0;  i < goods_manager_t::get_count();  i++  ) {
+			const goods_desc_t *ware = goods_manager_t::get_info(i);
+			if(  ware == goods_manager_t::none  ) {
+				continue;
+			}
+			if(  ware->get_catg() == 0  ) {
+				ware_filter.new_component<gui_scrolled_list_t::const_text_scrollitem_t>(translator::translate(ware->get_name()), SYSCOL_TEXT);
+				idx_to_ware.append( ware );
+			}
+		}
+		// now add other good categories
+		for(  int i=1;  i < goods_manager_t::get_max_catg_index();  i++  ) {
+			const goods_desc_t *ware = goods_manager_t::get_info_catg(i);
+			if(  ware->get_catg() != 0  ) {
+				ware_filter.new_component<gui_scrolled_list_t::const_text_scrollitem_t>(translator::translate(ware->get_catg_name()), SYSCOL_TEXT);
+				idx_to_ware.append( ware );
+			}
+		}
+		ware_filter.set_selection( 0 );
+		ware_filter.add_listener( this );
+		add_component( &ware_filter );
+
+		// next rows
 		bt_obsolete.init( button_t::square_state, "Show obsolete" );
 		bt_obsolete.add_listener( this );
 		add_component( &bt_obsolete );
+
+		bt_future.init( button_t::square_state, "Show future" );
+		bt_future.add_listener( this );
+		if (!welt->get_settings().get_show_future_vehicle_info()) {
+			bt_future.set_visible(false);
+		}
+		bt_future.pressed = false;
+		add_component( &bt_future, 2 );
+
 	}
 	end_table();
 
@@ -294,17 +265,14 @@ vehiclelist_frame_t::vehiclelist_frame_t() :
 /**
  * This method is called if an action is triggered
  */
-bool vehiclelist_frame_t::action_triggered( gui_action_creator_t *comp,value_t /* */)
+bool vehiclelist_frame_t::action_triggered( gui_action_creator_t *comp,value_t v)
 {
-	if(comp == &sortedby) {
-		vehiclelist_stats_t::sort_mode = (vehiclelist_stats_t::sort_mode + 1) % SORT_MODES;
-		sortedby.set_text(sort_text[vehiclelist_stats_t::sort_mode]);
-		if( vehiclelist_stats_t::sort_mode == 0 ) {
-			fill_list();	// using sorting from vehikelbauer
-		}
-		else {
-			scrolly.sort( 0 );
-		}
+	if(comp == &sort_by) {
+		vehiclelist_stats_t::sort_mode = max(0,v.i);
+		fill_list();
+	}
+	else if(comp == &ware_filter) {
+		fill_list();
 	}
 	else if(comp == &sorteddir) {
 		vehiclelist_stats_t::reverse = !vehiclelist_stats_t::reverse;
@@ -313,6 +281,10 @@ bool vehiclelist_frame_t::action_triggered( gui_action_creator_t *comp,value_t /
 	}
 	else if(comp == &bt_obsolete) {
 		bt_obsolete.pressed ^= 1;
+		fill_list();
+	}
+	else if(comp == &bt_future) {
+		bt_future.pressed ^= 1;
 		fill_list();
 	}
 	else if(comp == &tabs) {
@@ -330,23 +302,42 @@ void vehiclelist_frame_t::fill_list()
 {
 	scrolly.clear_elements();
 	vehiclelist_stats_t::img_width = 32; // reset col1 width
-	vehiclelist_stats_t::col1_width = 100; // reset col1 width
-	vehiclelist_stats_t::col2_width = 100; // reset col2 width
 	uint32 month = world()->get_current_month();
+	const goods_desc_t *ware = idx_to_ware[ max( 0, ware_filter.get_selection() ) ];
 	if(  current_wt == any_wt  ) {
 		// adding all vehiles, i.e. iterate over all available waytypes
 		for(  int i=1;  i<max_idx;  i++  ) {
 			FOR(slist_tpl<vehicle_desc_t *>, const veh, vehicle_builder_t::get_info(tabs_to_wt[i])) {
-				if(  bt_obsolete.pressed  ||  !veh->is_retired(month)  ) {
-					scrolly.new_component<vehiclelist_stats_t>( veh );
+				if(  bt_obsolete.pressed  ||  !veh->is_retired( month )  ) {
+					if(  bt_future.pressed  ||  !veh->is_future( month )  ) {
+						if( ware ) {
+							const goods_desc_t *vware = veh->get_freight_type();
+							if(  (ware->get_catg_index() > 0  &&  vware->get_catg_index() == ware->get_catg_index())  ||  vware->get_index() == ware->get_index()  ) {
+								scrolly.new_component<vehiclelist_stats_t>( veh );
+							}
+						}
+						else {
+							scrolly.new_component<vehiclelist_stats_t>( veh );
+						}
+					}
 				}
 			}
 		}
 	}
 	else {
 		FOR(slist_tpl<vehicle_desc_t *>, const veh, vehicle_builder_t::get_info(current_wt)) {
-			if(  bt_obsolete.pressed  ||  !veh->is_retired(month)  ) {
-				scrolly.new_component<vehiclelist_stats_t>( veh );
+			if(  bt_obsolete.pressed  ||  !veh->is_retired( month )  ) {
+				if(  bt_future.pressed  ||  !veh->is_future( month )  ) {
+					if( ware ) {
+						const goods_desc_t *vware = veh->get_freight_type();
+						if(  (ware->get_catg_index() > 0  &&  vware->get_catg_index() == ware->get_catg_index())  ||  vware->get_index() == ware->get_index()  ) {
+							scrolly.new_component<vehiclelist_stats_t>( veh );
+						}
+					}
+					else {
+						scrolly.new_component<vehiclelist_stats_t>( veh );
+					}
+				}
 			}
 		}
 	}

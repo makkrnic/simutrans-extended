@@ -26,6 +26,30 @@ template <class T> class slist_tpl;
 class vehicle_builder_t
 {
 public:
+	// sorting categories
+	enum sort_mode_t {
+		sb_freight,
+		sb_name,
+		sb_capacity,
+		sb_price,
+		sb_cost,
+		sb_cost_per_unit,
+		sb_speed, sb_power,
+		sb_weight,
+		sb_intro_date,
+		sb_retire_date,
+		sb_length
+	};
+	static const char *vehicle_sort_by[sb_length];
+
+	// default compare function
+	static bool compare_vehicles( const vehicle_desc_t* a, const vehicle_desc_t* b, sort_mode_t mode );
+
+	static const char *engine_type_names[11];
+
+	static bool speedbonus_init(const std::string &objfilename);
+	static sint32 get_speedbonus( sint32 monthyear, waytype_t wt );
+
 	// Retained for compatibility only
 	static void rdwr_speedbonus(loadsave_t *file);
 
@@ -40,7 +64,8 @@ public:
 	static vehicle_t* build(koord3d k, player_t* player, convoi_t* cnv, const vehicle_desc_t* vb, bool upgrade, uint16 livery_scheme_index = 0 );
 
 	static const vehicle_desc_t * get_info(const char *name);
-	static slist_tpl<vehicle_desc_t*> const& get_info(waytype_t);
+	static slist_tpl<vehicle_desc_t*> const& get_info(waytype_t, uint8 sortkey = vehicle_builder_t::sb_name);
+	//static slist_tpl<vehicle_desc_t const*> const& get_info(waytype_t, uint8 sortkey = vehicle_builder_t::sb_name);
 
 	/** extended search for vehicles for AI
 	*/
