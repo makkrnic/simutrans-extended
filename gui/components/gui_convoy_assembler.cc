@@ -2905,7 +2905,7 @@ void gui_convoy_assembler_t::set_panel_rows(int dy)
 	if (dy==-1) {
 		uint16 default_grid_y = 24 + 6; // grid.y of ships in pak64.
 		panel_rows=(7 * default_grid_y) / grid.y; // 7 rows of cars in pak64 fit at the screen (initial screen size).
-		panel_rows = clamp( panel_rows, 2, 3 ); // Not more then 3 rows and at least 2.
+		panel_rows = sim::clamp( panel_rows, 2, 3 ); // Not more then 3 rows and at least 2.
 		return;
 	}
 	dy -= get_convoy_height() + convoy_tabs_skip + 8 + get_vinfo_height() + 17 + D_TAB_HEADER_HEIGHT + 2 * gui_image_list_t::BORDER;

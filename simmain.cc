@@ -1075,7 +1075,7 @@ int simu_main(int argc, char** argv)
 	// set number of threads
 	if(  const char *ref_str = gimme_arg(argc, argv, "-threads", 1)  ) {
 		int want_threads = atoi(ref_str);
-		env_t::num_threads = clamp(want_threads, 1, MAX_THREADS);
+		env_t::num_threads = sim::clamp(want_threads, 1, MAX_THREADS);
 	}
 #else
 	if(  env_t::num_threads > 1  ) {
@@ -1280,7 +1280,7 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 	if(  gimme_arg(argc, argv, "-startyear", 0) != NULL  ) {
 		const char * ref_str = gimme_arg(argc, argv, "-startyear", 1); //1930
 		if(  ref_str != NULL  ) {
-			env_t::default_settings.set_starting_year( clamp(atoi(ref_str),1,2999) );
+			env_t::default_settings.set_starting_year( sim::clamp(atoi(ref_str),1,2999) );
 		}
 	}
 

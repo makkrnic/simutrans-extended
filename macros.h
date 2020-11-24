@@ -21,14 +21,14 @@ static inline size_t lengthof(T (&)[N]) { return N; }
 #define MEMZERON(ptr, n) memset((ptr), 0, sizeof(*(ptr)) * (n))
 #define MEMZERO(obj)     MEMZERON(&(obj), 1)
 
+namespace sim {
+
 // make sure, a value in within the borders
 template<typename T> static inline T clamp(T v, T l, T u)
 {
 	return v < l ? l : (v > u ? u :v);
 }
 
-
-namespace sim {
 
 template<class T> inline void swap(T& a, T& b)
 {

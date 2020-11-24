@@ -68,7 +68,7 @@ sint32 get_frame_time()
 
 void set_frame_time(uint32 time)
 {
-	frame_time = clamp( time, 1000/env_t::max_fps, 1000/env_t::min_fps )*FRAME_TIME_MULTI;
+	frame_time = sim::clamp( time, 1000/env_t::max_fps, 1000/env_t::min_fps )*FRAME_TIME_MULTI;
 }
 
 

@@ -34,7 +34,7 @@ namespace script_api {
 	{
 		SQInteger i = 0;
 		sq_getinteger(vm, index, &i);
-		return clamp<uint8>(i, 0, 255);
+		return sim::clamp<uint8>(i, 0, 255);
 	}
 	SQInteger param<uint8>::push(HSQUIRRELVM vm, uint8 const& v)
 	{
@@ -46,7 +46,7 @@ namespace script_api {
 	{
 		SQInteger i = 0;
 		sq_getinteger(vm, index, &i);
-		return clamp<sint8>(i, -128, 127);
+		return sim::clamp<sint8>(i, -128, 127);
 	}
 	SQInteger param<sint8>::push(HSQUIRRELVM vm, sint8 const& v)
 	{
@@ -58,7 +58,7 @@ namespace script_api {
 	{
 		SQInteger i = 0;
 		sq_getinteger(vm, index, &i);
-		return clamp<uint16>(i, 0, 0xffff);
+		return sim::clamp<uint16>(i, 0, 0xffff);
 	}
 	SQInteger param<uint16>::push(HSQUIRRELVM vm, uint16 const& v)
 	{
@@ -70,7 +70,7 @@ namespace script_api {
 	{
 		SQInteger i = 0;
 		sq_getinteger(vm, index, &i);
-		return clamp<sint16>(i, -32768, 0x7fff);
+		return sim::clamp<sint16>(i, -32768, 0x7fff);
 	}
 	SQInteger param<sint16>::push(HSQUIRRELVM vm, sint16 const& v)
 	{

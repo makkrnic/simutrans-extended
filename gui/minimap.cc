@@ -601,7 +601,7 @@ PIXVAL minimap_t::calc_severity_color(sint32 amount, sint32 max_value)
 	if(max_value!=0) {
 		// color array goes from light blue to red
 		sint32 severity = amount * MAX_SEVERITY_COLORS / (max_value+1);
-		return color_idx_to_rgb( minimap_t::severity_color[ clamp( severity, 0, MAX_SEVERITY_COLORS-1 ) ]);
+		return color_idx_to_rgb( minimap_t::severity_color[ sim::clamp( severity, 0, MAX_SEVERITY_COLORS-1 ) ]);
 	}
 	return color_idx_to_rgb( minimap_t::severity_color[0]);
 }
@@ -617,7 +617,7 @@ PIXVAL minimap_t::calc_severity_color_log(sint32 amount, sint32 max_value)
 		else {
 			severity = (uint32)( log( (double)amount*(double)(1<<MAX_SEVERITY_COLORS)/(double)max_value) + 0.5 );
 		}
-		return color_idx_to_rgb( minimap_t::severity_color[ clamp( severity, 0, MAX_SEVERITY_COLORS-1 ) ]);
+		return color_idx_to_rgb( minimap_t::severity_color[ sim::clamp( severity, 0, MAX_SEVERITY_COLORS-1 ) ]);
 	}
 	return color_idx_to_rgb( minimap_t::severity_color[0]);
 }
@@ -692,7 +692,7 @@ PIXVAL minimap_t::calc_height_color(const sint16 height, const sint16 groundwate
 	} else {
 		relative_index = height-groundwater;
 	}
-	return color_idx_to_rgb(map_type_color[clamp( relative_index+MAX_MAP_TYPE_WATER-1, 0, MAX_MAP_TYPE_WATER+MAX_MAP_TYPE_LAND-1 )]);
+	return color_idx_to_rgb(map_type_color[sim::clamp( relative_index+MAX_MAP_TYPE_WATER-1, 0, MAX_MAP_TYPE_WATER+MAX_MAP_TYPE_LAND-1 )]);
 }
 
 
@@ -1410,7 +1410,7 @@ const fabrik_t* minimap_t::draw_factory_connections(const PIXVAL colour, const s
 				scr_coord boxpos = end + scr_coord(10, 0);
 				const char * name = translator::translate(fab2->get_name());
 				int name_width = proportional_string_width(name)+8;
-				boxpos.x = clamp( boxpos.x, pos.x, pos.x+get_size().w-name_width );
+				boxpos.x = sim::clamp( boxpos.x, pos.x, pos.x+get_size().w-name_width );
 				display_ddd_proportional_clip(boxpos.x, boxpos.y, name_width, 0, color_idx_to_rgb(5), color_idx_to_rgb(COL_WHITE), name, true);
 			}
 		}
@@ -2024,7 +2024,7 @@ void minimap_t::draw(scr_coord pos)
 			scr_coord boxpos = fabpos + scr_coord(10, 0);
 			const char * name = translator::translate(fab->get_name());
 			int name_width = proportional_string_width(name)+8;
-			boxpos.x = clamp( boxpos.x, 0, 0+get_size().w-name_width );
+			boxpos.x = sim::clamp( boxpos.x, 0, 0+get_size().w-name_width );
 			boxpos += pos;
 			display_ddd_proportional_clip(boxpos.x, boxpos.y, name_width, 0, 10, color_idx_to_rgb(COL_WHITE), name, true);
 		}

@@ -1250,8 +1250,8 @@ void move_win(int win, event_t *ev)
 	}
 
 	// CLIP(wert,min,max)
-	to_pos.x = clamp( to_pos.x, 8-to_size.x, display_get_width()-16 );
-	to_pos.y = clamp( to_pos.y, env_t::iconsize.h, display_get_height() - D_TITLEBAR_HEIGHT - win_get_statusbar_height() - TICKER_HEIGHT);
+	to_pos.x = sim::clamp( to_pos.x, 8-to_size.x, display_get_width()-16 );
+	to_pos.y = sim::clamp( to_pos.y, env_t::iconsize.h, display_get_height() - D_TITLEBAR_HEIGHT - win_get_statusbar_height() - TICKER_HEIGHT);
 
 	// delta is actual window movement.
 	const scr_coord delta = to_pos - from_pos;

@@ -93,8 +93,8 @@ void scrollbar_t::set_knob(sint32 new_visible_size, sint32 new_total_size)
 		knob_offset = (sint32)( (double)knob_offset * ( (double)new_total_size / (double) total_size ) + 0.5 );
 	}
 	total_size = max(1,new_total_size);
-	knob_size = clamp( new_visible_size, 1, total_size );
-	knob_offset = clamp( knob_offset, 0, total_size-knob_size );
+	knob_size = sim::clamp( new_visible_size, 1, total_size );
+	knob_offset = sim::clamp( knob_offset, 0, total_size-knob_size );
 	reposition_buttons();
 }
 
@@ -107,7 +107,7 @@ void scrollbar_t::reposition_buttons()
 		size.w - D_ARROW_LEFT_WIDTH - D_ARROW_RIGHT_WIDTH);
 		// area will be actual area knob can move in
 
-	knob_offset = clamp( knob_offset, 0, total_size-knob_size );
+	knob_offset = sim::clamp( knob_offset, 0, total_size-knob_size );
 
 	double size_ratio = (double)knob_size / (double)total_size;
 	scr_coord_val length = min( area, (scr_coord_val)( area*size_ratio+0.5) );
@@ -120,7 +120,7 @@ void scrollbar_t::reposition_buttons()
 
 	double offset_ratio = (double)knob_offset / (double)total_size;
 	int offset = (int)( offset_ratio*area+0.5 );
-	offset = clamp( offset, 0, area-length );
+	offset = sim::clamp( offset, 0, area-length );
 
 	if(type == vertical) {
 		button_def[left_top_arrow_index].set_pos( scr_coord( (D_SCROLLBAR_WIDTH - D_ARROW_UP_WIDTH)/2, 0) );
@@ -143,7 +143,7 @@ void scrollbar_t::reposition_buttons()
 // actually handles crolling, callback etc.
 void scrollbar_t::scroll(sint32 updown)
 {
-	sint32 new_knob_offset = clamp( knob_offset+updown, 0, total_size-knob_size );
+	sint32 new_knob_offset = sim::clamp( knob_offset+updown, 0, total_size-knob_size );
 	if(  new_knob_offset != knob_offset  ) {
 		knob_offset = new_knob_offset;
 		call_listeners((long)knob_offset);

@@ -40,7 +40,7 @@ wolke_t::wolke_t(koord3d pos, sint8 x_off, sint8 y_off, const skin_desc_t* desc 
 #endif
 {
 	cloud_nr = all_clouds.index_of(desc);
-	base_y_off = clamp( (sint16)y_off - 8, -128, 127 );
+	base_y_off = sim::clamp( (sint16)y_off - 8, -128, 127 );
 	set_xoff( x_off );
 	set_yoff( base_y_off );
 	purchase_time = 0;
@@ -135,7 +135,7 @@ void wolke_t::rotate90()
 	set_yoff( base_y_off + 8 );
 	obj_t::rotate90();
 	// .. and recalc smoke offsets
-	base_y_off = clamp( (sint16)get_yoff()-8, -128, 127 );
+	base_y_off = sim::clamp( (sint16)get_yoff()-8, -128, 127 );
 	set_yoff( base_y_off - ((purchase_time*OBJECT_OFFSET_STEPS) >> 12) );
 }
 

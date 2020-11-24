@@ -68,7 +68,7 @@ scr_size gui_numberinput_t::get_min_size() const
 void gui_numberinput_t::set_value(sint32 new_value)
 {
 	// range check
-	value = clamp( new_value, min_value, max_value );
+	value = sim::clamp( new_value, min_value, max_value );
 
 	gui_frame_t *win = win_get_top();
 	if(  win  &&  win->get_focus()!=this  ) {
@@ -93,7 +93,7 @@ sint32 gui_numberinput_t::get_text_value()
 
 sint32 gui_numberinput_t::get_value()
 {
-	return clamp( value, min_value, max_value );
+	return sim::clamp( value, min_value, max_value );
 }
 
 
@@ -150,7 +150,7 @@ sint32 gui_numberinput_t::get_next_value()
 		{
 			sint64 diff = (sint64)max_value - (sint64)min_value;
 			sint32 one_percent = (sint32) (diff / 100l);
-			return clamp( value+max(1,one_percent), min_value, max_value );
+			return sim::clamp( value+max(1,one_percent), min_value, max_value );
 		}
 		// power of 2
 		case POWER2:
@@ -158,7 +158,7 @@ sint32 gui_numberinput_t::get_next_value()
 			sint32 new_value=1;
 			for( int i=0;  i<32;  i++  ) {
 				if(  value<(new_value<<i)  ) {
-					return clamp( (new_value<<i), min_value, max_value );
+					return sim::clamp( (new_value<<i), min_value, max_value );
 				}
 			}
 			return max_value;
@@ -176,7 +176,7 @@ sint32 gui_numberinput_t::get_next_value()
 		}
 		// default value is step size
 		default:
-			return clamp( ((value+step_mode)/step_mode)*step_mode, min_value, max_value );
+			return sim::clamp( ((value+step_mode)/step_mode)*step_mode, min_value, max_value );
 	}
 }
 
@@ -194,7 +194,7 @@ sint32 gui_numberinput_t::get_prev_value()
 		{
 			sint64 diff = (sint64)max_value - (sint64)min_value;
 			sint32 one_percent = (sint32) (diff / 100ll);
-			return clamp( value-max(1,one_percent), min_value, max_value );
+			return sim::clamp( value-max(1,one_percent), min_value, max_value );
 		}
 		// power of 2
 		case POWER2:
@@ -202,7 +202,7 @@ sint32 gui_numberinput_t::get_prev_value()
 			sint32 new_value=1;
 			for( int i=30;  i>=0;  i--  ) {
 				if(  value>(new_value<<i)  ) {
-					return clamp( (new_value<<i), min_value, max_value );
+					return sim::clamp( (new_value<<i), min_value, max_value );
 				}
 			}
 			return min_value;
@@ -220,7 +220,7 @@ sint32 gui_numberinput_t::get_prev_value()
 		}
 		// default value is step size
 		default:
-			return clamp( value-step_mode, min_value, max_value );
+			return sim::clamp( value-step_mode, min_value, max_value );
 	}
 }
 

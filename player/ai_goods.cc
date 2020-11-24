@@ -1011,7 +1011,7 @@ DBG_MESSAGE("ai_goods_t::do_ki()","No roadway possible.");
 			if(  count_road<255  ) {
 				// for short distance: reduce number of cars
 				// calculated here, since the above number was based on production
-				count_road = clamp( (sint32)(dist*15)/best_road_speed, 2, count_road );
+				count_road = sim::clamp( (sint32)(dist*15)/best_road_speed, 2, count_road );
 
 				// Guess that average speed is half of "best" speed
 				const uint32 average_speed = best_road_speed / 2;
