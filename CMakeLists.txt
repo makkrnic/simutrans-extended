@@ -473,6 +473,12 @@ if (SIMUTRANS_BACKEND STREQUAL "sdl2")
 		target_sources(simutrans-extended PRIVATE sys/simsys_w32_png.cc)
 	endif ()
 
+elseif(SIMUTRANS_BACKEND STREQUAL "sdl2_vulkan")
+    # TODO MAK
+	target_sources(simutrans-extended PRIVATE display/simgraph_vulkan.cc sys/simsys_s2_vulkan.cc sound/sdl2_sound.cc ${BACKUP_MUSIC})
+	target_link_libraries(simutrans-extended PRIVATE SDL2::Core Vulkan::Vulkan)
+	target_compile_definitions(simutrans-extended PRIVATE COLOUR_DEPTH=16)
+
 elseif (SIMUTRANS_BACKEND STREQUAL "mixer_sdl2")
 	target_sources(simutrans-extended PRIVATE display/simgraph16.cc sys/simsys_s2.cc sound/sdl2_mixer_sound.cc music/sdl2_mixer_midi.cc)
 	target_link_libraries(simutrans-extended PRIVATE SDL2::Core SDL2::Mixer)
