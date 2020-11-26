@@ -13,12 +13,17 @@
 #include <sys/time.h>
 #include <csignal>
 
+int display_error_message(const char *title, const char *message) {
+	return SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, nullptr);
+}
+
 void sim_window_t::show() {
 	if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+		display_error_message("SDL_Init", SDL_GetError());
 		throw std::runtime_error(SDL_GetError());
 	}
 
-	Uint32 flags = SDL_WINDOW_ALLOW_HIGHDPI; // SDL_WINDOW_VULKAN;
+	Uint32 flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_VULKAN;
 
 	flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE;
 
@@ -29,7 +34,8 @@ void sim_window_t::show() {
 		flags );
 
 	if(  window == NULL  ) {
-		dbg->error("dr_os_open(SDL2)", "Could not open the window: %s", SDL_GetError() );
+		display_error_message("Could not open the window", SDL_GetError());
+		dbg->error("sim_window_t::show SDL2_vulkan", "Could not open the window: %s", SDL_GetError() );
 	}
 }
 
