@@ -18,6 +18,10 @@ void simgraph_init(scr_size window_size, bool fullscreen)
 	window->run();
 }
 
+void simgraph_draw_frame() {
+	window->draw_frame();
+}
+
 
 // TODO MAK remove after implementing vulkan rendering
 int default_font_ascent = 0;

@@ -413,4 +413,6 @@ extern uint8 display_day_lights[LIGHT_COUNT * 3];
 extern uint8 display_night_lights[LIGHT_COUNT * 3];
 #endif
 
+void simgraph_draw_frame();
+
 #endif

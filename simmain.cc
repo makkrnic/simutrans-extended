@@ -902,6 +902,9 @@ int simu_main(int argc, char** argv)
 	simgraph_init(scr_size(disp_width, disp_height), fullscreen != 0);
 	DBG_MESSAGE("simu_main()", ".. results in disp_width=%d, disp_height=%d", display_get_width(), display_get_height());
 
+	// Draw anything, at least to clear the screen
+	simgraph_draw_frame();
+
 	// now that the graphics system has already started
 	// the saved colours can be converted to the system format
 	env_t_rgb_to_system_colors();
@@ -1561,7 +1564,9 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 		// poor man's fps limiting
 		// std::this_thread::sleep_for(std::chrono::microseconds(25000));
 		// DBG_MESSAGE("simmain","rendering");
-		intr_refresh_display(false);
+		// intr_refresh_display(false);
+
+		simgraph_draw_frame();
 	}
 
 	game_thread.join();
