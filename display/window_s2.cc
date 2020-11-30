@@ -38,6 +38,8 @@ sim_window_t::sim_window_t(int _width, int _height, int _fullscreen)
 		throw std::runtime_error(SDL_GetError());
 	}
 
+	atexit( SDL_Quit ); // clean up on exit
+
 	init_window();
 };
 
