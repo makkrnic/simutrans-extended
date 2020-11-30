@@ -45,7 +45,7 @@ void sim_window_t::init_window() {
 	flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE;
 
 	window = SDL_CreateWindow(
-			SIM_TITLE,
+			SIM_TITLE " Vulkan",
 			SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 			res.w, res.h,
 			flags );

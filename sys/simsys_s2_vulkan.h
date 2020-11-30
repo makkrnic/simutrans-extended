@@ -58,11 +58,22 @@ private:
 	std::vector<VkFramebuffer> swap_chain_framebuffers;
 
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorSetLayout descriptor_set_layout;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline graphicsPipeline;
 
 	VkCommandPool command_pool;
+
+	VkBuffer vertex_buffer;
+	VkDeviceMemory vertex_buffer_memory;
+	VkBuffer index_buffer;
+	VkDeviceMemory index_buffer_memory;
+
+	std::vector<VkBuffer> uniform_buffers;
+	std::vector<VkDeviceMemory> uniform_buffers_memory;
+
+	VkDescriptorPool descriptor_pool;
+	std::vector<VkDescriptorSet> descriptor_sets;
 
 	std::vector<VkCommandBuffer> command_buffers;
 
@@ -91,15 +102,24 @@ private:
 	void create_swap_chain();
 	void create_image_views();
 	void create_render_pass();
-
+	void create_descriptor_set_layout();
 	void create_graphics_pipeline();
 
 
 
 	void create_framebuffers();
 	void create_command_pool();
+	void create_vertex_buffer();
+	void create_index_buffer();
+	void create_uniform_buffers();
+	void create_descriptor_pool();
+	void create_descriptor_sets();
 	void create_command_buffers();
 	void create_sync_objects();
+
+
+
+	void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 };
 
 #endif //SIMSYS_S2_VULKAN_H
