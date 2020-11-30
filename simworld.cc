@@ -4994,7 +4994,7 @@ void karte_t::sync_step(uint32 delta_t, bool do_sync_step, bool display )
 		// 4. release lock
 
 		// display new frame with water animation
-		// intr_refresh_display( false );
+		intr_refresh_display( false );
 		update_frame_sleep_time();
 	}
 

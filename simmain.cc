@@ -1497,7 +1497,17 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 	bool stop_render_thread = false;
 
 
-	std::thread game_thread([&]() {
+	std::thread vulkan_thread([&renderer, &stop_render_thread]() {
+		while (!stop_render_thread) {
+			// TODO MAK
+			// poor man's fps limiting
+			std::this_thread::sleep_for(std::chrono::microseconds(25000));
+			// DBG_MESSAGE("simmain","rendering");
+			renderer->draw_frame();
+		}
+	});
+
+	// std::thread game_thread([&]() {
 		if (!env_t::networkmode && !env_t::server && new_world) {
 			welt->get_message()->clear();
 		}
@@ -1563,19 +1573,10 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 	}
 
 		stop_render_thread = true;
-	});
+	// });
 
-	while (!stop_render_thread) {
-		// TODO MAK
-		// poor man's fps limiting
-		// std::this_thread::sleep_for(std::chrono::microseconds(25000));
-		// DBG_MESSAGE("simmain","rendering");
-		intr_refresh_display(false);
 
-		renderer->draw_frame();
-	}
-
-	game_thread.join();
+	vulkan_thread.join();
 
 	destroy_all_win(true);
 	tool_t::exit_menu();
