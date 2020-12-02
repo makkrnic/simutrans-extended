@@ -15,7 +15,7 @@ static sim_window_t *window;
 void simgraph_init(scr_size window_size, bool fullscreen)
 {
 	window = new sim_window_t(window_size, fullscreen);
-	window->show();
+	window->run();
 }
 
 
