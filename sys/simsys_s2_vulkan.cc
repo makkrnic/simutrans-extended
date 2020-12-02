@@ -14,6 +14,9 @@
 #include "../simversion.h"
 #include "../simdebug.h"
 #include "../macros.h"
+#include "../simworld.h"
+#include "../display/viewport.h"
+#include "../dataobj/ribi.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -195,26 +198,28 @@ struct UniformBufferObject {
 };
 
 const std::vector<Vertex> vertices = {
-		{{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}},
-		{{ 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
-		{{ 0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 1.0f}},
-		{{-0.5f,  0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-		{{-0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 1.0f}},
-		{{ 0.5f, -0.5f,  0.5f}, {1.0f, 1.0f, 0.0f}},
-		{{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}},
-		{{-0.5f,  0.5f,  0.5f}, {1.0f, 0.5f, 0.0f}},
+		{glm::vec3(-0.5f, -0.5f, -0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {0.0f, 0.0f, 1.0f}},
+		{glm::vec3( 0.5f, -0.5f, -0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {0.0f, 1.0f, 0.0f}},
+		{glm::vec3( 0.5f,  0.5f, -0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {0.0f, 1.0f, 1.0f}},
+		{glm::vec3(-0.5f,  0.5f, -0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {1.0f, 0.0f, 0.0f}},
+		{glm::vec3(-0.5f, -0.5f,  0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {1.0f, 0.0f, 1.0f}},
+		{glm::vec3( 0.5f, -0.5f,  0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {1.0f, 1.0f, 0.0f}},
+		{glm::vec3( 0.5f,  0.5f,  0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {1.0f, 1.0f, 1.0f}},
+		{glm::vec3(-0.5f,  0.5f,  0.5f) + glm::vec3(90.0f, 90.0f, 0.0f), {1.0f, 0.5f, 0.0f}},
 };
 
 const std::vector<uint16_t> indices = {
-	0, 3, 2, 2, 1, 0,
-	0, 1, 4, 4, 1, 5,
-	1, 2, 5, 5, 2, 6,
-	2, 3, 6, 6, 3, 7,
-	3, 0, 7, 7, 0, 4,
-	4, 5, 7, 7, 5, 6
+//	For triangle list
+// 	0, 3, 2, 2, 1, 0,
+// 	0, 1, 4, 4, 1, 5,
+// 	1, 2, 5, 5, 2, 6,
+// 	2, 3, 6, 6, 3, 7,
+// 	3, 0, 7, 7, 0, 4,
+// 	4, 5, 7, 7, 5, 6
 
+//  For triangle strip
+	4, 5, 7, 6, 2, 5, 1, 4, 0, 7, 3, 2, 0, 1
 };
-
 
 void sim_renderer_t::run() {
 	// (more or less) follow the vulkan-tutorial
@@ -433,6 +438,7 @@ void sim_renderer_t::recreate_swap_chain() {
 	create_swap_chain();
 	create_image_views();
 	create_render_pass();
+	prepare_tiles_rendering();
 	create_graphics_pipeline();
 	create_framebuffers();
 	create_uniform_buffers();
@@ -629,8 +635,11 @@ void sim_renderer_t::create_graphics_pipeline() {
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
+	inputAssembly.primitiveRestartEnable = VK_TRUE;
 
 	VkViewport viewport{};
 	viewport.x = 0.0f;
@@ -928,6 +937,10 @@ void sim_renderer_t::create_command_buffers() {
 		throw std::runtime_error("failed to allocate command buffers");
 	}
 
+	if (tiles_grid_indices.count == 0) {
+		return;
+	}
+
 	for (size_t i = 0; i < command_buffers.size(); i++) {
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -953,15 +966,16 @@ void sim_renderer_t::create_command_buffers() {
 
 			vkCmdBindPipeline(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-			VkBuffer vertexBuffers[] = { vertex_buffer };
+			// VkBuffer vertexBuffers[] = { vertex_buffer };
+			VkBuffer vertexBuffers[] = { tiles_vertices.buffer };
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
 
-			vkCmdBindIndexBuffer(command_buffers[i], index_buffer, 0, VK_INDEX_TYPE_UINT16);
+			vkCmdBindIndexBuffer(command_buffers[i], tiles_grid_indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
 
-			vkCmdDrawIndexed(command_buffers[i], static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+			vkCmdDrawIndexed(command_buffers[i], static_cast<uint32_t>(tiles_grid_indices.count), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(command_buffers[i]);
 
@@ -1010,13 +1024,25 @@ void sim_renderer_t::draw_frame() {
 	// Update uniform buffer
 	UniformBufferObject ubo{};
 	ubo.model = glm::mat4(1.0f); // glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3( 2.0f,  2.00f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	// ubo.proj = glm::perspective(glm::radians(45.0f), swap_chain_extent.width / (float)swap_chain_extent.height, 0.1f, 10.0f);
-	// ubo.proj[1][1] *= -1;
+	// ubo.view = glm::lookAt(glm::vec3( 20.0f,  20.00f, 20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	if (viewport != nullptr) {
+		auto eye = glm::vec3((float) viewport->get_world_position().y, (float)viewport->get_world_position().x, 10.0f);
+		auto dir = glm::vec3(-1.0f, -1.0f, -0.7f);
+		ubo.view = glm::lookAt(
+				eye,
+				eye + dir, glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	}
+
+	float zoom_factor = static_cast<float>(get_zoom_factor() + 1) * 10.0;
+
 	float ratio = swap_chain_extent.width / (float)swap_chain_extent.height;
-	float halfw = 5.0; //swap_chain_extent.width / 2.0;
-	float halfh = 5.0 / ratio; //swap_chain_extent.height / 2.0;
-	ubo.proj = glm::ortho( -halfw, halfw, halfh, -halfh, 0.1f, 1000.0f);
+	float halfw = zoom_factor; //swap_chain_extent.width / 2.0;
+	float halfh = zoom_factor / ratio; //swap_chain_extent.height / 2.0;
+	ubo.proj = glm::ortho( -halfw, halfw, halfh, -halfh, -100.0000f, 1000.0f);
+
+	// ubo.proj = glm::perspective(glm::radians(45.0f), swap_chain_extent.width / (float)swap_chain_extent.height, 0.1f, 1000.0f);
+	// ubo.proj[0][0] *= -1;
+
 
 
 	void *data;
@@ -1107,6 +1133,121 @@ void sim_renderer_t::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDev
 
 	vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
 }
+
+void sim_renderer_t::prepare_tiles_rendering() {
+	vkDestroyBuffer(device, tiles_vertices.buffer, nullptr);
+	vkFreeMemory(device, tiles_vertices.memory, nullptr);
+	vkDestroyBuffer(device, tiles_grid_indices.buffer, nullptr);
+	vkFreeMemory(device, tiles_grid_indices.memory, nullptr);
+
+	const float z_scale = 0.5;
+
+	karte_ptr_t world;
+
+	koord world_size = world->get_size();
+
+	vector<Vertex> vertices_1(world_size.x * world_size.y * 4);
+	vector<int> indices_1(world_size.x * world_size.y * 6);
+
+	for (sint16 j = 0; j < world_size.y; j++) {
+		for (sint16 i = 0; i < world_size.x; i++) {
+			grund_t *tile = world->lookup_kartenboden_gridcoords({i, j});
+			auto tile_pos = tile->get_pos();
+			slope_t::type slope = tile->get_disp_slope();
+			sint8 add_height = is_one_high(tile->get_disp_slope()) ? 1 : 2;
+			sint8 adds_map[4] = {
+					(sint8)(corner_nw(slope) ? add_height : 0),
+					(sint8)(corner_ne(slope) ? add_height : 0),
+					(sint8)(corner_sw(slope) ? add_height : 0),
+					(sint8)(corner_se(slope) ? add_height : 0)
+			};
+
+			// For each tile, calculate corner positions and store the into
+			// vertex and index buffers.
+			for (int y = 0; y < 2; y++) {
+				for (int x = 0; x < 2; x++) {
+					sint16 x_coord = i + x;
+					sint16 y_coord = j + y;
+
+					vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord, (tile_pos.z + adds_map[y*2 + x]) * z_scale}, {1.0, 1.0, 1.0}};
+
+					int micro_x = y == 1 ? 1 - x : x;
+
+					indices_1[(j * world_size.x + i) * 6 + x + y * 2] = (j * world_size.x + i) * 4 + y * 2 + micro_x;
+					if (x == 0 && y == 0) {
+						indices_1[(j * world_size.x + i) * 6 + 4] = (j * world_size.x + i) * 4;
+					}
+				}
+			}
+			indices_1[(j * world_size.x + i) * 6 + 5] = 0xFFFFFFFF;
+		}
+	}
+
+	VkDeviceSize vertices_buffer_size = sizeof(vertices_1[0]) * vertices_1.size();
+	VkBuffer vertices_staging_buffer;
+	VkDeviceMemory vertices_staging_buffer_memory;
+
+	create_buffer(
+			physicalDevice,
+			device,
+			vertices_buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			vertices_staging_buffer,
+			vertices_staging_buffer_memory);
+
+	void *data;
+	vkMapMemory(device, vertices_staging_buffer_memory, 0, vertices_buffer_size, 0, &data);
+		memcpy(data, vertices_1.data(), (size_t)vertices_buffer_size);
+	vkUnmapMemory(device, vertices_staging_buffer_memory);
+
+	create_buffer(
+			physicalDevice,
+			device,
+			vertices_buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			tiles_vertices.buffer,
+			tiles_vertices.memory);
+
+	copy_buffer(vertices_staging_buffer, tiles_vertices.buffer, vertices_buffer_size);
+	vkFreeMemory(device, vertices_staging_buffer_memory, nullptr);
+
+	VkDeviceSize indices_buffer_size = sizeof(indices_1[0]) * indices_1.size();
+	VkBuffer indices_staging_buffer;
+	VkDeviceMemory indices_staging_buffer_memory;
+
+	create_buffer(
+			physicalDevice,
+			device,
+			indices_buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			indices_staging_buffer,
+			indices_staging_buffer_memory);
+
+	void *data_indices;
+	if (vkMapMemory(device, indices_staging_buffer_memory, 0, indices_buffer_size, 0, &data_indices) != VK_SUCCESS) {
+		throw std::runtime_error("unable to map memory");
+	};
+	memcpy(data_indices, indices_1.data(), (size_t)indices_buffer_size);
+	vkUnmapMemory(device, indices_staging_buffer_memory);
+
+	tiles_grid_indices.count = indices_1.size();
+	create_buffer(
+			physicalDevice,
+			device,
+			indices_buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			tiles_grid_indices.buffer,
+			tiles_grid_indices.memory);
+
+	copy_buffer(indices_staging_buffer, tiles_grid_indices.buffer, indices_buffer_size);
+	vkFreeMemory(device, indices_staging_buffer_memory, nullptr);
+}
+
+
 
 // Helpers implementations
 

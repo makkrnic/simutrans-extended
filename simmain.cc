@@ -911,6 +911,23 @@ int simu_main(int argc, char** argv)
 
 	simevent_set_window(window);
 
+	// Run gui on main thread and game loop in worker thread
+	// TODO MAK what if multithreading is disabled?
+
+	// start the rendering thread
+	bool stop_render_thread = false;
+
+
+	std::thread vulkan_thread([&renderer, &stop_render_thread]() {
+		while (!stop_render_thread) {
+			// TODO MAK
+			// poor man's fps limiting
+			std::this_thread::sleep_for(std::chrono::microseconds(25000));
+			// DBG_MESSAGE("simmain","rendering");
+			renderer->draw_frame();
+		}
+	});
+
 	// now that the graphics system has already started
 	// the saved colours can be converted to the system format
 	env_t_rgb_to_system_colors();
@@ -1490,22 +1507,8 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 	}
 	env_t::restore_UI = old_restore_UI;
 
-	// Run gui on main thread and game loop in worker thread
-	// TODO MAK what if multithreading is disabled?
-
-	// start the rendering thread
-	bool stop_render_thread = false;
-
-
-	std::thread vulkan_thread([&renderer, &stop_render_thread]() {
-		while (!stop_render_thread) {
-			// TODO MAK
-			// poor man's fps limiting
-			std::this_thread::sleep_for(std::chrono::microseconds(25000));
-			// DBG_MESSAGE("simmain","rendering");
-			renderer->draw_frame();
-		}
-	});
+	// TODO MAK: world could update
+	renderer->set_viewport(welt->get_viewport());
 
 	// std::thread game_thread([&]() {
 		if (!env_t::networkmode && !env_t::server && new_world) {

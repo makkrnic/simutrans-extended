@@ -19,9 +19,19 @@
 #include <vector>
 
 #include "../display/window.h"
-
-
+#include "../display/viewport.h"
 #include "../display/scr_coord.h"
+
+struct Vertices {
+	VkBuffer       buffer;
+	VkDeviceMemory memory;
+};
+
+struct Indices {
+	VkBuffer       buffer;
+	VkDeviceMemory memory;
+	uint32_t       count;
+};
 
 // TODO: Use sim_renderer_t as an API, and implement SDL, GDI etc in separate subclasses?
 class sim_renderer_t {
@@ -33,10 +43,14 @@ public:
 	void run();
 	void draw_frame();
 
+	void set_viewport(viewport_t *_viewport) { viewport = _viewport; }
+
 private:
 	int width;
 	int height;
 	bool fullscreen;
+
+	viewport_t *viewport = nullptr;
 
 	sim_window_t *window = nullptr;
 
@@ -58,6 +72,7 @@ private:
 	std::vector<VkFramebuffer> swap_chain_framebuffers;
 
 	VkRenderPass renderPass;
+	VkRenderPass renderPass_grid;
 	VkDescriptorSetLayout descriptor_set_layout;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline graphicsPipeline;
@@ -68,6 +83,9 @@ private:
 	VkDeviceMemory vertex_buffer_memory;
 	VkBuffer index_buffer;
 	VkDeviceMemory index_buffer_memory;
+
+	Vertices tiles_vertices = { VK_NULL_HANDLE };
+	Indices tiles_grid_indices = { VK_NULL_HANDLE };
 
 	std::vector<VkBuffer> uniform_buffers;
 	std::vector<VkDeviceMemory> uniform_buffers_memory;
@@ -118,6 +136,7 @@ private:
 	void create_sync_objects();
 
 
+	void prepare_tiles_rendering();
 
 	void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
 };
