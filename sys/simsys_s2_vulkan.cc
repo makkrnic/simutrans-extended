@@ -1009,6 +1009,7 @@ void sim_renderer_t::create_sync_objects() {
 }
 
 void sim_renderer_t::draw_frame() {
+	auto frame_start_time = std::chrono::steady_clock::now();
 	vkWaitForFences(device, 1, &in_flight_fences[current_frame], VK_TRUE, UINT64_MAX);
 
 	uint32_t image_index;
@@ -1088,6 +1089,18 @@ void sim_renderer_t::draw_frame() {
 	presentInfo.pImageIndices = &image_index;
 
 	result = vkQueuePresentKHR(present_queue, &presentInfo);
+
+	auto frame_end_time = std::chrono::steady_clock::now();
+	frame_counter++;
+
+	float fps_timer = std::chrono::duration<double, std::milli>(frame_end_time - last_timestamp).count();
+	// do not refresh counter more often than every 200ms
+	if (fps_timer > 200.0f) {
+		last_fps = ((float)frame_counter / fps_timer) * 1000.0f;
+		frame_counter = 0;
+		last_timestamp = frame_end_time;
+		fps_updated = true;
+	}
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebuffer_resized) {
 		framebuffer_resized = false;

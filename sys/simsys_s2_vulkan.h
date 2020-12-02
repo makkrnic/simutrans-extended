@@ -17,6 +17,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
+#include <chrono>
 
 #include "../display/window.h"
 #include "../display/viewport.h"
@@ -45,10 +46,24 @@ public:
 
 	void set_viewport(viewport_t *_viewport) { viewport = _viewport; }
 
+	float consume_fps_change() {
+		if (!fps_updated) {
+			return -1.0;
+		}
+
+		fps_updated = false;
+		return last_fps;
+	}
+
 private:
 	int width;
 	int height;
 	bool fullscreen;
+
+	int frame_counter = 0;
+	std::chrono::steady_clock::time_point last_timestamp = std::chrono::steady_clock::now();
+	float last_fps = 0;
+	bool fps_updated = false;
 
 	viewport_t *viewport = nullptr;
 

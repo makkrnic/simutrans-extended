@@ -918,13 +918,20 @@ int simu_main(int argc, char** argv)
 	bool stop_render_thread = false;
 
 
-	std::thread vulkan_thread([&renderer, &stop_render_thread]() {
+	std::thread vulkan_thread([&renderer, &stop_render_thread, &window]() {
 		while (!stop_render_thread) {
 			// TODO MAK
 			// poor man's fps limiting
-			std::this_thread::sleep_for(std::chrono::microseconds(25000));
+			// std::this_thread::sleep_for(std::chrono::microseconds(25000));
 			// DBG_MESSAGE("simmain","rendering");
 			renderer->draw_frame();
+
+			float fps = renderer->consume_fps_change();
+			if (fps < 0) {
+				continue;
+			}
+
+			window->update_fps_info(fps);
 		}
 	});
 

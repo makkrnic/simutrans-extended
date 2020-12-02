@@ -9,6 +9,7 @@
 #endif
 
 #include <stdexcept>
+#include <sstream>
 
 #include "../simversion.h"
 #include "../simdebug.h"
@@ -59,7 +60,19 @@ void sim_window_t::init_window() {
 		dbg->error("sim_renderer_t::show SDL2_vulkan", "Could not open the window: %s", SDL_GetError() );
 	}
 
+	update_drawable_size();
+}
+
+void sim_window_t::update_drawable_size() {
 	SDL_Vulkan_GetDrawableSize(window, &res.w, &res.h);
+}
+
+void sim_window_t::update_fps_info(float fps) {
+	std::ostringstream title;
+
+	title << SIM_TITLE << ' ' << fps << "fps" << "; " << res.w << 'x' << res.h;
+
+	SDL_SetWindowTitle(window, title.str().c_str());
 }
 
 
@@ -150,6 +163,8 @@ struct sys_event_t sim_window_t::get_event(bool const wait)
 				sys_event.new_window_size.h = SCREEN_TO_TEX_Y(event.window.data2);
 				sys_event.type = SIM_SYSTEM;
 				sys_event.code = SYSTEM_RESIZE;
+
+				update_drawable_size();
 			}
 			// Ignore other window events.
 			break;

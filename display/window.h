@@ -26,6 +26,8 @@ class sim_window_t {
 public:
 	sim_window_t(int _width, int _height, int _fullscreen);
 
+	void update_fps_info(float fps);
+
 	// TODO: ifdef VULKAN etc
 	// this function should be only called by a vulkan renderer
 	void create_vulkan_surface(VkInstance instance, VkSurfaceKHR *pSurface);
@@ -44,6 +46,7 @@ private:
 	SDL_Window *window = nullptr;
 
 	void init_window();
+	void update_drawable_size();
 };
 
 #endif //DISPLAY_WINDOW_H
