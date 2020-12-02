@@ -3,11 +3,21 @@
  * (see LICENSE.txt)
  */
 
+#include "../sys/simsys_s2_vulkan.h"
 #include "../simconst.h"
 #include "../sys/simsys.h"
 #include "../descriptor/image.h"
 
 #include "simgraph.h"
+
+static sim_window_t *window;
+
+void simgraph_init(scr_size window_size, bool fullscreen)
+{
+	window = new sim_window_t(window_size, fullscreen);
+	window->show();
+}
+
 
 // TODO MAK remove after implementing vulkan rendering
 int default_font_ascent = 0;
@@ -412,8 +422,9 @@ void display_show_load_pointer(int)
 {
 }
 
-void simgraph_init(KOORD_VAL, KOORD_VAL, int)
+bool is_display_init()
 {
+	return false;
 }
 
 void display_free_all_images_above(image_id)
@@ -425,15 +436,7 @@ void simgraph_exit()
 	dr_os_close();
 }
 
-void simgraph_resize(KOORD_VAL, KOORD_VAL)
-{
-}
-
-void reset_textur(void *)
-{
-}
-
-void display_snapshot()
+void simgraph_resize(scr_size)
 {
 }
 
@@ -463,14 +466,6 @@ int display_fluctuation_triangle_rgb(KOORD_VAL, KOORD_VAL, uint8, const bool, si
 }
 
 void draw_bezier_rgb(KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, KOORD_VAL, const PIXVAL, KOORD_VAL, KOORD_VAL)
-{
-}
-
-void display_set_progress_text(const char *)
-{
-}
-
-void display_progress(int, int)
 {
 }
 

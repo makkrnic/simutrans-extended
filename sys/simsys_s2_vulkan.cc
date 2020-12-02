@@ -3,15 +3,35 @@
  * (see LICENSE.txt)
  */
 
-#ifdef ALT_SDL_DIR
-#include "SDL.h"
-#else
-#include <SDL2/SDL.h>
-#endif
 
 #include "simsys.h"
+#include "simsys_s2_vulkan.h"
+
+#include "../simversion.h"
+#include "../simdebug.h"
+
 #include <sys/time.h>
 #include <csignal>
+
+void sim_window_t::show() {
+	if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+		throw std::runtime_error(SDL_GetError());
+	}
+
+	Uint32 flags = SDL_WINDOW_ALLOW_HIGHDPI; // SDL_WINDOW_VULKAN;
+
+	flags |= fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE;
+
+	window = SDL_CreateWindow(
+		SIM_TITLE,
+		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+		width, height,
+		flags );
+
+	if(  window == NULL  ) {
+		dbg->error("dr_os_open(SDL2)", "Could not open the window: %s", SDL_GetError() );
+	}
+}
 
 bool dr_auto_scale(bool)
 {
@@ -29,11 +49,6 @@ resolution dr_query_screen_resolution()
 	return res;
 }
 
-// open the window
-int dr_os_open(int, int, int)
-{
-	return 1;
-}
 
 
 void dr_os_close()
