@@ -123,6 +123,8 @@
 #ifdef MULTI_THREAD
 #include "utils/simthread.h"
 
+#include <mutex>
+
 static vector_tpl<pthread_t> private_car_route_threads;
 static vector_tpl<pthread_t> unreserve_route_threads;
 static vector_tpl<pthread_t> step_passengers_and_mail_threads;
@@ -4977,8 +4979,22 @@ void karte_t::sync_step(uint32 delta_t, bool do_sync_step, bool display )
 			}
 		}
 
+
+        // Data buffer functionality:
+        // All of the data required for render should be copied to a buffer
+        // which can then be read from by the render function. In order to achieve
+        // that in a safe way, double buffering is used, and after the call
+        // to make data available to the renderer, whatever was in the render
+        // buffer should be considered invalid and not read from from here.
+        //
+        // TODO MAK
+		// 1. copy data needed for render to buffer
+		// 2. obtain lock
+		// 3. switch render data buffers ("1" and "2")
+		// 4. release lock
+
 		// display new frame with water animation
-		intr_refresh_display( false );
+		// intr_refresh_display( false );
 		update_frame_sleep_time();
 	}
 

@@ -7,6 +7,8 @@
 #define DISPLAY_SIMVIEW_H
 
 
+#include <chrono>
+
 #include "simgraph.h"
 
 
@@ -28,6 +30,11 @@ private:
 
 	/// Cached value from last display run to determine if the background was visible, we'll save redraws if it was not.
 	bool outside_visible;
+
+    std::chrono::steady_clock::time_point last_frame_time;
+
+    /// In contrast to `frame_time` from `simintr.cc`, this value is descriptive, and not prescriptive.
+    long usec_per_frame = 0;
 
 public:
 	main_view_t(karte_t *welt);
@@ -78,6 +85,12 @@ public:
 	 */
 	void display_background( KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, KOORD_VAL h, bool dirty );
 
+	/**
+	 * Get the time elapsed between the last two full draws in ms
+	 */
+	int get_frame_time_ms();
+
+	int get_fps();
 };
 
 #endif

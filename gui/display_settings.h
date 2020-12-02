@@ -7,6 +7,7 @@
 #define GUI_DISPLAY_SETTINGS_H
 
 
+#include "../simworld.h"
 #include "gui_frame.h"
 #include "components/gui_divider.h"
 #include "components/gui_label.h"
@@ -33,6 +34,7 @@ private:
 		explore_path_label,
 		reroute_goods_label,
 		status_label;
+	karte_ptr_t welt;
 
 public:
 	gui_settings_t();

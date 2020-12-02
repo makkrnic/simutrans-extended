@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string>
 #include <new>
+#include <thread>
 
 #include "pathes.h"
 
@@ -77,7 +78,11 @@
 #include "vehicle/simvehicle.h"
 #include "vehicle/simroadtraffic.h"
 
+#include <mutex>
+
 using std::string;
+
+std::mutex render_mutex;
 
 #if defined DEBUG || defined PROFILE
 /* diagnostic routine:
@@ -1476,55 +1481,69 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 	}
 	env_t::restore_UI = old_restore_UI;
 
-	if(  !env_t::networkmode  &&  !env_t::server  &&  new_world  ) {
-		welt->get_message()->clear();
-	}
-	while(  !env_t::quit_simutrans  ) {
-		// play next tune?
-		check_midi();
+	// Run gui on main thread and game loop in worker thread
+	// TODO MAK what if multithreading is disabled?
 
-		if(  !env_t::networkmode  &&  new_world  ) {
-			dbg->message("simmain()", "Show banner ... " );
-			ticker::add_msg("Welcome to Simutrans-Extended (formerly Simutrans-Experimental), a fork of Simutrans-Standard, extended and maintained by the Simutrans community.", koord::invalid, PLAYER_FLAG | color_idx_to_rgb(COL_SOFT_BLUE));
-				modal_dialogue( new banner_t(), magic_none, welt, never_quit );
-			// only show new world, if no other dialogue is active ...
-			new_world = win_get_open_count()==0;
+	// start the rendering thread
+	bool stop_render_thread = false;
+
+
+	std::thread game_thread([&]() {
+		if (!env_t::networkmode && !env_t::server && new_world) {
+			welt->get_message()->clear();
 		}
-		if(  env_t::quit_simutrans  ) {
-			break;
-		}
+		while (!env_t::quit_simutrans) {
+			// play next tune?
+			check_midi();
 
-		// to purge all previous old messages
-		welt->get_message()->set_message_flags(env_t::message_flags[0], env_t::message_flags[1], env_t::message_flags[2], env_t::message_flags[3]);
-
-		if(  !env_t::networkmode  &&  !env_t::server  ) {
-			welt->set_pause( pause_after_load );
-			pause_after_load = false;
-		}
-
-		if(  new_world  ) {
-			dbg->message("simmain()","modal_dialogue( new welt_gui_t(&env_t::default_settings), magic_welt_gui_t, welt, never_quit );" );
-			modal_dialogue( new welt_gui_t(&env_t::default_settings), magic_welt_gui_t, welt, never_quit );
-			if(  env_t::quit_simutrans  ) {
+			if (!env_t::networkmode && new_world) {
+				dbg->message("simmain()", "Show banner ... ");
+				ticker::add_msg(
+						"Welcome to Simutrans-Extended (formerly Simutrans-Experimental), a fork of Simutrans-Standard, extended and maintained by the Simutrans community.",
+						koord::invalid, PLAYER_FLAG | color_idx_to_rgb(COL_SOFT_BLUE));
+				modal_dialogue(new banner_t(), magic_none, welt, never_quit);
+				// only show new world, if no other dialogue is active ...
+				new_world = win_get_open_count() == 0;
+			}
+			if (env_t::quit_simutrans) {
 				break;
 			}
+
+			// to purge all previous old messages
+			welt->get_message()->set_message_flags(env_t::message_flags[0], env_t::message_flags[1],
+												   env_t::message_flags[2], env_t::message_flags[3]);
+
+			if (!env_t::networkmode && !env_t::server) {
+				welt->set_pause(pause_after_load);
+				pause_after_load = false;
+			}
+
+			if (new_world) {
+				dbg->message("simmain()",
+							 "modal_dialogue( new welt_gui_t(&env_t::default_settings), magic_welt_gui_t, welt, never_quit );");
+				modal_dialogue(new welt_gui_t(&env_t::default_settings), magic_welt_gui_t, welt, never_quit);
+				if (env_t::quit_simutrans) {
+					break;
+				}
+			}
+			dbg->message("simmain()", "Running world, pause=%i, fast forward=%i ... ", welt->is_paused(),
+						 welt->is_fast_forward());
+			loadgame = ""; // only first time
+
+			// run the loop
+			welt->interactive(quit_month);
+
+			new_world = true;
+			welt->get_message()->get_message_flags(&env_t::message_flags[0], &env_t::message_flags[1],
+												   &env_t::message_flags[2], &env_t::message_flags[3]);
+			welt->set_fast_forward(false);
+			welt->set_pause(false);
+			setsimrand(dr_time(), dr_time());
+
+			dbg->message("simmain()", "World finished ...");
 		}
-		dbg->message("simmain()", "Running world, pause=%i, fast forward=%i ... ", welt->is_paused(), welt->is_fast_forward() );
-		loadgame = ""; // only first time
 
-		// run the loop
-		welt->interactive(quit_month);
-
-		new_world = true;
-		welt->get_message()->get_message_flags(&env_t::message_flags[0], &env_t::message_flags[1], &env_t::message_flags[2], &env_t::message_flags[3]);
-		welt->set_fast_forward(false);
-		welt->set_pause(false);
-		setsimrand(dr_time(), dr_time());
-
-		dbg->message("simmain()", "World finished ..." );
-	}
-
-	intr_disable();
+		intr_disable();
 
 	// save setting ...
 	dr_chdir( env_t::user_dir );
@@ -1534,7 +1553,20 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 		file.close();
 	}
 
-	destroy_all_win( true );
+		stop_render_thread = true;
+	});
+
+	while (!stop_render_thread) {
+		// TODO MAK
+		// poor man's fps limiting
+		// std::this_thread::sleep_for(std::chrono::microseconds(25000));
+		// DBG_MESSAGE("simmain","rendering");
+		intr_refresh_display(false);
+	}
+
+	game_thread.join();
+
+	destroy_all_win(true);
 	tool_t::exit_menu();
 
 	delete welt;

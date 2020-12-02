@@ -4,6 +4,7 @@
  */
 
 #include <stdio.h>
+#include <chrono>
 
 #include "../simworld.h"
 #include "simview.h"
@@ -95,6 +96,9 @@ static bool can_multithreading = true;
 
 void main_view_t::display(bool force_dirty)
 {
+    std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    usec_per_frame = std::chrono::duration_cast<std::chrono::microseconds>(now - last_frame_time).count();
+    last_frame_time = now;
 #if COLOUR_DEPTH != 0
 	DBG_DEBUG4("main_view_t::display", "starting ...");
 	display_set_image_proc(true);
@@ -579,4 +583,14 @@ void main_view_t::display_background( KOORD_VAL xp, KOORD_VAL yp, KOORD_VAL w, K
 	if(  !(env_t::draw_earth_border  &&  env_t::draw_outside_tile)  ) {
 		display_fillbox_wh_rgb(xp, yp, w, h, env_t::background_color, dirty );
 	}
+}
+
+
+int main_view_t::get_frame_time_ms() {
+    return static_cast<int>(usec_per_frame / 1000);
+}
+
+
+int main_view_t::get_fps() {
+    return static_cast<int>(1000000 / usec_per_frame);
 }

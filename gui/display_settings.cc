@@ -6,6 +6,7 @@
 #include "display_settings.h"
 #include "../simdebug.h"
 #include "../simworld.h"
+#include "../display/simview.h"
 #include "../display/simimg.h"
 #include "../simintr.h"
 #include "../simcolor.h"
@@ -185,20 +186,21 @@ gui_settings_t::gui_settings_t()
 void gui_settings_t::draw(scr_coord offset)
 {
 	// Update label buffers
-	frame_time_value_label.buf().printf(" %d ms", get_frame_time() );
+    frame_time_value_label.buf().printf(" %d ms",  welt->get_view()->get_frame_time_ms() );
 	frame_time_value_label.update();
 	idle_time_value_label.buf().printf(" %d ms", world()->get_idle_time() );
 	idle_time_value_label.update();
 
 	// fps_label
-	uint32 target_fps = world()->is_fast_forward() ? env_t::ff_fps : env_t::fps;
-	uint32 loops = world()->get_realFPS();
+	// TODO MAK decide what to do with this
+	// uint32 target_fps = world()->is_fast_forward() ? env_t::ff_fps : env_t::fps;
+	 uint32 loops = world()->get_realFPS();
 	PIXVAL color = SYSCOL_TEXT_HIGHLIGHT;
-	if(  loops < (target_fps*16*3)/4  ) {
-		color = color_idx_to_rgb(( loops <= target_fps*16/2 ) ? COL_RED : COL_YELLOW);
-	}
-	fps_value_label.set_color(color);
-	fps_value_label.buf().printf(" %d fps", loops/16 );
+	// if(  loops < (target_fps*16*3)/4  ) {
+	// 	color = color_idx_to_rgb(( loops <= target_fps*16/2 ) ? COL_RED : COL_YELLOW);
+	// }
+	// fps_value_label.set_color(color);
+	fps_value_label.buf().printf(" %d fps", welt->get_view()->get_fps());
 #if MSG_LEVEL >= 3
 	if(  env_t::simple_drawing  ) {
 		fps_value_label.buf().append( "*" );
