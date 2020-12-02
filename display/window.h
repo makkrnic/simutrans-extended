@@ -34,6 +34,8 @@ public:
 
 	static resolution query_screen_resolution();
 
+	struct sys_event_t get_event(bool const wait);
+
 private:
 	// TODO: update on resize
 	resolution res;

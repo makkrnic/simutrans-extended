@@ -3,9 +3,15 @@
  * (see LICENSE.txt)
  */
 
+#include "display/window.h"
 #include "simevent.h"
-#include "sys/simsys.h"
 #include "tpl/slist_tpl.h"
+
+static sim_window_t *window;
+
+void simevent_set_window(sim_window_t *_window) {
+	window = _window;
+}
 
 // system-independent event handling routines
 
@@ -43,7 +49,7 @@ void change_drag_start(int x, int y)
 }
 
 
-static void fill_event(event_t* const ev)
+static void fill_event(event_t* const ev, struct sys_event_t sys_event)
 {
 	// variables for detecting double-clicks and triple-clicks
 	const  unsigned long interval = 400;
@@ -229,9 +235,7 @@ static void fill_event(event_t* const ev)
 	ev->button_state = pressed_buttons;
 }
 
-
-void display_poll_event(event_t* const ev)
-{
+static void display_next_event(event_t* const ev, const bool wait) {
 	if( !queued_events.empty() ) {
 		// We have a queued (injected programatically) event, return it.
 		event_t *elem = queued_events.remove_first();
@@ -244,39 +248,24 @@ void display_poll_event(event_t* const ev)
 		*ev = meta_event;
 		last_meta_class = meta_event.ev_class;
 		meta_event.ev_class = EVENT_NONE;
+		return;
 	}
-	else {
-		last_meta_class = EVENT_NONE;
-		GetEventsNoWait();
-		fill_event(ev);
-		// prepare for next event
-		sys_event.type = SIM_NOEVENT;
-		sys_event.code = 0;
+
+	last_meta_class = EVENT_NONE;
+	if (window != nullptr) {
+		fill_event(ev, window->get_event(wait));
 	}
+}
+
+void display_poll_event(event_t* const ev)
+{
+	display_next_event(ev, false);
 }
 
 
 void display_get_event(event_t* const ev)
 {
-	if(  !queued_events.empty()  ) {
-		// We have a queued (injected programatically) event, return it.
-		event_t *elem = queued_events.remove_first();
-		*ev = *elem;
-		delete elem;
-		return ;
-	}
-	// if there is any pending meta-event, consume it instead of fetching a new event from the system
-	if(  meta_event.ev_class!=EVENT_NONE  ) {
-		*ev = meta_event;
-		meta_event.ev_class = EVENT_NONE;
-	}
-	else {
-		GetEvents();
-		fill_event(ev);
-		// prepare for next event
-		sys_event.type = SIM_NOEVENT;
-		sys_event.code = 0;
-	}
+	display_next_event(ev, true);
 }
 
 

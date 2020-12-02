@@ -206,6 +206,10 @@ static inline void translate_event(event_t *const ev, int x, int y)
 	ev->cy += y;
 }
 
+class sim_window_t;
+
+void simevent_set_window(sim_window_t *_window);
+
 /// Return one event. Does *not* wait.
 void display_poll_event(event_t*);
 

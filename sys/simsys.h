@@ -64,8 +64,6 @@ struct sys_event_t
 	unsigned int key_mod; /* key mod, like ALT, STRG, SHIFT */
 };
 
-extern sys_event_t sys_event;
-
 extern char const PATH_SEPARATOR[];
 
 // scale according to dpi setting

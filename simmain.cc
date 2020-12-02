@@ -909,6 +909,8 @@ int simu_main(int argc, char** argv)
 	// Draw anything, at least to clear the screen
 	renderer->draw_frame();
 
+	simevent_set_window(window);
+
 	// now that the graphics system has already started
 	// the saved colours can be converted to the system format
 	env_t_rgb_to_system_colors();
