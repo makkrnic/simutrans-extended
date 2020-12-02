@@ -78,11 +78,10 @@
 #include "vehicle/simvehicle.h"
 #include "vehicle/simroadtraffic.h"
 
-#include <mutex>
+#include "display/window.h"
+#include "sys/simsys_s2_vulkan.h"
 
 using std::string;
-
-std::mutex render_mutex;
 
 #if defined DEBUG || defined PROFILE
 /* diagnostic routine:
@@ -887,7 +886,7 @@ int simu_main(int argc, char** argv)
 
 	// Get optimal resolution.
 	if (disp_width == 0 || disp_height == 0) {
-		resolution const res = dr_query_screen_resolution();
+		resolution const res = sim_window_t::query_screen_resolution();
 		if (fullscreen) {
 			disp_width  = res.w;
 			disp_height = res.h;
@@ -900,10 +899,15 @@ int simu_main(int argc, char** argv)
 
 	DBG_MESSAGE("simu_main()", "simgraph_init disp_width=%d, disp_height=%d, fullscreen=%d", disp_width, disp_height, (int)fullscreen);
 	simgraph_init(scr_size(disp_width, disp_height), fullscreen != 0);
-	DBG_MESSAGE("simu_main()", ".. results in disp_width=%d, disp_height=%d", display_get_width(), display_get_height());
+
+	sim_window_t *window = new sim_window_t(disp_width, disp_height, fullscreen);
+	resolution res = window->get_drawable_size();
+	DBG_MESSAGE("simu_main()", ".. results in disp_width=%d, disp_height=%d", res.w, res.h);
+
+	sim_renderer_t *renderer = new sim_renderer_t(window);
 
 	// Draw anything, at least to clear the screen
-	simgraph_draw_frame();
+	renderer->draw_frame();
 
 	// now that the graphics system has already started
 	// the saved colours can be converted to the system format
@@ -1564,9 +1568,9 @@ DBG_MESSAGE("simmain","loadgame file found at %s",path.c_str());
 		// poor man's fps limiting
 		// std::this_thread::sleep_for(std::chrono::microseconds(25000));
 		// DBG_MESSAGE("simmain","rendering");
-		// intr_refresh_display(false);
+		intr_refresh_display(false);
 
-		simgraph_draw_frame();
+		renderer->draw_frame();
 	}
 
 	game_thread.join();

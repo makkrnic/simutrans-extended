@@ -475,7 +475,7 @@ if (SIMUTRANS_BACKEND STREQUAL "sdl2")
 
 elseif(SIMUTRANS_BACKEND STREQUAL "sdl2_vulkan")
     # TODO MAK
-	target_sources(simutrans-extended PRIVATE display/simgraph_vulkan.cc sys/simsys_s2_vulkan.cc sound/sdl2_sound.cc ${BACKUP_MUSIC})
+	target_sources(simutrans-extended PRIVATE display/simgraph16.cc display/window_s2.cc sys/simsys_s2_vulkan.cc sound/sdl2_sound.cc ${BACKUP_MUSIC})
 	target_link_libraries(simutrans-extended PRIVATE SDL2::Core Vulkan::Vulkan)
 	target_compile_definitions(simutrans-extended PRIVATE COLOUR_DEPTH=16)
 

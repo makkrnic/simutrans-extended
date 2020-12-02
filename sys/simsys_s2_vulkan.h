@@ -13,20 +13,24 @@
 #else
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
+#endif
+
 #include <vulkan/vulkan.h>
 #include <vector>
 
-#endif
+#include "../display/window.h"
+
 
 #include "../display/scr_coord.h"
 
-// TODO: Use sim_window_t as an API, and implement SDL, GDI etc in separate subclasses?
-class sim_window_t {
+// TODO: Use sim_renderer_t as an API, and implement SDL, GDI etc in separate subclasses?
+class sim_renderer_t {
 public:
-	sim_window_t(scr_size window_size, bool _fullscreen);
+	sim_renderer_t(sim_window_t *_window) : window(_window) {
+		run();
+	};
 
 	void run();
-	void render_iteration();
 	void draw_frame();
 
 private:
@@ -34,7 +38,7 @@ private:
 	int height;
 	bool fullscreen;
 
-	SDL_Window *window = nullptr;
+	sim_window_t *window = nullptr;
 
 	VkInstance instance = nullptr;
 	VkDebugUtilsMessengerEXT debugMessenger = nullptr;
@@ -72,8 +76,6 @@ private:
 
 	uint32_t mip_levels;
 
-
-	void init_window();
 
 	void init_vulkan();
 	void cleanup();
