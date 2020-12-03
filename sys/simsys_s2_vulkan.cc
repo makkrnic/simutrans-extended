@@ -1157,6 +1157,10 @@ void sim_renderer_t::prepare_tiles_rendering() {
 
 	karte_ptr_t world;
 
+	if (static_cast<karte_t*>(world) == 0) {
+		return;
+	}
+
 	koord world_size = world->get_size();
 
 	vector<Vertex> vertices_1(world_size.x * world_size.y * 4);
@@ -1165,6 +1169,11 @@ void sim_renderer_t::prepare_tiles_rendering() {
 	for (sint16 j = 0; j < world_size.y; j++) {
 		for (sint16 i = 0; i < world_size.x; i++) {
 			grund_t *tile = world->lookup_kartenboden_gridcoords({i, j});
+			if (tile == nullptr) {
+				// The map isn't loaded yet?
+				return;
+			}
+
 			auto tile_pos = tile->get_pos();
 			slope_t::type slope = tile->get_disp_slope();
 			sint8 add_height = is_one_high(tile->get_disp_slope()) ? 1 : 2;
