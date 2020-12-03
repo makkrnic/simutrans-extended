@@ -6,6 +6,7 @@
 #ifndef DISPLAY_WINDOW_H
 #define DISPLAY_WINDOW_H
 
+
 #ifdef ALT_SDL_DIR
 #	include "SDL.h"
 #	include "SDL_vulkan.h"
