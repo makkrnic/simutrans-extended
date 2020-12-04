@@ -20,6 +20,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/normal.hpp>
 
 #include <sys/time.h>
 #include <csignal>
@@ -165,6 +166,7 @@ static void destroy_debug_utils_messenger_ext(VkInstance instance, VkDebugUtilsM
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 color;
+	glm::vec3 normal;
 
 	static VkVertexInputBindingDescription getBindingDescription() {
 		VkVertexInputBindingDescription bindingDescription{};
@@ -175,8 +177,8 @@ struct Vertex {
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-		std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+	static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
+		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
 		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -186,6 +188,11 @@ struct Vertex {
 		attributeDescriptions[1].location = 1;
 		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+		attributeDescriptions[2].binding = 0;
+		attributeDescriptions[2].location = 2;
+		attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+		attributeDescriptions[2].offset = offsetof(Vertex, normal);
 
 		return attributeDescriptions;
 	}
@@ -1164,8 +1171,8 @@ void sim_renderer_t::prepare_tiles_rendering() {
 		return;
 	}
 
-	// koord world_size = koord(4, 4);
-	koord world_size = world->get_size();
+	koord world_size = koord(5, 5);
+	// koord world_size = world->get_size();
 
 	vector<Vertex> vertices_1(world_size.x * world_size.y * 4);
 	vector<int> grid_indices(world_size.x * world_size.y * 6);
@@ -1182,6 +1189,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 				return;
 			}
 
+			int vertices_base = (j * world_size.x + i) * 4;
 			// For each tile, calculate corner positions and store the into
 			// vertex and index buffers.
 			for (int y = 0; y < 2; y++) {
@@ -1208,7 +1216,12 @@ void sim_renderer_t::prepare_tiles_rendering() {
 					sint8 corner_height  = tile->get_hoehe(current_corner);
 
 					// vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord, (tile_pos.z + adds_map[y*2 + x]) * z_scale}, {1.0, 1.0, 1.0}};
-					vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord,  corner_height * z_scale}, {x, y, 1.0 - (x + y ) / 2.0}};
+					auto& current_vertex = vertices_1[vertices_base + y * 2 + x];
+					current_vertex.pos = {y_coord, x_coord,  corner_height * z_scale};
+					// current_vertex.color = {x, y, 1.0 - (x + y ) / 2.0};
+					current_vertex.color = {1.0f, 1.0f, 1.0f};
+					// current_vertex.normal = {1.0f, 1.0f, 1.0f};
+					// current_vertex.normal = glm::vec3(0.0f, 0.0f, 1.0f);
 
 					int micro_x = y == 1 ? 1 - x : x;
 
@@ -1220,48 +1233,82 @@ void sim_renderer_t::prepare_tiles_rendering() {
 			}
 			grid_indices[(j * world_size.x + i) * 6 + 5] = 0xFFFFFFFF;
 
-
-
-			int vertices_base = (j * world_size.x + i) * 4;
 			int surface_indices_base = (j * world_size.x + i) * 12;
 
 
 			/*
-			 * +--------+--------+
+			 * 4-------5+7------!6
 			 * |  top   | wall x |
-			 * +--------+--------+
+			 * 2-------3+9-------8
 			 * | wall y |
-			 * +--------+
+			 * 0--------1
+			 *
+			 * `x` marks provoking vertex for the triangle
+			 *
+			 * +--------x5------x4
+			 * | t2\t3  |  t5\t4 |
+			 * x2------x3--------+
+			 * | t0\t1  |
+			 * x0------x1
+			 * ^        ^
+			 * \--------+----> Handled in the next pass/row (j)
 			 */
 
-			// next y
+			// indices
+			int
+				v0 = vertices_base + world_size.x * 4 + 0, // wall y
+				v1 = vertices_base + world_size.x * 4 + 1,
+				v2 = vertices_base + 2, // top
+				v3 = vertices_base + 3,
+				v4 = vertices_base + 0,
+				v5 = vertices_base + 1,
+				v6 = vertices_base + 4, // wall x
+				v7 = vertices_base + 6;
+
+			// top face's normals (x2 and x3)
+			auto& x2 = vertices_1[v2];
+			auto& x3 = vertices_1[v3];
+			auto& t4 = vertices_1[v4];
+			auto& t5 = vertices_1[v5];
+			x2.normal = glm::triangleNormal(x2.pos, x3.pos, t4.pos);
+			x3.normal = glm::triangleNormal(x3.pos, t5.pos, t4.pos);
+
+			// wall x face's normals (x4 and x5)
+			auto& x4 = vertices_1[v6];
+			auto& x5 = vertices_1[v5];
+			auto& t8 = vertices_1[v7];
+			auto& t9 = vertices_1[v3];
+			x4.normal = glm::triangleNormal(x4.pos, x5.pos, t8.pos);
+			x5.normal = glm::triangleNormal(x5.pos, t9.pos, t8.pos);
+
+			// wall y
 			if (j == world_size.y - 1) {
 				// duplicate, probably can be optimized
-				surface_indices[surface_indices_base + 0] = vertices_base + 2;
-				surface_indices[surface_indices_base + 1] = vertices_base + 3;
+				surface_indices[surface_indices_base + 0] = 0xFFFFFFFF; //v2;
+				surface_indices[surface_indices_base + 1] = 0xFFFFFFFF; //v3;
 			} else {
-				surface_indices[surface_indices_base + 0] = vertices_base + world_size.x * 4 + 0;
-				surface_indices[surface_indices_base + 1] = vertices_base + world_size.x * 4 + 1;
+				surface_indices[surface_indices_base + 0] = 0xFFFFFFFF; //v0;
+				surface_indices[surface_indices_base + 1] = 0xFFFFFFFF; //v1;
 			}
 
 			// top
-			surface_indices[surface_indices_base + 2] = vertices_base + 2;
-			surface_indices[surface_indices_base + 3] = vertices_base + 3;
-			surface_indices[surface_indices_base + 4] = vertices_base + 0;
-			surface_indices[surface_indices_base + 5] = vertices_base + 1;
+			surface_indices[surface_indices_base + 2] = v2;
+			surface_indices[surface_indices_base + 3] = v3;
+			surface_indices[surface_indices_base + 4] = v4;
+			surface_indices[surface_indices_base + 5] = v5;
 			surface_indices[surface_indices_base + 6] = 0xFFFFFFFF;
 
-			// next x
+			// wall x
 			if (i == world_size.x -1) {
 				surface_indices[surface_indices_base + 7] = 0xFFFFFFFF;
 				surface_indices[surface_indices_base + 8] = 0xFFFFFFFF;
 				surface_indices[surface_indices_base + 9] = 0xFFFFFFFF;
 				surface_indices[surface_indices_base + 10] = 0xFFFFFFFF;
 			} else {
-				surface_indices[surface_indices_base + 7] = vertices_base + 1;
-				surface_indices[surface_indices_base + 8] = vertices_base + 3;
-				surface_indices[surface_indices_base + 9] = vertices_base + 4;
-				surface_indices[surface_indices_base + 10] = vertices_base + 6;
+				surface_indices[surface_indices_base + 7]  = v6;
+				surface_indices[surface_indices_base + 8]  = v5;
+				surface_indices[surface_indices_base + 9]  = v7;
+				surface_indices[surface_indices_base + 10] = v3;
 			}
 			surface_indices[surface_indices_base + 11] = 0xFFFFFFFF;
 
