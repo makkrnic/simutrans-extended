@@ -634,10 +634,10 @@ void sim_renderer_t::create_graphics_pipeline() {
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	// inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 	inputAssembly.primitiveRestartEnable = VK_TRUE;
 
@@ -937,7 +937,7 @@ void sim_renderer_t::create_command_buffers() {
 		throw std::runtime_error("failed to allocate command buffers");
 	}
 
-	if (tiles_grid_indices.count == 0) {
+	if (tiles_indices.count == 0) {
 		return;
 	}
 
@@ -971,11 +971,14 @@ void sim_renderer_t::create_command_buffers() {
 			VkDeviceSize offsets[] = { 0 };
 			vkCmdBindVertexBuffers(command_buffers[i], 0, 1, vertexBuffers, offsets);
 
-			vkCmdBindIndexBuffer(command_buffers[i], tiles_grid_indices.buffer, 0, VK_INDEX_TYPE_UINT32);
 
 			vkCmdBindDescriptorSets(command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets[i], 0, nullptr);
 
-			vkCmdDrawIndexed(command_buffers[i], static_cast<uint32_t>(tiles_grid_indices.count), 1, 0, 0, 0);
+			vkCmdBindIndexBuffer(command_buffers[i], tiles_indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdDrawIndexed(command_buffers[i], static_cast<uint32_t>(tiles_indices.count), 1, 0, 0, 0);
+
+			// vkCmdBindIndexBuffer(command_buffers[i], tiles_grid_indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+			// vkCmdDrawIndexed(command_buffers[i], static_cast<uint32_t>(tiles_grid_indices.count), 1, 0, 0, 0);
 
 		vkCmdEndRenderPass(command_buffers[i]);
 
@@ -1028,7 +1031,7 @@ void sim_renderer_t::draw_frame() {
 	// ubo.view = glm::lookAt(glm::vec3( 20.0f,  20.00f, 20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	if (viewport != nullptr) {
 		auto eye = glm::vec3((float) viewport->get_world_position().y, (float)viewport->get_world_position().x, 10.0f);
-		auto dir = glm::vec3(-1.0f, -1.0f, -0.7f);
+		auto dir = glm::vec3(-1.0f, -1.0f, -1.0f);
 		ubo.view = glm::lookAt(
 				eye,
 				eye + dir, glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -1153,7 +1156,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 	vkDestroyBuffer(device, tiles_grid_indices.buffer, nullptr);
 	vkFreeMemory(device, tiles_grid_indices.memory, nullptr);
 
-	const float z_scale = 0.5;
+	const float z_scale = 0.25;
 
 	karte_ptr_t world;
 
@@ -1161,28 +1164,23 @@ void sim_renderer_t::prepare_tiles_rendering() {
 		return;
 	}
 
+	// koord world_size = koord(4, 4);
 	koord world_size = world->get_size();
 
 	vector<Vertex> vertices_1(world_size.x * world_size.y * 4);
-	vector<int> indices_1(world_size.x * world_size.y * 6);
+	vector<int> grid_indices(world_size.x * world_size.y * 6);
+	vector<int> surface_indices(world_size.x * world_size.y * 12);
 
 	for (sint16 j = 0; j < world_size.y; j++) {
-		for (sint16 i = 0; i < world_size.x; i++) {
+		// int i_start = j % 2 == 0 ? 0 : world_size.x;
+		// int i_dir = j % 2 == 0 ? 1 : -1;
+
+		for (sint16 i = 0; i >= 0 && i < world_size.x; i++) {
 			grund_t *tile = world->lookup_kartenboden_gridcoords({i, j});
 			if (tile == nullptr) {
 				// The map isn't loaded yet?
 				return;
 			}
-
-			auto tile_pos = tile->get_pos();
-			slope_t::type slope = tile->get_disp_slope();
-			sint8 add_height = is_one_high(tile->get_disp_slope()) ? 1 : 2;
-			sint8 adds_map[4] = {
-					(sint8)(corner_nw(slope) ? add_height : 0),
-					(sint8)(corner_ne(slope) ? add_height : 0),
-					(sint8)(corner_sw(slope) ? add_height : 0),
-					(sint8)(corner_se(slope) ? add_height : 0)
-			};
 
 			// For each tile, calculate corner positions and store the into
 			// vertex and index buffers.
@@ -1191,18 +1189,84 @@ void sim_renderer_t::prepare_tiles_rendering() {
 					sint16 x_coord = i + x;
 					sint16 y_coord = j + y;
 
-					vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord, (tile_pos.z + adds_map[y*2 + x]) * z_scale}, {1.0, 1.0, 1.0}};
+					slope4_t::type current_corner;
+					switch (2 * y + x) {
+					case 0:
+						current_corner = slope4_t::corner_NW;
+						break;
+					case 1:
+						current_corner = slope4_t::corner_NE;
+						break;
+					case 2:
+						current_corner = slope4_t::corner_SW;
+						break;
+					case 3:
+						current_corner = slope4_t::corner_SE;
+						break;
+					}
+
+					sint8 corner_height  = tile->get_hoehe(current_corner);
+
+					// vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord, (tile_pos.z + adds_map[y*2 + x]) * z_scale}, {1.0, 1.0, 1.0}};
+					vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord,  corner_height * z_scale}, {x, y, 1.0 - (x + y ) / 2.0}};
 
 					int micro_x = y == 1 ? 1 - x : x;
 
-					indices_1[(j * world_size.x + i) * 6 + x + y * 2] = (j * world_size.x + i) * 4 + y * 2 + micro_x;
+					grid_indices[(j * world_size.x + i) * 6 + x + y * 2] = (j * world_size.x + i) * 4 + y * 2 + micro_x;
 					if (x == 0 && y == 0) {
-						indices_1[(j * world_size.x + i) * 6 + 4] = (j * world_size.x + i) * 4;
+						grid_indices[(j * world_size.x + i) * 6 + 4] = (j * world_size.x + i) * 4;
 					}
 				}
 			}
-			indices_1[(j * world_size.x + i) * 6 + 5] = 0xFFFFFFFF;
+			grid_indices[(j * world_size.x + i) * 6 + 5] = 0xFFFFFFFF;
+
+
+
+			int vertices_base = (j * world_size.x + i) * 4;
+			int surface_indices_base = (j * world_size.x + i) * 12;
+
+
+			/*
+			 * +--------+--------+
+			 * |  top   | wall x |
+			 * +--------+--------+
+			 * | wall y |
+			 * +--------+
+			 */
+
+			// next y
+			if (j == world_size.y - 1) {
+				// duplicate, probably can be optimized
+				surface_indices[surface_indices_base + 0] = vertices_base + 2;
+				surface_indices[surface_indices_base + 1] = vertices_base + 3;
+			} else {
+				surface_indices[surface_indices_base + 0] = vertices_base + world_size.x * 4 + 0;
+				surface_indices[surface_indices_base + 1] = vertices_base + world_size.x * 4 + 1;
+			}
+
+			// top
+			surface_indices[surface_indices_base + 2] = vertices_base + 2;
+			surface_indices[surface_indices_base + 3] = vertices_base + 3;
+			surface_indices[surface_indices_base + 4] = vertices_base + 0;
+			surface_indices[surface_indices_base + 5] = vertices_base + 1;
+			surface_indices[surface_indices_base + 6] = 0xFFFFFFFF;
+
+			// next x
+			if (i == world_size.x -1) {
+				surface_indices[surface_indices_base + 7] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 8] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 9] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 10] = 0xFFFFFFFF;
+			} else {
+				surface_indices[surface_indices_base + 7] = vertices_base + 1;
+				surface_indices[surface_indices_base + 8] = vertices_base + 3;
+				surface_indices[surface_indices_base + 9] = vertices_base + 4;
+				surface_indices[surface_indices_base + 10] = vertices_base + 6;
+			}
+			surface_indices[surface_indices_base + 11] = 0xFFFFFFFF;
+
 		}
+		surface_indices[(j * world_size.x + world_size.x - 1) * 6 + 1] = 0xFFFFFFFF;
 	}
 
 	VkDeviceSize vertices_buffer_size = sizeof(vertices_1[0]) * vertices_1.size();
@@ -1235,7 +1299,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 	copy_buffer(vertices_staging_buffer, tiles_vertices.buffer, vertices_buffer_size);
 	vkFreeMemory(device, vertices_staging_buffer_memory, nullptr);
 
-	VkDeviceSize indices_buffer_size = sizeof(indices_1[0]) * indices_1.size();
+	VkDeviceSize indices_buffer_size = sizeof(grid_indices[0]) * grid_indices.size();
 	VkBuffer indices_staging_buffer;
 	VkDeviceMemory indices_staging_buffer_memory;
 
@@ -1252,10 +1316,10 @@ void sim_renderer_t::prepare_tiles_rendering() {
 	if (vkMapMemory(device, indices_staging_buffer_memory, 0, indices_buffer_size, 0, &data_indices) != VK_SUCCESS) {
 		throw std::runtime_error("unable to map memory");
 	};
-	memcpy(data_indices, indices_1.data(), (size_t)indices_buffer_size);
+	memcpy(data_indices, grid_indices.data(), (size_t)indices_buffer_size);
 	vkUnmapMemory(device, indices_staging_buffer_memory);
 
-	tiles_grid_indices.count = indices_1.size();
+	tiles_grid_indices.count = grid_indices.size();
 	create_buffer(
 			physicalDevice,
 			device,
@@ -1267,6 +1331,39 @@ void sim_renderer_t::prepare_tiles_rendering() {
 
 	copy_buffer(indices_staging_buffer, tiles_grid_indices.buffer, indices_buffer_size);
 	vkFreeMemory(device, indices_staging_buffer_memory, nullptr);
+
+	VkDeviceSize surface_indices_buffer_size = sizeof(surface_indices[0]) * surface_indices.size();
+	VkBuffer surface_indices_staging_buffer;
+	VkDeviceMemory surface_indices_staging_buffer_memory;
+
+	create_buffer(
+			physicalDevice,
+			device,
+			surface_indices_buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			surface_indices_staging_buffer,
+			surface_indices_staging_buffer_memory);
+
+	void *data_surface_indices;
+	if (vkMapMemory(device, surface_indices_staging_buffer_memory, 0, surface_indices_buffer_size, 0, &data_surface_indices) != VK_SUCCESS) {
+		throw std::runtime_error("unable to map memory");
+	};
+	memcpy(data_surface_indices, surface_indices.data(), (size_t)surface_indices_buffer_size);
+	vkUnmapMemory(device, surface_indices_staging_buffer_memory);
+
+	tiles_indices.count = surface_indices.size();
+	create_buffer(
+			physicalDevice,
+			device,
+			surface_indices_buffer_size,
+			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			tiles_indices.buffer,
+			tiles_indices.memory);
+
+	copy_buffer(surface_indices_staging_buffer, tiles_indices.buffer, surface_indices_buffer_size);
+	vkFreeMemory(device, surface_indices_staging_buffer_memory, nullptr);
 }
 
 

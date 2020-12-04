@@ -100,6 +100,7 @@ private:
 	VkDeviceMemory index_buffer_memory;
 
 	Vertices tiles_vertices = { VK_NULL_HANDLE };
+	Indices tiles_indices = { VK_NULL_HANDLE };
 	Indices tiles_grid_indices = { VK_NULL_HANDLE };
 
 	std::vector<VkBuffer> uniform_buffers;
