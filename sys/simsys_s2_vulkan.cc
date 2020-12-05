@@ -1034,17 +1034,23 @@ void sim_renderer_t::draw_frame() {
 
 	// Update uniform buffer
 	UniformBufferObject ubo{};
-	ubo.model = glm::mat4(1.0f); // glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f)); // glm::mat4(1.0f); // glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
 	// ubo.view = glm::lookAt(glm::vec3( 20.0f,  20.00f, 20.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	if (viewport != nullptr) {
-		auto eye = glm::vec3((float) viewport->get_world_position().y, (float)viewport->get_world_position().x, 10.0f);
+		auto eye = glm::vec3((float) viewport->get_world_position().x, 10.0f, (float)viewport->get_world_position().y);
+		// auto eye = glm::vec3(0.0f, 5.0f, 10.0f);
 		auto dir = glm::vec3(-1.0f, -1.0f, -1.0f);
+		auto center = eye + dir;
+		// center.x = 4.0f;
+		// center.y = 8.0f;
 		ubo.view = glm::lookAt(
 				eye,
-				eye + dir, glm::vec3(0.0f, 0.0f, 1.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				center,
+				glm::vec3(0.0f, 1.0f, 0.0f)); // glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
-	float zoom_factor = static_cast<float>(get_zoom_factor() + 1) * 10.0;
+	float zoom_factor = static_cast<float>(get_zoom_factor() + 1) * 8.0;
 
 	float ratio = swap_chain_extent.width / (float)swap_chain_extent.height;
 	float halfw = zoom_factor; //swap_chain_extent.width / 2.0;
@@ -1163,7 +1169,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 	vkDestroyBuffer(device, tiles_grid_indices.buffer, nullptr);
 	vkFreeMemory(device, tiles_grid_indices.memory, nullptr);
 
-	const float z_scale = 0.25;
+	const float height_scale = 0.25;
 
 	karte_ptr_t world;
 
@@ -1171,149 +1177,255 @@ void sim_renderer_t::prepare_tiles_rendering() {
 		return;
 	}
 
-	koord world_size = koord(5, 5);
-	// koord world_size = world->get_size();
+	// koord world_size = koord(4, 3);
+	koord world_size = world->get_size();
 
-	vector<Vertex> vertices_1(world_size.x * world_size.y * 4);
+	const int vertices_per_tile = 12;
+	const int indices_per_tile = 15;
+
+	// 4 vertices * 3 faces for each tile
+	vector<Vertex> vertices_1(world_size.x * world_size.y * vertices_per_tile);
 	vector<int> grid_indices(world_size.x * world_size.y * 6);
-	vector<int> surface_indices(world_size.x * world_size.y * 12);
+	// (4 indices + 1 reset per face) * 3 faces
+	vector<int> surface_indices(world_size.x * world_size.y * indices_per_tile);
 
+	// When translating from 2D coordinates
+	// x -> x
+	// y -> z
+	// z -> y
 	for (sint16 j = 0; j < world_size.y; j++) {
 		// int i_start = j % 2 == 0 ? 0 : world_size.x;
 		// int i_dir = j % 2 == 0 ? 1 : -1;
 
 		for (sint16 i = 0; i >= 0 && i < world_size.x; i++) {
-			grund_t *tile = world->lookup_kartenboden_gridcoords({i, j});
+			grund_t *tile = world->lookup_kartenboden(i, j);
 			if (tile == nullptr) {
 				// The map isn't loaded yet?
 				return;
 			}
 
-			int vertices_base = (j * world_size.x + i) * 4;
+			int vertices_base = (j * world_size.x + i) * vertices_per_tile;
+
+
+			/* VERTICES LAYOUT:
+			 *
+			 *  +y_
+			 *   !\
+			 *     \  N N
+			 *      0-----> +x
+			 *   W  |
+			 *   W  |
+			 *      \/
+			 *      +z
+			 *
+			 *       (6)----(11)
+			 *        | WALL Z|
+			 *        8-------5
+			 *        =       =
+			 *  ----4=0-------1=9---
+			 * WALL X |  TOP  | | WALL X
+			 *  ---10=2-------3=7---
+			 *        =       =
+			 *        6------11
+			 *        | WALL Z|
+			 *
+			 *
+			 *        |  PREV    |
+			 *        |8 WALL Z 5|
+			 *      4 +----------+
+			 *    |  /0        1/|9
+			 *    | /   TOP    / |
+			 *  10|/2        3/WX|
+			 *    +----------+7  +
+			 *    |6       11|  /
+			 *    |  WALL Z  | /
+			 *    |          |/
+			 *    +----------+
+			 *
+			 * DRAWING:
+			 * 1. TOP
+			 * 2. PREVIOUS WALL-X
+			 * 3. PREVIOUS WALL-Z
+			 */
+
+			// 0
+			int offset = 0;
+			sint8 corner_height = tile->get_hoehe(slope4_t::corner_NW);
+			float y = corner_height * height_scale;
+			auto *current_vertex = &vertices_1[vertices_base + offset];
+			current_vertex->pos = {i, y, j};
+			current_vertex->color = {1.0f, 0.0f, 0.0f};
+			// 4
+			current_vertex = &vertices_1[vertices_base + offset + 4];
+			current_vertex->pos = {i, y, j};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+			// 8
+			current_vertex = &vertices_1[vertices_base + offset + 8];
+			current_vertex->pos = {i, y, j};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+
+			// 1
+			offset++;
+			current_vertex = &vertices_1[vertices_base + offset];
+			corner_height = tile->get_hoehe(slope4_t::corner_NE);
+			y = corner_height * height_scale;
+			current_vertex->pos = {i+1, y, j};
+			current_vertex->color = {0.0f, 1.0f, 0.0f};
+			// 5
+			current_vertex = &vertices_1[vertices_base + offset + 4];
+			current_vertex->pos = {i+1, y, j};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+			// 9
+			current_vertex = &vertices_1[vertices_base + offset + 8];
+			current_vertex->pos = {i+1, y, j};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+
+			// 2
+			offset++;
+			current_vertex = &vertices_1[vertices_base + offset];
+			corner_height = tile->get_hoehe(slope4_t::corner_SW);
+			y = corner_height * height_scale;
+			current_vertex->pos = {i, y, j+1};
+			current_vertex->color = {1.0f, 0.0f, 0.0f};
+			// 6
+			current_vertex = &vertices_1[vertices_base + offset + 4];
+			current_vertex->pos = {i, y, j+1};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+			// 10
+			current_vertex = &vertices_1[vertices_base + offset + 8];
+			current_vertex->pos = {i, y, j+1};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+
+			// 3
+			offset++;
+			current_vertex = &vertices_1[vertices_base + offset];
+			corner_height = tile->get_hoehe(slope4_t::corner_SE);
+			y = corner_height * height_scale;
+			current_vertex->pos = {i+1, y, j+1};
+			current_vertex->color = {0.0f, 1.0f, 0.0f};
+			// 7
+			current_vertex = &vertices_1[vertices_base + offset + 4];
+			current_vertex->pos = {i+1, y, j+1};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+			// 11
+			current_vertex = &vertices_1[vertices_base + offset + 8];
+			current_vertex->pos = {i+1, y, j+1};
+			current_vertex->color = {1.0f, 1.0f, 1.0f};
+
+
+
 			// For each tile, calculate corner positions and store the into
 			// vertex and index buffers.
-			for (int y = 0; y < 2; y++) {
-				for (int x = 0; x < 2; x++) {
-					sint16 x_coord = i + x;
-					sint16 y_coord = j + y;
+			// for (int y = 0; y < 2; y++) {
+			// 	for (int x = 0; x < 2; x++) {
+			// 		sint16 x_coord = i + x;
+			// 		sint16 y_coord = j + y;
 
-					slope4_t::type current_corner;
-					switch (2 * y + x) {
-					case 0:
-						current_corner = slope4_t::corner_NW;
-						break;
-					case 1:
-						current_corner = slope4_t::corner_NE;
-						break;
-					case 2:
-						current_corner = slope4_t::corner_SW;
-						break;
-					case 3:
-						current_corner = slope4_t::corner_SE;
-						break;
-					}
+			// 		// int micro_x = y == 1 ? 1 - x : x;
 
-					sint8 corner_height  = tile->get_hoehe(current_corner);
+			// 		// grid_indices[(j * world_size.x + i) * 6 + x + y * 2] = (j * world_size.x + i) * 4 + y * 2 + micro_x;
+			// 		// if (x == 0 && y == 0) {
+			// 		// 	grid_indices[(j * world_size.x + i) * 6 + 4] = (j * world_size.x + i) * 4;
+			// 		// }
+			// 	}
+			// }
+			// grid_indices[(j * world_size.x + i) * 6 + 5] = 0xFFFFFFFF;
 
-					// vertices_1[(j * world_size.x + i) * 4 + y * 2 + x] = {{y_coord, x_coord, (tile_pos.z + adds_map[y*2 + x]) * z_scale}, {1.0, 1.0, 1.0}};
-					auto& current_vertex = vertices_1[vertices_base + y * 2 + x];
-					current_vertex.pos = {y_coord, x_coord,  corner_height * z_scale};
-					// current_vertex.color = {x, y, 1.0 - (x + y ) / 2.0};
-					current_vertex.color = {1.0f, 1.0f, 1.0f};
-					// current_vertex.normal = {1.0f, 1.0f, 1.0f};
-					// current_vertex.normal = glm::vec3(0.0f, 0.0f, 1.0f);
+			int surface_indices_base = (j * world_size.x + i) * indices_per_tile;
 
-					int micro_x = y == 1 ? 1 - x : x;
-
-					grid_indices[(j * world_size.x + i) * 6 + x + y * 2] = (j * world_size.x + i) * 4 + y * 2 + micro_x;
-					if (x == 0 && y == 0) {
-						grid_indices[(j * world_size.x + i) * 6 + 4] = (j * world_size.x + i) * 4;
-					}
-				}
-			}
-			grid_indices[(j * world_size.x + i) * 6 + 5] = 0xFFFFFFFF;
-
-			int surface_indices_base = (j * world_size.x + i) * 12;
-
-
-			/*
-			 * 4-------5+7------!6
-			 * |  top   | wall x |
-			 * 2-------3+9-------8
-			 * | wall y |
-			 * 0--------1
-			 *
-			 * `x` marks provoking vertex for the triangle
-			 *
-			 * +--------x5------x4
-			 * | t2\t3  |  t5\t4 |
-			 * x2------x3--------+
-			 * | t0\t1  |
-			 * x0------x1
-			 * ^        ^
-			 * \--------+----> Handled in the next pass/row (j)
-			 */
 
 			// indices
 			int
-				v0 = vertices_base + world_size.x * 4 + 0, // wall y
-				v1 = vertices_base + world_size.x * 4 + 1,
-				v2 = vertices_base + 2, // top
-				v3 = vertices_base + 3,
-				v4 = vertices_base + 0,
-				v5 = vertices_base + 1,
-				v6 = vertices_base + 4, // wall x
-				v7 = vertices_base + 6;
+				v0 = vertices_base + 0, // top
+				v1 = vertices_base + 1,
+				v2 = vertices_base + 2,
+				v3 = vertices_base + 3;
 
 			// top face's normals (x2 and x3)
-			auto& x2 = vertices_1[v2];
-			auto& x3 = vertices_1[v3];
-			auto& t4 = vertices_1[v4];
-			auto& t5 = vertices_1[v5];
-			x2.normal = glm::triangleNormal(x2.pos, x3.pos, t4.pos);
-			x3.normal = glm::triangleNormal(x3.pos, t5.pos, t4.pos);
-
-			// wall x face's normals (x4 and x5)
-			auto& x4 = vertices_1[v6];
-			auto& x5 = vertices_1[v5];
-			auto& t8 = vertices_1[v7];
-			auto& t9 = vertices_1[v3];
-			x4.normal = glm::triangleNormal(x4.pos, x5.pos, t8.pos);
-			x5.normal = glm::triangleNormal(x5.pos, t9.pos, t8.pos);
-
-			// wall y
-			if (j == world_size.y - 1) {
-				// duplicate, probably can be optimized
-				surface_indices[surface_indices_base + 0] = 0xFFFFFFFF; //v2;
-				surface_indices[surface_indices_base + 1] = 0xFFFFFFFF; //v3;
-			} else {
-				surface_indices[surface_indices_base + 0] = 0xFFFFFFFF; //v0;
-				surface_indices[surface_indices_base + 1] = 0xFFFFFFFF; //v1;
-			}
-
-			// top
-			surface_indices[surface_indices_base + 2] = v2;
+			auto& t0 = vertices_1[v0];
+			auto& t1 = vertices_1[v1];
+			auto& t2 = vertices_1[v2];
+			auto& t3 = vertices_1[v3];
+			t0.normal = glm::triangleNormal(t0.pos, t2.pos, t1.pos);
+			t2.normal = glm::triangleNormal(t2.pos, t3.pos, t1.pos);
+			surface_indices[surface_indices_base + 0] = v0;
+			surface_indices[surface_indices_base + 1] = v2;
+			surface_indices[surface_indices_base + 2] = v1;
 			surface_indices[surface_indices_base + 3] = v3;
-			surface_indices[surface_indices_base + 4] = v4;
-			surface_indices[surface_indices_base + 5] = v5;
-			surface_indices[surface_indices_base + 6] = 0xFFFFFFFF;
+			surface_indices[surface_indices_base + 4] = 0xFFFFFFFF;
 
-			// wall x
-			if (i == world_size.x -1) {
+
+			// Most tiles don't have either x or z wall so maybe
+			// it can be removed from both vertex and index buffers
+
+			// *previous* wall x (towards west)
+			if (i > 0) {
+				int
+					xi0 = vertices_base - vertices_per_tile + 9,
+					xi1 = vertices_base + 4,
+					xi2 = vertices_base - vertices_per_tile + 7,
+					xi3 = vertices_base + 10;
+				auto& xv0 = vertices_1[xi0];
+				auto& xv1 = vertices_1[xi1];
+				auto& xv2 = vertices_1[xi2];
+				auto& xv3 = vertices_1[xi3];
+				xv0.normal = glm::triangleNormal(xv0.pos, xv2.pos, xv1.pos);
+				xv2.normal = glm::triangleNormal(xv2.pos, xv3.pos, xv1.pos);
+
+				if (isnan(xv0.normal.x)) {
+					xv0.normal = xv2.normal;
+				} else if (isnan(xv2.normal.x)) {
+					xv2.normal = xv1.normal;
+				}
+
+				surface_indices[surface_indices_base + 5] = xi0;
+				surface_indices[surface_indices_base + 6] = xi2;
+				surface_indices[surface_indices_base + 7] = xi1;
+				surface_indices[surface_indices_base + 8] = xi3;
+				surface_indices[surface_indices_base + 9] = 0xFFFFFFFF;
+			} else {
+				// TODO: draw map's side walls; ignore for now
+				surface_indices[surface_indices_base + 5] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 6] = 0xFFFFFFFF;
 				surface_indices[surface_indices_base + 7] = 0xFFFFFFFF;
 				surface_indices[surface_indices_base + 8] = 0xFFFFFFFF;
 				surface_indices[surface_indices_base + 9] = 0xFFFFFFFF;
-				surface_indices[surface_indices_base + 10] = 0xFFFFFFFF;
-			} else {
-				surface_indices[surface_indices_base + 7]  = v6;
-				surface_indices[surface_indices_base + 8]  = v5;
-				surface_indices[surface_indices_base + 9]  = v7;
-				surface_indices[surface_indices_base + 10] = v3;
 			}
-			surface_indices[surface_indices_base + 11] = 0xFFFFFFFF;
 
+			// *previous* wall z (towards north)
+			if (j > 0) {
+				int
+						zi0 = vertices_base - world_size.x * vertices_per_tile + 11,
+						zi1 = vertices_base + 5,
+						zi2 = vertices_base - world_size.x * vertices_per_tile + 6,
+						zi3 = vertices_base + 8;
+				auto& zv0 = vertices_1[zi0];
+				auto& zv1 = vertices_1[zi1];
+				auto& zv2 = vertices_1[zi2];
+				auto& zv3 = vertices_1[zi3];
+				zv0.normal = glm::triangleNormal(zv0.pos, zv2.pos, zv1.pos);
+				zv2.normal = glm::triangleNormal(zv2.pos, zv3.pos, zv1.pos);
+				if (isnan(zv0.normal.x)) {
+					zv0.normal = zv2.normal;
+				} else if (isnan(zv2.normal.x)) {
+					zv2.normal = zv1.normal;
+				}
+
+				surface_indices[surface_indices_base + 10] = zi0;
+				surface_indices[surface_indices_base + 11] = zi2;
+				surface_indices[surface_indices_base + 12] = zi1;
+				surface_indices[surface_indices_base + 13] = zi3;
+				surface_indices[surface_indices_base + 14] = 0xFFFFFFFF;
+			} else {
+				// TODO: draw map's side walls; ignore for now
+				surface_indices[surface_indices_base + 10] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 11] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 12] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 13] = 0xFFFFFFFF;
+				surface_indices[surface_indices_base + 14] = 0xFFFFFFFF;
+			}
 		}
-		surface_indices[(j * world_size.x + world_size.x - 1) * 6 + 1] = 0xFFFFFFFF;
+		// surface_indices[(j * world_size.x + world_size.x - 1) * 6 + 1] = 0xFFFFFFFF;
 	}
 
 	VkDeviceSize vertices_buffer_size = sizeof(vertices_1[0]) * vertices_1.size();
