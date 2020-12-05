@@ -94,6 +94,10 @@ private:
 
 	VkCommandPool command_pool;
 
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
+
 	VkBuffer vertex_buffer;
 	VkDeviceMemory vertex_buffer_memory;
 	VkBuffer index_buffer;
@@ -120,6 +124,7 @@ private:
 	bool framebuffer_resized = false;
 
 	uint32_t mip_levels;
+	VkSampleCountFlagBits msaa_samples = VK_SAMPLE_COUNT_1_BIT;
 
 
 	void init_vulkan();
@@ -138,11 +143,9 @@ private:
 	void create_render_pass();
 	void create_descriptor_set_layout();
 	void create_graphics_pipeline();
-
-
-
 	void create_framebuffers();
 	void create_command_pool();
+	void create_depth_resources();
 	void create_vertex_buffer();
 	void create_index_buffer();
 	void create_uniform_buffers();
