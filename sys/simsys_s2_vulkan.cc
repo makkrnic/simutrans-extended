@@ -1378,6 +1378,13 @@ void sim_renderer_t::prepare_tiles_rendering() {
 					xv2.normal = xv1.normal;
 				}
 
+				if (xv0.pos.y < xv1.pos.y) {
+					xv0.normal *= -1;
+				}
+				if (xv2.pos.y < xv3.pos.y) {
+					xv2.normal *= -1;
+				}
+
 				surface_indices[surface_indices_base + 5] = xi0;
 				surface_indices[surface_indices_base + 6] = xi2;
 				surface_indices[surface_indices_base + 7] = xi1;
@@ -1409,6 +1416,12 @@ void sim_renderer_t::prepare_tiles_rendering() {
 					zv0.normal = zv2.normal;
 				} else if (isnan(zv2.normal.x)) {
 					zv2.normal = zv1.normal;
+				}
+				if (zv0.pos.y < zv1.pos.y) {
+					zv0.normal *= -1;
+				}
+				if (zv2.pos.y < zv3.pos.y) {
+					zv2.normal *= -1;
 				}
 
 				surface_indices[surface_indices_base + 10] = zi0;
