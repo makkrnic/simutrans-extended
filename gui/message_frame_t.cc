@@ -3,6 +3,11 @@
  * (see LICENSE.txt)
  */
 
+// <cstddef> on mingw C++17 clashes with `byte` definition
+// included from winsock2.h through network.h
+// The solution is to first include winsock2.h (network.h) and then <cstddef>
+#include "../network/network_cmd_ingame.h"
+
 #include "simwin.h"
 #include "message_frame_t.h"
 #include "message_option_t.h"

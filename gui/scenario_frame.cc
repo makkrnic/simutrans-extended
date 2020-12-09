@@ -14,14 +14,7 @@
 #include "../simworld.h"
 #include "../simmenu.h"
 
-#include "../dataobj/environment.h"
 #include "../dataobj/scenario.h"
-#include "../dataobj/translator.h"
-
-#include "../network/network.h"
-#include "../network/network_cmd.h"
-
-#include "../utils/cbuffer_t.h"
 
 scenario_frame_t::scenario_frame_t() : savegame_frame_t(NULL, true, NULL, false)
 {

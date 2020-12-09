@@ -3,6 +3,11 @@
  * (see LICENSE.txt)
  */
 
+// simsys includes <cstddef> which on C++17 clashes with `byte` definition
+// included from winsock2.h through network.h
+// The solution is to first include winsock2.h (network.h) and then <cstddef>
+#include "../network/network.h"
+
 #include "../simdebug.h"
 
 // This gets us the max for a signed 32-bit int.  Hopefully.
