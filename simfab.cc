@@ -808,7 +808,7 @@ fabrik_t::fabrik_t(koord3d pos_, player_t* owner, const factory_desc_t* desc, si
 		for (weighted_vector_tpl<stadt_t*>::const_iterator i = cities.begin(), end = cities.end(); i != end; ++i)
 		{
 			stadt_t* const c = *i;
-			const sint64 pop = c->get_finance_history_month(0,HIST_CITICENS);
+			const sint64 pop = c->get_finance_history_month(0,HIST_CITIZENS);
 			if(pop > biggest_city_population)
 			{
 				biggest_city_population = pop;
@@ -819,7 +819,7 @@ fabrik_t::fabrik_t(koord3d pos_, player_t* owner, const factory_desc_t* desc, si
 			}
 		}
 
-		const sint64 this_city_population = city->get_finance_history_month(0,HIST_CITICENS);
+		const sint64 this_city_population = city->get_finance_history_month(0,HIST_CITIZENS);
 		sint32 production;
 
 		if(this_city_population == biggest_city_population)
@@ -2018,8 +2018,10 @@ sint32 fabrik_t::goods_needed(const goods_desc_t *typ) const
 
 bool fabrik_t::is_active_lieferziel( koord k ) const
 {
-	assert( lieferziele.is_contained(k) );
-	return 0 < ( ( 1 << lieferziele.index_of(k) ) & lieferziele_active_last_month );
+	if ( lieferziele.is_contained(k) ) {
+		return 0 < ( ( 1 << lieferziele.index_of(k) ) & lieferziele_active_last_month );
+	}
+	return false;
 }
 
 
@@ -2806,7 +2808,7 @@ void fabrik_t::new_month()
 						for (weighted_vector_tpl<stadt_t*>::const_iterator i = cities.begin(), end = cities.end(); i != end; ++i)
 						{
 							stadt_t* const c = *i;
-							const sint64 pop = c->get_finance_history_month(0, HIST_CITICENS);
+							const sint64 pop = c->get_finance_history_month(0, HIST_CITIZENS);
 							if(pop > biggest_city_population)
 							{
 								biggest_city_population = pop;
@@ -2817,7 +2819,7 @@ void fabrik_t::new_month()
 							}
 						}
 
-						const sint64 this_city_population = city->get_finance_history_month(0, HIST_CITICENS);
+						const sint64 this_city_population = city->get_finance_history_month(0, HIST_CITIZENS);
 						sint32 production;
 
 						if(this_city_population == biggest_city_population)
