@@ -321,7 +321,9 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ github.job }}-nightly
-          path: build/simutrans/simutrans-extended.exe
+          path: |
+            build/simutrans/simutrans-extended.exe
+            simutrans/shaders
 
 
   sim-mingw-gdi:
