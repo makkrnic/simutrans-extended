@@ -454,6 +454,12 @@ if (SIMUTRANS_MULTI_THREAD)
 	target_link_libraries(simutrans-extended PRIVATE Threads::Threads)
 endif (SIMUTRANS_MULTI_THREAD)
 
+if (VULKAN_RENDERER)
+    target_compile_definitions(simutrans-extended PRIVATE VULKAN_RENDERER=1)
+	# Currently used exclusively for vulkan builds
+	target_compile_definitions(simutrans-extended PRIVATE OO_WINDOWING=1)
+endif()
+
 
 # Backup sound and music routines if the selected backend does not provide any routines
 if (WIN32)

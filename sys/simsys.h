@@ -64,6 +64,10 @@ struct sys_event_t
 	unsigned int key_mod; /* key mod, like ALT, STRG, SHIFT */
 };
 
+#ifndef OO_WINDOWING
+extern sys_event_t sys_event;
+#endif // ! OO_WINDOWING
+
 extern char const PATH_SEPARATOR[];
 
 // scale according to dpi setting

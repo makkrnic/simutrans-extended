@@ -78,8 +78,13 @@
 #include "vehicle/simvehicle.h"
 #include "vehicle/simroadtraffic.h"
 
+#ifdef OO_WINDOWING
 #include "display/window.h"
+#endif // OO_WINDOWING
+
+#ifdef VULKAN_RENDERER
 #include "sys/simsys_s2_vulkan.h"
+#endif // VULKAN_RENDERER
 
 using std::string;
 
@@ -890,7 +895,11 @@ int simu_main(int argc, char** argv)
 
 	// Get optimal resolution.
 	if (disp_width == 0 || disp_height == 0) {
+#ifdef OO_WINDOWING
 		resolution const res = sim_window_t::query_screen_resolution();
+#else
+		resolution const res = dr_query_screen_resolution();
+#endif // OO_WINDOWING
 		if (fullscreen) {
 			disp_width  = res.w;
 			disp_height = res.h;
@@ -904,6 +913,7 @@ int simu_main(int argc, char** argv)
 	DBG_MESSAGE("simu_main()", "simgraph_init disp_width=%d, disp_height=%d, fullscreen=%d", disp_width, disp_height, (int)fullscreen);
 	simgraph_init(scr_size(disp_width, disp_height), fullscreen != 0);
 
+#ifdef VULKAN_RENDERER
 	sim_window_t *window = new sim_window_t(disp_width, disp_height, fullscreen);
 	resolution res = window->get_drawable_size();
 	DBG_MESSAGE("simu_main()", ".. results in disp_width=%d, disp_height=%d", res.w, res.h);
@@ -938,6 +948,7 @@ int simu_main(int argc, char** argv)
 			window->update_fps_info(fps);
 		}
 	});
+#endif // VULKAN_RENDERER
 
 	// now that the graphics system has already started
 	// the saved colours can be converted to the system format
@@ -1535,8 +1546,10 @@ int simu_main(int argc, char** argv)
 	}
 	env_t::restore_UI = old_restore_UI;
 
+#ifdef VULKAN_RENDERER
 	// TODO MAK: world could update
 	renderer->set_viewport(welt->get_viewport());
+#endif // VULKAN_RENDERER
 
 	// std::thread game_thread([&]() {
 		if (!env_t::networkmode && !env_t::server && new_world) {
@@ -1603,11 +1616,13 @@ int simu_main(int argc, char** argv)
 		file.close();
 	}
 
+#ifdef VULKAN_RENDERER
 		stop_render_thread = true;
 	// });
 
 
 	vulkan_thread.join();
+#endif // VULKAN_RENDERER
 
 	destroy_all_win(true);
 	tool_t::exit_menu();

@@ -3,8 +3,12 @@
  * (see LICENSE.txt)
  */
 
+#ifdef OO_WINDOWING
 #include "display/window.h"
+#endif // OO_WINDOWING
+
 #include "simevent.h"
+#include "sys/simsys.h"
 #include "tpl/slist_tpl.h"
 
 static sim_window_t *window;
@@ -49,7 +53,11 @@ void change_drag_start(int x, int y)
 }
 
 
+#ifdef OO_WINDOWING
 static void fill_event(event_t* const ev, struct sys_event_t sys_event)
+#else
+static void fill_event(event_t* const ev)
+#endif // OO_WINDOWING
 {
 	// variables for detecting double-clicks and triple-clicks
 	const  unsigned long interval = 400;
@@ -235,7 +243,11 @@ static void fill_event(event_t* const ev, struct sys_event_t sys_event)
 	ev->button_state = pressed_buttons;
 }
 
+#ifdef OO_WINDOWING
 static void display_next_event(event_t* const ev, const bool wait) {
+#else
+void display_poll_event(event_t* const ev) {
+#endif // OO_WINDOWING
 	if( !queued_events.empty() ) {
 		// We have a queued (injected programatically) event, return it.
 		event_t *elem = queued_events.remove_first();
@@ -251,21 +263,55 @@ static void display_next_event(event_t* const ev, const bool wait) {
 		return;
 	}
 
+#ifdef OO_WINDOWING
 	last_meta_class = EVENT_NONE;
 	if (window != nullptr) {
 		fill_event(ev, window->get_event(wait));
 	}
+#else // OO_WINDOWING
+	last_meta_class = EVENT_NONE;
+	GetEventsNoWait();
+	fill_event(ev);
+	// prepare for next event
+	sys_event.type = SIM_NOEVENT;
+	sys_event.code = 0;
+#endif // OO_WINDOWING
 }
 
+#ifdef OO_WINDOWING
 void display_poll_event(event_t* const ev)
 {
 	display_next_event(ev, false);
 }
+#endif // OO_WINDOWING
 
 
 void display_get_event(event_t* const ev)
 {
+#ifdef OO_WINDOWING
 	display_next_event(ev, true);
+#else // OO_WINDOWING
+	if(  !queued_events.empty()  ) {
+		// We have a queued (injected programatically) event, return it.
+		event_t *elem = queued_events.remove_first();
+		*ev = *elem;
+		delete elem;
+		return ;
+	}
+	// if there is any pending meta-event, consume it instead of fetching a new event from the system
+	if(  meta_event.ev_class!=EVENT_NONE  ) {
+		*ev = meta_event;
+		meta_event.ev_class = EVENT_NONE;
+	}
+	else {
+		GetEvents();
+		fill_event(ev);
+		// prepare for next event
+		sys_event.type = SIM_NOEVENT;
+		sys_event.code = 0;
+	}
+
+#endif // OO_WINDOWING
 }
 
 
