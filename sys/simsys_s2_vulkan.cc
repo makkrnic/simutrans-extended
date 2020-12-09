@@ -11,6 +11,10 @@
 #include "simsys.h"
 #include "simsys_s2_vulkan.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include "../simversion.h"
 #include "../simdebug.h"
 #include "../macros.h"
@@ -1895,10 +1899,6 @@ static bool has_stencil_component(VkFormat format) {
 // old simsys_s2.cc
 
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 #include <stdio.h>
 #include <string.h>
 
@@ -2346,11 +2346,11 @@ void set_pointer(int loading)
  */
 int dr_screenshot(const char *filename, int x, int y, int w, int h)
 {
-#ifdef WIN32
-	if(  dr_screenshot_png( filename, w, h, screen->w, ((unsigned short *)(screen->pixels)) + x + y * screen->w, screen->format->BitsPerPixel )  ) {
-		return 1;
-	}
-#endif
+// #ifdef WIN32
+// 	if(  dr_screenshot_png( filename, w, h, screen->w, ((unsigned short *)(screen->pixels)) + x + y * screen->w, screen->format->BitsPerPixel )  ) {
+// 		return 1;
+// 	}
+// #endif
 	(void)x; (void)y; (void)w; (void)h;
 	return SDL_SaveBMP( screen, filename ) == 0 ? 1 : -1;
 }

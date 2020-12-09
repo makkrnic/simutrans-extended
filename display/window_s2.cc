@@ -8,6 +8,10 @@
 #include <SDL2/SDL_vulkan.h>
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <stdexcept>
 #include <sstream>
 

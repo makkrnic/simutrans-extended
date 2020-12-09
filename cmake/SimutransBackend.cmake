@@ -9,6 +9,7 @@ find_package(SDL2_mixer MODULE)
 if (SDL2_FOUND)
     if (VULKAN_RENDERER)
         find_package(Vulkan REQUIRED)
+        find_package(GLM REQUIRED)
         list(APPEND AVAILABLE_BACKENDS "sdl2_vulkan")
     endif()
 

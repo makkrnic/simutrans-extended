@@ -297,6 +297,32 @@ jobs:
           name: ${{ github.job }}-nightly
           path: build/simutrans/simutrans-extended.exe
 
+  sim-mingw-sdl2-vulkan:
+    name: Windows (MinGW, SDL2 vulkan)
+    runs-on: ubuntu-latest
+    needs: [check-code-formatting]
+    container:
+      image: ceeac/simutrans-build-env:mingw-sdl2
+    steps:
+      - name: Additional setup
+        run: sudo dnf -y install git cmake mingw64-vulkan-headers mingw64-vulkan-validation-layers mingw64-spirv-tools mingw64-vulkan-loader glm-devel
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Configure
+        run: |
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./.github/toolchain_mingw.cmake -DSIMUTRANS_BACKEND=sdl2
+      - name: Build
+        run: |
+          cd build
+          make -j$(nproc) simutrans-extended
+          make package
+      - name: Upload Artifact (CI)
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ github.job }}-nightly
+          path: build/simutrans/simutrans-extended.exe
+
 
   sim-mingw-gdi:
     name: Windows (MinGW, GDI)
