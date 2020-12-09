@@ -240,6 +240,10 @@ void sim_renderer_t::run() {
 }
 
 void sim_renderer_t::cleanup_swap_chain() {
+	vkDestroyImageView(device, depthImageView, nullptr);
+	vkDestroyImage(device, depthImage, nullptr);
+	vkFreeMemory(device, depthImageMemory, nullptr);
+
 	for (auto framebuffer : swap_chain_framebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
@@ -1279,6 +1283,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 			// 0
 			int offset = 0;
 			sint8 corner_height = tile->get_hoehe(slope4_t::corner_NW);
+			sint8 h_nw = corner_height;
 			float y = corner_height * height_scale;
 			auto *current_vertex = &vertices_1[vertices_base + offset];
 			current_vertex->pos = {i, y, j};
@@ -1295,7 +1300,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 			// 1
 			offset++;
 			current_vertex = &vertices_1[vertices_base + offset];
-			corner_height = tile->get_hoehe(slope4_t::corner_NE);
+			sint8 h_ne = corner_height = tile->get_hoehe(slope4_t::corner_NE);
 			y = corner_height * height_scale;
 			current_vertex->pos = {i+1, y, j};
 			current_vertex->color = {0.0f, 1.0f, 0.0f};
@@ -1311,7 +1316,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 			// 2
 			offset++;
 			current_vertex = &vertices_1[vertices_base + offset];
-			corner_height = tile->get_hoehe(slope4_t::corner_SW);
+			sint8 h_sw = corner_height = tile->get_hoehe(slope4_t::corner_SW);
 			y = corner_height * height_scale;
 			current_vertex->pos = {i, y, j+1};
 			current_vertex->color = {1.0f, 0.0f, 0.0f};
@@ -1327,7 +1332,7 @@ void sim_renderer_t::prepare_tiles_rendering() {
 			// 3
 			offset++;
 			current_vertex = &vertices_1[vertices_base + offset];
-			corner_height = tile->get_hoehe(slope4_t::corner_SE);
+			sint8 h_se = corner_height = tile->get_hoehe(slope4_t::corner_SE);
 			y = corner_height * height_scale;
 			current_vertex->pos = {i+1, y, j+1};
 			current_vertex->color = {0.0f, 1.0f, 0.0f};
@@ -1374,13 +1379,33 @@ void sim_renderer_t::prepare_tiles_rendering() {
 			auto& t1 = vertices_1[v1];
 			auto& t2 = vertices_1[v2];
 			auto& t3 = vertices_1[v3];
-			t0.normal = glm::triangleNormal(t0.pos, t2.pos, t1.pos);
-			t2.normal = glm::triangleNormal(t2.pos, t3.pos, t1.pos);
-			surface_indices[surface_indices_base + 0] = v0;
-			surface_indices[surface_indices_base + 1] = v2;
-			surface_indices[surface_indices_base + 2] = v1;
-			surface_indices[surface_indices_base + 3] = v3;
-			surface_indices[surface_indices_base + 4] = 0xFFFFFFFF;
+			// check whether to draw diagonal ne-sw (default) or the opposite
+			// If diagonals are drawn the same way for all tiles, it cause
+			// inconsistencies on non-flat slopes.
+			// TODO: extract this check into separate function and determine
+			//       exact logic
+			if (   (h_nw <= h_se && (h_se < h_ne || h_se < h_sw))
+			    || (h_se <= h_nw && (h_nw < h_ne || h_nw < h_sw))
+			    // Three corners are at the same height (triangles pointing sw or ne)
+			    || (h_sw == h_se && h_sw == h_nw)
+			    || (h_ne == h_nw && h_ne == h_se)) {
+				// draw the diagonal nw-se
+				t1.normal = glm::triangleNormal(t1.pos, t0.pos, t3.pos);
+				t0.normal = glm::triangleNormal(t0.pos, t2.pos, t3.pos);
+				surface_indices[surface_indices_base + 0] = v1;
+				surface_indices[surface_indices_base + 1] = v0;
+				surface_indices[surface_indices_base + 2] = v3;
+				surface_indices[surface_indices_base + 3] = v2;
+				surface_indices[surface_indices_base + 4] = 0xFFFFFFFF;
+			} else {
+				t0.normal = glm::triangleNormal(t0.pos, t2.pos, t1.pos);
+				t2.normal = glm::triangleNormal(t2.pos, t3.pos, t1.pos);
+				surface_indices[surface_indices_base + 0] = v0;
+				surface_indices[surface_indices_base + 1] = v2;
+				surface_indices[surface_indices_base + 2] = v1;
+				surface_indices[surface_indices_base + 3] = v3;
+				surface_indices[surface_indices_base + 4] = 0xFFFFFFFF;
+			}
 
 
 			// Most tiles don't have either x or z wall so maybe
